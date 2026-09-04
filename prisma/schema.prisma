@@ -1,0 +1,1168 @@
+// =============================================================================
+//  TPZ Intranet — Datenmodell
+//  Baustein 1: Private Ausleihe von Firmenfahrzeugen
+//
+//  DER VORGANG (nicht: eine Pflichtlektüre für alle):
+//  Ein Kollege, der sonst kein Fahrzeugführer ist, fragt den Werkstattleiter,
+//  ob ein Fahrzeug am Wochenende frei ist. Wenn ja, werden bei der Übergabe
+//  die Nutzungsvereinbarung und das Übergabeprotokoll ausgefüllt, bei der
+//  Rückgabe das Protokoll ein zweites Mal. Ein paar Mal im Jahr.
+//
+//  Der betriebliche Fahrbetrieb unter der Woche ist NICHT Teil dieses Systems.
+//
+//  Aufbau:  FUNDAMENT  = erben alle späteren Module unverändert
+//           MODUL      = Fahrzeug, Ausleihe, Protokolle, Abrechnung
+// =============================================================================
+
+// Prisma 7: Generator heißt "prisma-client" (nicht mehr "prisma-client-js")
+// und erzeugt den Client an einen selbst gewählten Ort. Er liegt bewusst
+// unter src/, damit der "@/"-Alias greift und die Importe kurz bleiben.
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// Ab Prisma 7 steht die Verbindungs-URL NICHT mehr hier, sondern in
+// `prisma.config.ts` im Projektstamm. Ein `url = env(...)` an dieser Stelle
+// ist ein Validierungsfehler, kein Schönheitsfehler.
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+//  ENUMS
+// =============================================================================
+
+enum Rolle {
+  MITARBEITENDE
+  FUEHRUNGSKRAFT
+  WERKSTATTLEITER
+  REDAKTION
+  QM
+  ADMINISTRATION
+}
+
+enum DokumentArt {
+  NUTZUNGSVEREINBARUNG
+  UEBERGABEPROTOKOLL
+  DIENSTANWEISUNG
+  QM_DOKUMENT
+  SONSTIGES
+}
+
+/// Der Lebenszyklus einer Ausleihe.
+///
+/// ANGEFRAGT gibt es in der ersten Fassung noch nicht: die Anfrage läuft
+/// mündlich, und der Werkstattleiter legt den Vorgang direkt als ZUGESAGT an.
+/// Der Zustand steht trotzdem schon hier, damit Selbstbedienung später
+/// ohne Schemaänderung nachgerüstet werden kann.
+enum AusleiheStatus {
+  ANGEFRAGT
+  ZUGESAGT
+  ABGELEHNT
+  VEREINBART // Nutzungsvereinbarung unterschrieben
+  UEBERGEBEN // Ausgabeprotokoll erstellt, Fahrzeug ist draußen
+  ZURUECKGEGEBEN // Rücknahmeprotokoll erstellt
+  ABGESCHLOSSEN // Abrechnung erledigt, geldwerter Vorteil gemeldet
+  STORNIERT
+}
+
+enum Protokollrichtung {
+  AUSGABE
+  RUECKNAHME
+}
+
+/// Fünf Zustände wie auf der Tankuhr im echten Übergabeprotokoll —
+/// nicht Achtel, nicht Prozent. Siehe Kommentar am Model Uebergabeprotokoll.
+enum Tankfuellung {
+  VOLL
+  DREI_VIERTEL
+  HALB
+  VIERTEL
+  LEER
+}
+
+enum Abrechnungsart {
+  TANKDIFFERENZ
+  SELBSTBETEILIGUNG
+  SONSTIGES
+}
+
+/// Feste Auswahl von ca. 5 Farben für die Kalenderansicht — bewusst kein
+/// Freitext/Farbwähler, damit die Ansicht über alle Termine hinweg
+/// konsistent bleibt. Bewusst NICHT die Firmenfarben (Hellgrün/Orange) —
+/// die stehen schon für Buttons/Akzente und würden mit Termin-Markierungen
+/// verwechselbar.
+enum TerminFarbe {
+  DUNKELGRUEN
+  GELB
+  BLAU
+  ROT
+  VIOLETT
+}
+
+/// OFFEN ist der Startzustand direkt nach der Einladung — noch keine
+/// Rückmeldung. Absichtlich kein Löschen der Teilnahme bei Absage: Der
+/// Ersteller soll sehen, wer abgesagt hat, nicht nur wer übrig bleibt.
+enum TerminTeilnahmeStatus {
+  OFFEN
+  ZUGESAGT
+  ABGESAGT
+}
+
+// =============================================================================
+//  FUNDAMENT
+// =============================================================================
+
+/// Personen werden NIE gelöscht, nur deaktiviert.
+/// Nachweise müssen die Zugehörigkeit überdauern.
+///
+/// In der ersten Fassung haben nur Werkstattleiter und Verwaltung ein
+/// Passwort. Alle anderen existieren als Datensatz (damit man sie als
+/// Entleiher auswählen kann), aber ohne Zugang — unterschrieben wird auf
+/// dem Gerät des Werkstattleiters. Deshalb ist passwortHash optional.
+/// `benutzername` ist der Login-Name (siehe berechtigung(), auth.ts) UND
+/// der Primärschlüssel — keine separate cuid-Spalte. Für neu angelegte
+/// Personen automatisch aus Vorname + Nachname + Abteilungskürzel
+/// zusammengesetzt (vorname.nachname@kuerzel, siehe personErstellen),
+/// keine Personalnummer und keine echte E-Mail-Adresse: nicht jede/r hat
+/// eine, und eine zugewiesene Nummer müsste man den Mitarbeitenden
+/// trotzdem genauso einzeln mitteilen wie ein Passwort. Ein aus dem
+/// eigenen Namen ableitbarer Login braucht das nicht.
+///
+/// Weil benutzername der Primärschlüssel ist, enthalten alle *Id-Felder,
+/// die anderswo im Schema auf Person zeigen (personId, entleiherId,
+/// erstelltVonId, ...), den Benutzernamen — nicht mehr eine technische
+/// cuid. Die Feldnamen blieben bewusst unverändert (keine
+/// projektweite Umbenennung auf z. B. "personBenutzername"), um die
+/// Änderung auf Schema + die tatsächlich betroffenen Stellen zu
+/// begrenzen. Jede Fremdschlüssel-Relation hierher läuft mit
+/// `onUpdate: Cascade` (Prisma-Standard für Pflichtrelationen, hier
+/// bewusst genutzt): ändert `personBenutzernameAktualisieren` den
+/// Benutzernamen, schreibt Postgres automatisch jede referenzierende
+/// Zeile mit um — sonst würde die Umbenennung an genau dieser
+/// Fremdschlüssel-Prüfung scheitern.
+model Person {
+  benutzername String  @id
+  vorname      String
+  nachname     String
+  email        String? @unique
+
+  passwortHash                String?
+  passwortWechselErforderlich Boolean @default(true)
+  zweiFaktorAktiv             Boolean @default(false)
+  zweiFaktorSecret            String?
+
+  aktiv         Boolean   @default(true)
+  eintrittAm    DateTime?
+  austrittAm    DateTime?
+  /// Zeitpunkt der letzten Deaktivierung über den Adminbereich (siehe
+  /// personAktivSetzen) — für die "kürzlich deaktiviert"-Kachel dort.
+  /// Bewusst getrennt von `austrittAm` (Eintritts-/Austrittsdatum als
+  /// HR-Angabe, noch nirgends gepflegt): Zugang sperren und Firma
+  /// verlassen sind zwei unterschiedliche Ereignisse.
+  deaktiviertAm DateTime?
+
+  erstelltAm     DateTime @default(now())
+  aktualisiertAm DateTime @updatedAt
+
+  zugehoerigkeiten          Zugehoerigkeit[]
+  ausleihenAlsEntleiher     Ausleihe[]               @relation("Entleiher")
+  ausleihenEntschieden      Ausleihe[]               @relation("Entscheider")
+  vereinbarungen            Vereinbarung[]           @relation("VereinbarungFirma")
+  protokolle                Uebergabeprotokoll[]     @relation("ProtokollDurchfuehrer")
+  fuehrerscheinpruefungen   Fuehrerscheinkontrolle[] @relation("FsPruefer")
+  freigaben                 Dokumentversion[]        @relation("Freigeber")
+  abrechnungsposten         Abrechnungsposten[]      @relation("PostenErsteller")
+  protokolleintraege        Protokoll[]              @relation("Akteur")
+  termineErstellt           Termin[]                 @relation("TerminErsteller")
+  terminTeilnahmen          TerminTeilnehmer[]
+  benachrichtigungen        Benachrichtigung[]
+  terminAnhaengeHochgeladen TerminAnhang[]           @relation("TerminAnhangHochlader")
+  terminKommentare          TerminKommentar[]        @relation("TerminKommentarAutor")
+  aufgaben                  Aufgabe[]                @relation("AufgabePerson")
+  auftraegeErstellt         Auftrag[]                @relation("AuftragErsteller")
+  auftraegeZugewiesen       Auftrag[]                @relation("AuftragZugewiesen")
+  auftragKommentare         AuftragKommentar[]       @relation("AuftragKommentarAutor")
+  gruppen                   PersonGruppe[]
+  berechtigungen            PersonBerechtigung[]
+
+  // --- Projekte (dritter Unterbereich von "Aufgaben") ----------------------
+  aufgabenErstelltImProjekt   Aufgabe[]          @relation("AufgabeErstellerProjekt")
+  aufgabenZugewiesenImProjekt Aufgabe[]          @relation("AufgabeZugewiesenProjekt")
+  projekteErstellt            Projekt[]          @relation("ProjektErsteller")
+  projektmitgliedschaften     Projektmitglied[]  @relation("ProjektmitgliedPerson")
+  projektDokumenteHochgeladen ProjektDokument[]  @relation("ProjektDokumentHochlader")
+  projektNachrichten          Projektnachricht[] @relation("ProjektnachrichtAutor")
+
+  @@index([aktiv])
+  @@index([nachname, vorname])
+}
+
+model Standort {
+  id      String  @id @default(cuid())
+  name    String  @unique // Kamenz, Schwepnitz, Königsbrück, Pulsnitz, Ohorn
+  kuerzel String  @unique
+  aktiv   Boolean @default(true)
+
+  zugehoerigkeiten Zugehoerigkeit[]
+  fahrzeuge        Fahrzeug[]
+}
+
+model Abteilung {
+  id      String  @id @default(cuid())
+  name    String  @unique
+  /// Für den automatisch zusammengesetzten Benutzernamen (siehe Model
+  /// Person): vorname.nachname@kuerzel. Optional, weil ältere/deaktivierte
+  /// Abteilungen (Altdaten-Platzhalter) keins brauchen — nur aktive
+  /// Abteilungen stehen bei der Benutzeranlage überhaupt zur Auswahl.
+  kuerzel String? @unique
+  aktiv   Boolean @default(true)
+
+  zugehoerigkeiten Zugehoerigkeit[]
+}
+
+/// Person × Standort × Abteilung × Rolle. Mehrfachstandorte kommen vor —
+/// deshalb eine eigene Tabelle und KEIN Feld "standortId" an der Person.
+///
+/// `standortId` ist optional: manche Personen lassen sich keinem festen
+/// Standort zuordnen (sie bekommen ihren Einsatzort stattdessen über
+/// mehrere Gruppen verschiedener Standorte, siehe Kommentar am Model
+/// Gruppe) — beim Anlegen wird deshalb nur noch Abteilung + Rolle
+/// abgefragt, kein Standort mehr (siehe personErstellen).
+model Zugehoerigkeit {
+  id          String  @id @default(cuid())
+  personId    String
+  standortId  String?
+  abteilungId String
+  rolle       Rolle   @default(MITARBEITENDE)
+
+  vonDatum DateTime  @default(now())
+  bisDatum DateTime?
+
+  person    Person    @relation(fields: [personId], references: [benutzername])
+  standort  Standort? @relation(fields: [standortId], references: [id])
+  abteilung Abteilung @relation(fields: [abteilungId], references: [id])
+
+  @@unique([personId, standortId, abteilungId, rolle])
+  @@index([personId])
+  @@index([standortId])
+  @@index([abteilungId])
+}
+
+/// Freie Mehrfachzuordnung unabhängig von Standort/Abteilung/Rolle — z. B.
+/// Berufsgruppen wie "Physio (Kamenz)" oder funktionale Teams wie
+/// "Fahrdienst". Übernommen aus dem Rollenmodell des Altsystems
+/// (app.ueberblick.io); dient dort als Verteiler/Sichtbarkeits-Tag für
+/// Bausteine wie Wissen oder Newsfeed — hier zunächst nur verwaltbar,
+/// noch ohne erzwungene Wirkung, bis es die jeweiligen Bausteine gibt.
+model Gruppe {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  aktiv Boolean @default(true)
+
+  mitglieder PersonGruppe[]
+}
+
+model PersonGruppe {
+  id       String @id @default(cuid())
+  personId String
+  gruppeId String
+
+  person Person @relation(fields: [personId], references: [benutzername])
+  gruppe Gruppe @relation(fields: [gruppeId], references: [id])
+
+  @@unique([personId, gruppeId])
+  @@index([personId])
+  @@index([gruppeId])
+}
+
+/// Feature-bezogene Freischaltung pro Person, z. B. "Wissensartikel
+/// anlegen" oder "Adminbereich" — unabhängig von Rolle (Zugehoerigkeit) und
+/// Gruppe. Ebenfalls aus dem Altsystem übernommen. Die meisten Einträge
+/// betreffen Bausteine, die es hier noch nicht gibt (Infos, Wissensmanager,
+/// Meldestelle) und haben deshalb noch keine erzwingende Wirkung — der
+/// Adminbereich selbst prüft weiterhin über Rolle.ADMINISTRATION
+/// (berechtigung()), nicht über einen Eintrag hier.
+model Berechtigung {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  aktiv Boolean @default(true)
+
+  mitglieder PersonBerechtigung[]
+}
+
+model PersonBerechtigung {
+  id             String @id @default(cuid())
+  personId       String
+  berechtigungId String
+
+  person       Person       @relation(fields: [personId], references: [benutzername])
+  berechtigung Berechtigung @relation(fields: [berechtigungId], references: [id])
+
+  @@unique([personId, berechtigungId])
+  @@index([personId])
+  @@index([berechtigungId])
+}
+
+/// Feinere Orte innerhalb eines Standorts (z. B. "Kamenz - Praxis") für eine
+/// künftige Orts-Auswahl bei Terminen/Aufgaben statt Freitext (siehe Memory
+/// ort-feld-standort-dropdown). Bewusst eine flache Liste ohne
+/// Fremdschlüssel auf Standort: der Standortname steckt schon im Namen
+/// ("Kamenz - ..."), und nicht jeder Ort gehört eindeutig zu genau einem
+/// der fünf Standorte (z. B. "Halle Jesau").
+model Ort {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  aktiv Boolean @default(true)
+}
+
+/// Zentrales Protokoll für alle Module. Was hier hineingeschrieben wird, ist
+/// mit der MAV abgestimmt und in der Nutzungsordnung abschließend aufgezählt.
+model Protokoll {
+  id        String   @id @default(cuid())
+  zeitpunkt DateTime @default(now())
+  akteurId  String?
+  aktion    String
+  objektTyp String
+  objektId  String
+  detail    Json?
+  ipAdresse String?
+
+  akteur Person? @relation("Akteur", fields: [akteurId], references: [benutzername])
+
+  @@index([objektTyp, objektId])
+  @@index([zeitpunkt])
+  @@index([akteurId])
+}
+
+// =============================================================================
+//  MODUL — Dokumentvorlagen
+// =============================================================================
+
+/// Generische Hülle. Hier stecken die Nutzungsvereinbarung und die Vorlage
+/// des Übergabeprotokolls. Später auch Dienstanweisungen und QM-Dokumente.
+model Dokument {
+  id         String      @id @default(cuid())
+  titel      String
+  art        DokumentArt
+  aktiv      Boolean     @default(true)
+  erstelltAm DateTime    @default(now())
+
+  versionen Dokumentversion[]
+}
+
+/// Eine Unterschrift zeigt immer auf eine VERSION, nie auf das Dokument.
+/// Ändert die Geschäftsführung einen Satz in der Nutzungsvereinbarung,
+/// entsteht Version 2 — und alle bisher unterschriebenen Ausleihen bleiben
+/// eindeutig Version 1 zugeordnet. Genau diese Struktur brauchen später
+/// die Dienstanweisungen unverändert wieder.
+model Dokumentversion {
+  id             String @id @default(cuid())
+  dokumentId     String
+  versionsnummer Int
+
+  inhaltHtml String @db.Text
+  /// SHA-256 über inhaltHtml, beim Freigeben berechnet, danach unverändert.
+  inhaltHash String
+
+  /// Selbstbeteiligung im Schadensfall, in Cent. Steht im Text der
+  /// Vereinbarung und gehört deshalb zur Version, nicht zur Ausleihe.
+  selbstbeteiligungCent Int?
+
+  gueltigAb         DateTime
+  freigegebenAm     DateTime?
+  freigegebenVonId  String?
+  aenderungshinweis String?
+
+  dokument       Dokument             @relation(fields: [dokumentId], references: [id])
+  freigegebenVon Person?              @relation("Freigeber", fields: [freigegebenVonId], references: [benutzername])
+  vereinbarungen Vereinbarung[]
+  protokolle     Uebergabeprotokoll[]
+
+  @@unique([dokumentId, versionsnummer])
+  @@index([dokumentId, gueltigAb])
+}
+
+// =============================================================================
+//  MODUL — Fahrzeuge
+// =============================================================================
+
+model Fahrzeug {
+  id          String @id @default(cuid())
+  kennzeichen String @unique
+  bezeichnung String // "VW Multivan, 8 Sitze"
+
+  sitzplaetze Int?
+  /// Freitext: Rollstuhlrampe, Anhängerkupplung, Dachträger …
+  /// Steht in der Fahrzeugauswahl, damit der Kollege das Richtige bekommt.
+  merkmale    String?
+
+  /// Bruttolistenpreis in Cent, für die Berechnung des geldwerten Vorteils.
+  /// Siehe Kommentar am Model Ausleihe.
+  bruttolistenpreisCent Int?
+
+  kraftstoffart    String?
+  tankgroesseLiter Int?
+
+  /// Nicht jedes Fahrzeug darf privat verliehen werden. Diese Kennzeichnung
+  /// ist die einzige Stelle, an der das System eine Vorauswahl trifft.
+  fuerPrivatausleiheFreigegeben Boolean @default(false)
+
+  standortId String?
+  aktiv      Boolean @default(true)
+
+  standort  Standort?  @relation(fields: [standortId], references: [id])
+  ausleihen Ausleihe[]
+
+  @@index([fuerPrivatausleiheFreigegeben, aktiv])
+}
+
+// =============================================================================
+//  MODUL — Der Vorgang
+// =============================================================================
+
+/// Eine private Ausleihe von der Zusage bis zur Abrechnung.
+///
+/// VERFÜGBARKEIT: Das System kennt nur die privaten Ausleihen und kann
+/// deshalb nur Überschneidungen mit anderen privaten Ausleihen erkennen.
+/// Ob das Fahrzeug betrieblich gebraucht wird, weiß allein der
+/// Werkstattleiter. Die App ersetzt diese Prüfung nicht und soll auch nicht
+/// so tun, als könnte sie es.
+model Ausleihe {
+  id             String @id @default(cuid())
+  /// Menschenlesbar, z. B. "2026-0042". Danach fragt der Werkstattleiter
+  /// am Telefon — eine cuid kann niemand vorlesen.
+  vorgangsnummer String @unique
+
+  fahrzeugId  String
+  entleiherId String
+
+  /// Nur ausgefüllt, wenn eine andere Person fährt als der Entleiher —
+  /// entspricht "Fahrer, falls abweichend" auf der Nutzungsvereinbarung.
+  /// Leer bedeutet: Entleiher fährt selbst.
+  fahrerName String?
+
+  /// "Umzug", "Familienfeier" — steht so in der Vereinbarung.
+  zweck String
+
+  /// Pfad zum vorbereiteten, ausgefüllten aber NICHT unterschriebenen
+  /// Nutzungsvereinbarung-PDF — für den Werkstattleiter bei der Übergabe.
+  /// Kein Ersatz für die echte `Vereinbarung` (Regel 1+2): Die entsteht erst
+  /// mit echter Unterschrift, referenziert dann eine `Dokumentversion` und
+  /// bekommt ein eigenes, signiertes PDF. Datei liegt auf dem Volume, hier
+  /// nur der Pfad (Regel 7).
+  vereinbarungsentwurfPfad String?
+
+  /// Pfad zum vorbereiteten, ausgefüllten aber NICHT unterschriebenen
+  /// Übergabeprotokoll-PDF (nur Übergabe-Teil) — gleiches Prinzip wie
+  /// `vereinbarungsentwurfPfad`. Kein Ersatz für ein echtes
+  /// `Uebergabeprotokoll` (Regel 2+3): Das verlangt bereits vorhandene
+  /// Unterschriftspfade, die es erst mit einer künftigen
+  /// Unterschriften-Erfassung geben wird.
+  ausgabeprotokollEntwurfPfad String?
+
+  /// Rohe Formulareingaben hinter dem Übergabeprotokoll-Entwurf (Regel 7
+  /// betrifft nur Dateien, keine Formularwerte) — damit "Übergabeprotokoll
+  /// bearbeiten" die Felder wieder vorausfüllen kann, statt bei leerem
+  /// Formular neu anzufangen. Kein Ersatz für ein echtes
+  /// `Uebergabeprotokoll`, nur Arbeitsstand des Entwurfs.
+  ausgabeprotokollEntwurfDaten Json?
+
+  /// Rohe Formulareingaben hinter dem Rücknahme-Teil desselben
+  /// Übergabeprotokoll-Entwurfs (siehe `ausgabeprotokollEntwurfDaten`,
+  /// gleiches Prinzip) — existiert erst, sobald "Rücknahme protokollieren"
+  /// mindestens einmal ausgeführt wurde.
+  ruecknahmeprotokollEntwurfDaten Json?
+
+  geplantVon DateTime
+  geplantBis DateTime
+
+  status AusleiheStatus @default(ZUGESAGT)
+
+  angefragtAm      DateTime  @default(now())
+  entschiedenAm    DateTime?
+  entschiedenVonId String?
+  ablehnungsgrund  String?
+
+  bemerkung String?
+
+  // --- Ergebnis nach der Rücknahme -----------------------------------------
+  // Wird beim Erstellen des Rücknahmeprotokolls einmalig berechnet und
+  // danach nicht mehr angefasst.
+
+  gefahreneKilometer Int?
+
+  /// STEUER: Bei Überlassung von Fall zu Fall und für nicht mehr als fünf
+  /// Kalendertage im Kalendermonat sind 0,001 % des inländischen
+  /// Listenpreises je gefahrenem Kilometer als geldwerter Vorteil
+  /// anzusetzen (BMF-Schreiben vom 3.3.2022, Rz. 16) — statt der
+  /// 1-%-Regelung, die sonst für den GANZEN Monat greifen würde.
+  ///
+  /// Deshalb speichert die Ausleihe den Listenpreis zum Zeitpunkt der
+  /// Ausleihe: ändert sich der Wert am Fahrzeug später, bleibt die
+  /// Berechnung nachvollziehbar.
+  ///
+  /// Vor Inbetriebnahme vom Steuerberater bestätigen lassen.
+  bruttolistenpreisCentBeiAusleihe Int?
+  geldwerterVorteilCent            Int?
+  /// Kalendertage dieser Ausleihe — zählt gegen die Fünf-Tage-Grenze.
+  kalendertage                     Int?
+  anLohnbuchhaltungGemeldetAm      DateTime?
+
+  fahrzeug       Fahrzeug @relation(fields: [fahrzeugId], references: [id])
+  entleiher      Person   @relation("Entleiher", fields: [entleiherId], references: [benutzername])
+  entschiedenVon Person?  @relation("Entscheider", fields: [entschiedenVonId], references: [benutzername])
+
+  vereinbarung           Vereinbarung?
+  protokolle             Uebergabeprotokoll[]
+  fuehrerscheinkontrolle Fuehrerscheinkontrolle?
+  abrechnungsposten      Abrechnungsposten[]
+
+  @@index([fahrzeugId, geplantVon, geplantBis])
+  @@index([entleiherId, geplantVon])
+  @@index([status])
+}
+
+/// Die unterschriebene Nutzungsvereinbarung zu genau einer Ausleihe.
+/// APPEND-ONLY: nach dem Anlegen kein Update, kein Delete.
+///
+/// Zwei Unterschriften, beide auf dem Gerät des Werkstattleiters
+/// nacheinander gezeichnet.
+model Vereinbarung {
+  id                String @id @default(cuid())
+  ausleiheId        String @unique
+  dokumentversionId String
+
+  unterschriebenAm          DateTime @default(now())
+  unterschriftEntleiherPfad String
+  unterschriftFirmaPfad     String
+  unterschriebenVonFirmaId  String
+
+  /// Eingefroren aus der Dokumentversion — der Betrag, dem der Entleiher
+  /// an diesem Tag zugestimmt hat.
+  selbstbeteiligungCent Int?
+
+  /// Serverseitig erzeugt. Ein PDF, das der Client baut, ist wertlos.
+  pdfPfad     String
+  pdfHash     String
+  /// Kopie des inhaltHash der Version zum Zeitpunkt der Unterschrift.
+  versionHash String
+
+  ipAdresse String
+  userAgent String
+
+  ausleihe               Ausleihe        @relation(fields: [ausleiheId], references: [id])
+  dokumentversion        Dokumentversion @relation(fields: [dokumentversionId], references: [id])
+  unterschriebenVonFirma Person          @relation("VereinbarungFirma", fields: [unterschriebenVonFirmaId], references: [benutzername])
+
+  @@index([unterschriebenAm])
+}
+
+/// Genau zwei pro Ausleihe: AUSGABE und RUECKNAHME.
+/// APPEND-ONLY. Eine Korrektur ist ein Vermerk, kein Update.
+model Uebergabeprotokoll {
+  id                String            @id @default(cuid())
+  ausleiheId        String
+  richtung          Protokollrichtung
+  dokumentversionId String
+
+  zeitpunkt      DateTime @default(now())
+  /// Ort der Übergabe (richtung = AUSGABE) bzw. der Rückgabe (RUECKNAHME).
+  ort            String
+  kilometerstand Int
+
+  /// Fünf Zustände, wie auf der Tankuhr im echten Formular abgefragt.
+  /// Die Differenz zwischen Ausgabe und Rücknahme ist die Grundlage der
+  /// Tankabrechnung.
+  tankfuellung Tankfuellung
+
+  // --- Zustand & Ausstattung ------------------------------------------------
+  // Exakt die sieben Prüfpunkte aus dem echten TuPZW-Übergabeprotokoll,
+  // je i.O./Schaden. NICHT um weitere Punkte ergänzen, ohne dass die Änderung
+  // zuerst im Papierformular steht — siehe Regel 11 in der CLAUDE.md.
+  karosserieInOrdnung      Boolean @default(true) // Karosserie / Lack
+  scheibenInOrdnung        Boolean @default(true) // Windschutzscheibe / Scheiben
+  reifenInOrdnung          Boolean @default(true) // Reifen / Felgen
+  innenraumInOrdnung       Boolean @default(true) // Innenraum / Polster
+  bordwerkzeugInOrdnung    Boolean @default(true) // Bordwerkzeug / Warndreieck / Verbandskasten
+  fahrzeugpapiereInOrdnung Boolean @default(true) // Fahrzeugpapiere / grüne Versicherungskarte
+  ladekabelInOrdnung       Boolean @default(true) // Ladekabel / Zubehör (falls vorhanden)
+
+  bemerkung String?
+
+  durchgefuehrtVonId        String
+  unterschriftEntleiherPfad String
+  unterschriftFirmaPfad     String
+
+  pdfPfad String
+  pdfHash String
+
+  ausleihe         Ausleihe        @relation(fields: [ausleiheId], references: [id])
+  dokumentversion  Dokumentversion @relation(fields: [dokumentversionId], references: [id])
+  durchgefuehrtVon Person          @relation("ProtokollDurchfuehrer", fields: [durchgefuehrtVonId], references: [benutzername])
+  schaeden         Schaden[]
+
+  /// Verhindert ein zweites Ausgabe- oder Rücknahmeprotokoll.
+  @@unique([ausleiheId, richtung])
+  @@index([zeitpunkt])
+}
+
+model Schaden {
+  id             String  @id @default(cuid())
+  protokollId    String
+  /// "Stoßstange vorne links", "Kratzer Schiebetür rechts"
+  position       String
+  beschreibung   String
+  /// true = bei der Rücknahme neu aufgefallen. Das ist die Angabe, an der
+  /// später die Selbstbeteiligung hängt.
+  neuAufgefallen Boolean @default(false)
+
+  protokoll Uebergabeprotokoll @relation(fields: [protokollId], references: [id])
+  fotos     Schadensfoto[]
+}
+
+model Schadensfoto {
+  id            String   @id @default(cuid())
+  schadenId     String
+  pfad          String
+  aufgenommenAm DateTime @default(now())
+
+  schaden Schaden @relation(fields: [schadenId], references: [id])
+}
+
+/// DATENSCHUTZ: Nur ein Prüfvermerk, KEIN Scan und KEIN Foto des
+/// Führerscheins. Für den Zweck "wir haben vor der Übergabe kontrolliert"
+/// reicht der Vermerk; ein Abbild wäre nicht erforderlich und damit
+/// unzulässige Vorratsdatenhaltung.
+model Fuehrerscheinkontrolle {
+  id         String @id @default(cuid())
+  ausleiheId String @unique
+
+  geprueftAm    DateTime  @default(now())
+  geprueftVonId String
+  /// "B, BE"
+  klassen       String
+  gueltigBis    DateTime?
+  inOrdnung     Boolean
+  bemerkung     String?
+
+  ausleihe    Ausleihe @relation(fields: [ausleiheId], references: [id])
+  geprueftVon Person   @relation("FsPruefer", fields: [geprueftVonId], references: [benutzername])
+}
+
+/// Offene Forderungen gegenüber dem Entleiher: Tankdifferenz, im
+/// Schadensfall die Selbstbeteiligung. Der geldwerte Vorteil steht NICHT
+/// hier — der geht an die Lohnbuchhaltung, nicht als Rechnung an die Person.
+model Abrechnungsposten {
+  id           String         @id @default(cuid())
+  ausleiheId   String
+  art          Abrechnungsart
+  beschreibung String
+  betragCent   Int
+
+  erstelltAm        DateTime  @default(now())
+  erstelltVonId     String
+  erledigtAm        DateTime?
+  erledigtBemerkung String?
+
+  ausleihe    Ausleihe @relation(fields: [ausleiheId], references: [id])
+  erstelltVon Person   @relation("PostenErsteller", fields: [erstelltVonId], references: [benutzername])
+
+  @@index([ausleiheId])
+  @@index([erledigtAm])
+}
+
+// =============================================================================
+//  MODUL — Kalender
+// =============================================================================
+
+/// Ein eigener Termin, angelegt von einer Person — nicht die betriebliche
+/// Verfügbarkeit aus Baustein 1, ein eigenständiger Baustein.
+///
+/// SICHTBARKEIT (bewusst, DSGVO-Standardhaltung): Ein Termin ist nur für die
+/// erstellende Person und die eingeladenen Teilnehmenden sichtbar, nicht für
+/// alle Mitarbeitenden — kein öffentlicher Firmenkalender.
+model Termin {
+  id                String      @id @default(cuid())
+  titel             String
+  /// Sanitiertes HTML aus dem Rich-Text-Editor (siehe terminEingabenLesen)
+  /// — NIE ungeprüftes Nutzer-HTML, sonst wäre die Anzeige (dangerouslySet-
+  /// InnerHTML) eine XSS-Lücke.
+  beschreibung      String?
+  /// Freitext, bewusst kein Verweis auf Standort — ein Termin kann auch
+  /// außerhalb aller Standorte stattfinden (z. B. beim Kunden).
+  ort               String?
+  beginn            DateTime
+  ende              DateTime
+  /// Mehrtägig (Urlaub, Dienstreise): beginn/ende sind dann Tagesanfang/
+  /// -ende ohne bedeutungsvolle Uhrzeit, siehe terminEingabenLesen.
+  ganztaegig        Boolean     @default(false)
+  farbe             TerminFarbe @default(DUNKELGRUEN)
+  /// Erlaubt die erstellende Person Rückfragen der Teilnehmenden, bevor
+  /// der Termin stattfindet? Default an, abschaltbar beim Anlegen.
+  kommentareErlaubt Boolean     @default(true)
+
+  /// Verknüpft Termine derselben wiederkehrenden Reihe — keine eigene
+  /// Tabelle, weil die Wiederholungsregel selbst NICHT gespeichert wird:
+  /// Beim Anlegen werden alle Termine der Serie einmalig als eigenständige
+  /// Zeilen erzeugt (siehe terminErstellen). Jede Zeile bleibt danach ein
+  /// ganz normaler Termin — bearbeiten/löschen wirkt nur auf diese eine
+  /// Zeile, außer man wählt ausdrücklich "ganze Serie löschen".
+  serieId String?
+
+  erstelltVonId String
+  erstelltAm    DateTime @default(now())
+
+  erstelltVon  Person             @relation("TerminErsteller", fields: [erstelltVonId], references: [benutzername])
+  teilnehmer   TerminTeilnehmer[]
+  erinnerungen TerminErinnerung[]
+  anhaenge     TerminAnhang[]
+  kommentare   TerminKommentar[]
+
+  @@index([erstelltVonId])
+  @@index([beginn])
+  @@index([serieId])
+}
+
+/// Dateipfad wie überall sonst (Regel 7) — die Datei selbst liegt auf dem
+/// Volume, hier nur Pfad + Metadaten für die Anzeige.
+///
+/// `kommentarId` ist optional: ein Anhang gehört entweder direkt zum
+/// Termin (kommentarId = null, Standardfall) oder zu einer einzelnen
+/// Rückfrage (siehe TerminKommentar) — `terminId` bleibt in jedem Fall
+/// gesetzt, damit die Sichtbarkeitsprüfung beim Download (dieselbe wie für
+/// den Termin) nicht zwischen beiden Fällen unterscheiden muss.
+model TerminAnhang {
+  id               String   @id @default(cuid())
+  terminId         String
+  kommentarId      String?
+  dateiname        String
+  pfad             String
+  mimetyp          String
+  groesseBytes     Int
+  hochgeladenAm    DateTime @default(now())
+  hochgeladenVonId String
+
+  termin         Termin           @relation(fields: [terminId], references: [id], onDelete: Cascade)
+  kommentar      TerminKommentar? @relation(fields: [kommentarId], references: [id], onDelete: Cascade)
+  hochgeladenVon Person           @relation("TerminAnhangHochlader", fields: [hochgeladenVonId], references: [benutzername])
+
+  @@index([terminId])
+  @@index([kommentarId])
+}
+
+/// Rückfragen zu einem Termin — sichtbar für dieselben Personen wie der
+/// Termin selbst (Ersteller + Teilnehmende). Abschaltbar über
+/// Termin.kommentareErlaubt.
+model TerminKommentar {
+  id         String   @id @default(cuid())
+  terminId   String
+  personId   String
+  text       String
+  erstelltAm DateTime @default(now())
+
+  termin   Termin         @relation(fields: [terminId], references: [id], onDelete: Cascade)
+  person   Person         @relation("TerminKommentarAutor", fields: [personId], references: [benutzername])
+  anhaenge TerminAnhang[]
+
+  @@index([terminId, erstelltAm])
+}
+
+/// Eingeladene Person zu einem Termin — eigene Tabelle statt eines
+/// Freitextfelds, damit der Termin auch im Kalender der eingeladenen
+/// Person erscheint.
+model TerminTeilnehmer {
+  id       String                @id @default(cuid())
+  terminId String
+  personId String
+  status   TerminTeilnahmeStatus @default(OFFEN)
+
+  termin Termin @relation(fields: [terminId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [benutzername])
+
+  @@unique([terminId, personId])
+  @@index([personId])
+}
+
+/// Wie lange vor Terminbeginn erinnert werden soll. Auslieferung vorerst
+/// ausschließlich in der App selbst (kein E-Mail-Versand eingerichtet) —
+/// wird beim Anzeigen der Seite berechnet, kein eigener Hintergrundjob.
+model TerminErinnerung {
+  id            String @id @default(cuid())
+  terminId      String
+  minutenVorher Int
+
+  termin Termin @relation(fields: [terminId], references: [id], onDelete: Cascade)
+}
+
+// =============================================================================
+//  MODUL — Benachrichtigungen
+// =============================================================================
+
+/// Generische Benachrichtigung an eine Person — die Glocke oben rechts in
+/// der Kopfzeile. Bewusst ein Freitext-`text` statt strukturierter Felder:
+/// Ursprung kann später aus mehreren Bausteinen kommen (bisher nur
+/// Termin-Rückmeldungen), ein generisches Modell erspart eine eigene
+/// Tabelle pro Baustein.
+///
+/// `gelesenAm` statt eines Löschens beim Lesen — sonst könnte die Person
+/// nicht mehr nachvollziehen, was zuletzt passiert ist (siehe die
+/// aufklappbare Übersicht der letzten Mitteilungen).
+model Benachrichtigung {
+  id         String    @id @default(cuid())
+  personId   String
+  text       String
+  /// Wohin ein Klick auf die Benachrichtigung führen soll, z. B. "/kalender".
+  link       String?
+  erstelltAm DateTime  @default(now())
+  gelesenAm  DateTime?
+
+  person Person @relation(fields: [personId], references: [benutzername])
+
+  @@index([personId, gelesenAm])
+  @@index([personId, erstelltAm])
+}
+
+// =============================================================================
+//  MODUL — Aufgaben
+// =============================================================================
+
+/// EIN Modell für zwei Fälle, unterschieden über `projektId` — kein
+/// Parallelmodell für Projekt-Aufgaben. Der Baustein "Aufgaben" hat drei
+/// Unterbereiche (siehe /aufgaben): der erste ("To-dos") ist eine
+/// persönliche Liste ohne Zuweisung an andere (`projektId == null`,
+/// `personId` Pflicht). Der zweite ("Aufgaben", einzelne Aufträge an eine
+/// andere Person) ist weiterhin Auftrag, ein eigenständiges Modell. Der
+/// dritte ("Projekte", größere mehrpersonige Vorhaben mit Zeitstrahl) nutzt
+/// dieses Modell mit `projektId` gesetzt.
+///
+/// `personId` bleibt AUSSCHLIESSLICH die persönliche To-do-Bedeutung, auch
+/// nach dieser Erweiterung — bei einer Projekt-Aufgabe bleibt es `null`,
+/// die zugewiesene Person steht stattdessen in `zugewiesenAnId`. Das ist
+/// bewusst KEINE Doppelbedeutung desselben Feldes: bestehende Abfragen
+/// (aufgabenFuerPerson) und bestehende Aktionen (aufgabeAktualisieren,
+/// aufgabeErledigtSetzen, aufgabeLoeschen, aufgabeAnhangLoeschen), die alle
+/// nur `personId` prüfen, blenden Projekt-Aufgaben dadurch automatisch aus
+/// bzw. lehnen sie automatisch ab — ohne dass jede Stelle einzeln um einen
+/// `projektId`-Filter ergänzt werden musste.
+///
+/// `erledigtAm` statt eines Boolean, damit auch "wann erledigt" sichtbar
+/// bleibt, ohne ein zweites Datumsfeld zu brauchen — dasselbe Muster wie
+/// bei Benachrichtigung.gelesenAm. Bei Projekt-Aufgaben wird es zusätzlich
+/// zu `status: ERLEDIGT` gesetzt, damit personId-unabhängige Auswertungen
+/// (Fortschritt, Sortierung) dieselbe Spalte weiterverwenden können.
+model Aufgabe {
+  id           String            @id @default(cuid())
+  titel        String
+  /// Sanitiertes HTML aus dem Rich-Text-Editor (siehe richTextSanitisieren) — bleibt frei/leer.
+  beschreibung String?
+  prioritaet   AufgabePrioritaet @default(MITTEL)
+  faelligAm    DateTime?
+  erledigtAm   DateTime?
+  erstelltAm   DateTime          @default(now())
+
+  /// Persönliches To-do (projektId == null): Pflichtfeld, die eigene
+  /// Person (siehe aufgabeErstellen). Projekt-Aufgabe (projektId gesetzt):
+  /// bleibt leer, siehe Kommentar oben am Model.
+  personId String?
+
+  // --- Ab hier nur bei einer Projekt-Aufgabe befüllt ----------------------
+  projektId      String?
+  zwischenzielId String?
+  /// Wer die Aufgabe im Projekt angelegt hat (Leitung oder Selbstanlage
+  /// durch ein Mitglied) — Pendant zu Auftrag.erstelltVonId.
+  erstelltVonId  String?
+  /// Die Person, die die Aufgabe im Projekt übernommen hat. Leer = Status
+  /// OFFEN, noch niemand zuständig.
+  zugewiesenAnId String?
+  /// Siehe enum AufgabeStatus. Bei persönlichen To-dos ungenutzt (null).
+  status         AufgabeStatus?
+
+  person       Person?         @relation("AufgabePerson", fields: [personId], references: [benutzername])
+  projekt      Projekt?        @relation(fields: [projektId], references: [id], onDelete: Cascade)
+  zwischenziel Zwischenziel?   @relation(fields: [zwischenzielId], references: [id], onDelete: SetNull)
+  erstelltVon  Person?         @relation("AufgabeErstellerProjekt", fields: [erstelltVonId], references: [benutzername])
+  zugewiesenAn Person?         @relation("AufgabeZugewiesenProjekt", fields: [zugewiesenAnId], references: [benutzername])
+  anhaenge     AufgabeAnhang[]
+
+  @@index([personId, erledigtAm])
+  @@index([projektId, zwischenzielId])
+  @@index([projektId, status])
+  @@index([zugewiesenAnId])
+}
+
+/// Sortiert Aufgaben mit demselben Fälligkeitsdatum: höchste Priorität
+/// zuerst — siehe aufgabenFuerPerson. Reihenfolge der Werte hier ist
+/// deshalb bewusst absteigend nach Dringlichkeit (HOCH zuerst), nicht nur
+/// zur Anzeige.
+enum AufgabePrioritaet {
+  HOCH
+  MITTEL
+  NIEDRIG
+}
+
+/// Nur bei einer Projekt-Aufgabe befüllt (siehe Kommentar am Model
+/// Aufgabe). OFFEN = noch niemand hat übernommen bzw. die zugewiesene
+/// Person hat noch nicht bestätigt (zugewiesenAnId ggf. schon gesetzt),
+/// ANGENOMMEN = bestätigt, aber die eigentliche Arbeit hat noch nicht
+/// begonnen (z. B. weil die Aufgabe erst zu einem späteren Zwischenziel
+/// gehört), IN_ARBEIT = die Person arbeitet gerade daran, ERLEDIGT =
+/// abgeschlossen (erledigtAm wird zusätzlich gesetzt, dieselbe Konvention
+/// wie beim persönlichen To-do). Der Ablauf ist bewusst linear
+/// (OFFEN → ANGENOMMEN → IN_ARBEIT → ERLEDIGT), jeweils genau ein Schritt
+/// nach vorn über einen eigenen Knopf — kein Überspringen von IN_ARBEIT,
+/// damit für die übrigen Mitglieder sichtbar bleibt, wann jemand
+/// tatsächlich zu arbeiten beginnt.
+enum AufgabeStatus {
+  OFFEN
+  ANGENOMMEN
+  IN_ARBEIT
+  ERLEDIGT
+}
+
+/// Dateipfad wie überall sonst (Regel 7) — die Datei liegt auf dem
+/// Volume, hier nur Pfad + Metadaten. Kein `hochgeladenVonId` wie bei
+/// TerminAnhang: Bei einem persönlichen To-do (Aufgabe.projektId == null)
+/// ist die Uploaderin ohnehin immer dieselbe wie `Aufgabe.personId`. Bei
+/// einer Projekt-Aufgabe (mehrere Beteiligte möglich) fehlt diese Angabe
+/// bewusst — wer genau hochgeladen hat, ist für den schmalen Rahmen dieses
+/// Bausteins nicht wichtiger als bei den übrigen Projekt-Aufgaben-Feldern.
+model AufgabeAnhang {
+  id            String   @id @default(cuid())
+  aufgabeId     String
+  dateiname     String
+  pfad          String
+  mimetyp       String
+  groesseBytes  Int
+  hochgeladenAm DateTime @default(now())
+
+  aufgabe Aufgabe @relation(fields: [aufgabeId], references: [id], onDelete: Cascade)
+
+  @@index([aufgabeId])
+}
+
+/// Der zweite Unterbereich des Aufgaben-Bausteins: eine einzelne Aufgabe,
+/// die eine Person einer ANDEREN Person gibt — anders als Aufgabe (rein
+/// persönlich) und bewusst nicht so komplex wie das geplante "Projekte"
+/// (mehrere Beteiligte, Zeitstrahl). Genau eine zugewiesene Person, kein
+/// Selbstauftrag (die Server Action weist das zurück — dafür gibt es
+/// Aufgabe).
+///
+/// Nur `zugewiesenAnId` darf `erledigtAm` setzen (wer die Arbeit macht,
+/// hakt ab), nur `erstelltVonId` darf löschen — dieselbe Aufteilung wie
+/// bei Termin (Ersteller vs. Eingeladene).
+model Auftrag {
+  id           String            @id @default(cuid())
+  titel        String
+  /// Sanitiertes HTML aus dem Rich-Text-Editor (siehe richTextSanitisieren) — bleibt frei/leer.
+  beschreibung String?
+  prioritaet   AufgabePrioritaet @default(MITTEL)
+  faelligAm    DateTime?
+  erledigtAm   DateTime?
+  erstelltAm   DateTime          @default(now())
+
+  erstelltVonId  String
+  zugewiesenAnId String
+
+  erstelltVon  Person             @relation("AuftragErsteller", fields: [erstelltVonId], references: [benutzername])
+  zugewiesenAn Person             @relation("AuftragZugewiesen", fields: [zugewiesenAnId], references: [benutzername])
+  anhaenge     AuftragAnhang[]
+  kommentare   AuftragKommentar[]
+
+  @@index([zugewiesenAnId, erledigtAm])
+  @@index([erstelltVonId])
+}
+
+/// Dateipfad wie überall sonst (Regel 7). Kein `hochgeladenVonId` wie bei
+/// TerminAnhang: bei einem Auftrag ist ohnehin klar, wer die Datei
+/// mitgegeben hat — entweder beim Anlegen (erstelltVon) oder über einen
+/// Kommentar (siehe `kommentarId`, dasselbe Muster wie TerminAnhang).
+model AuftragAnhang {
+  id            String   @id @default(cuid())
+  auftragId     String
+  kommentarId   String?
+  dateiname     String
+  pfad          String
+  mimetyp       String
+  groesseBytes  Int
+  hochgeladenAm DateTime @default(now())
+
+  auftrag   Auftrag           @relation(fields: [auftragId], references: [id], onDelete: Cascade)
+  kommentar AuftragKommentar? @relation(fields: [kommentarId], references: [id], onDelete: Cascade)
+
+  @@index([auftragId])
+  @@index([kommentarId])
+}
+
+/// Rückfragen zu einem Auftrag — sichtbar für dieselben Personen wie der
+/// Auftrag selbst (erstellende + zugewiesene Person), dasselbe Muster wie
+/// TerminKommentar. Anders als bei Terminen fest an, keine
+/// Abschalt-Option — bei nur zwei Beteiligten und einer einzelnen Aufgabe
+/// gibt es keinen Anwendungsfall, das auszuschalten.
+model AuftragKommentar {
+  id         String   @id @default(cuid())
+  auftragId  String
+  personId   String
+  text       String
+  erstelltAm DateTime @default(now())
+
+  auftrag  Auftrag         @relation(fields: [auftragId], references: [id], onDelete: Cascade)
+  person   Person          @relation("AuftragKommentarAutor", fields: [personId], references: [benutzername])
+  anhaenge AuftragAnhang[]
+
+  @@index([auftragId, erstelltAm])
+}
+
+// =============================================================================
+//  MODUL — Projekte (dritter Unterbereich von "Aufgaben")
+// =============================================================================
+
+/// Eine Gruppe (Leitung + Mitglieder), die auf ein Ziel mit Enddatum
+/// hinarbeitet, unterteilt in Zwischenziele. Bewusst KEIN echtes
+/// Projektmanagement: keine Aufgaben-Abhängigkeiten, keine
+/// Kapazitäts-/Auslastungsplanung über mehrere Projekte, keine
+/// automatische Terminverschiebung mit Kaskade — Reihenfolge zwischen
+/// Aufgaben läuft organisatorisch über Zwischenziele und den Thread, nicht
+/// technisch erzwungen.
+///
+/// SCHREIBSCHUTZ nach `ende`: wird beim Ausführen jeder schreibenden
+/// Projekt-Aktion berechnet (siehe istProjektSchreibgeschuetzt in
+/// src/lib/projekte/mitgliedschaft.ts), kein Hintergrundjob — dasselbe
+/// Prinzip wie bei TerminErinnerung. Schreibbar bis einschließlich
+/// 23:59:59 Uhr des `ende`-Tages. Eine Leitung kommt an ihr eigenes,
+/// abgelaufenes Projekt trotzdem weiter heran (Enddatum verlängern,
+/// Status ändern) — nur die vier "inhaltlichen" Bereiche (Zwischenziele,
+/// Aufgaben, Dokumente, Nachrichten) sperren.
+///
+/// SICHTBARKEIT: nicht über Standort/Abteilung wie sonst im Projekt,
+/// sondern ausschließlich über eingetragene Projektmitglied-Zeilen (siehe
+/// dort) — auch Führungskräfte sehen ein Projekt nicht automatisch nur
+/// wegen ihrer Rolle.
+model Projekt {
+  id     String        @id @default(cuid())
+  titel  String
+  /// Sanitiertes HTML aus dem Rich-Text-Editor (siehe richTextSanitisieren).
+  ziel   String        @db.Text
+  start  DateTime
+  ende   DateTime
+  status ProjektStatus @default(PLANUNG)
+
+  erstelltVonId String
+  erstelltAm    DateTime @default(now())
+
+  erstelltVon Person @relation("ProjektErsteller", fields: [erstelltVonId], references: [benutzername])
+
+  mitglieder    Projektmitglied[]
+  zwischenziele Zwischenziel[]
+  aufgaben      Aufgabe[]
+  dokumente     ProjektDokument[]
+  nachrichten   Projektnachricht[]
+
+  @@index([status])
+  @@index([ende])
+}
+
+enum ProjektStatus {
+  PLANUNG
+  AKTIV
+  ABGESCHLOSSEN
+  ABGEBROCHEN
+}
+
+/// Person × Projekt × Rolle. Analog zu Person.aktiv/deaktiviertAm: Scheidet
+/// ein Mitglied aus einem Projekt aus, wird die Zeile NICHT gelöscht,
+/// sondern `ausgeschiedenAm` gesetzt — Zugriff endet damit sofort (siehe
+/// projektMitgliedschaftPruefen), alte Beiträge (Aufgaben, Nachrichten)
+/// bleiben für die übrigen Mitglieder mit Namen sichtbar. Ein
+/// Wiedereintritt setzt `ausgeschiedenAm` zurück auf null, statt eine
+/// zweite Zeile für dieselbe Person×Projekt-Kombination anzulegen (siehe
+/// @@unique).
+model Projektmitglied {
+  id              String               @id @default(cuid())
+  projektId       String
+  personId        String
+  rolle           ProjektmitgliedRolle @default(MITGLIED)
+  beigetretenAm   DateTime             @default(now())
+  ausgeschiedenAm DateTime?
+
+  projekt Projekt @relation(fields: [projektId], references: [id], onDelete: Cascade)
+  person  Person  @relation("ProjektmitgliedPerson", fields: [personId], references: [benutzername])
+
+  @@unique([projektId, personId])
+  @@index([personId])
+  @@index([projektId, ausgeschiedenAm])
+}
+
+enum ProjektmitgliedRolle {
+  LEITUNG
+  MITGLIED
+}
+
+/// Ein Zwischenziel mit Frist — kein Gantt, keine Abhängigkeiten zwischen
+/// Zwischenzielen. Anzeigereihenfolge und Nummerierung richten sich immer
+/// nach `frist` (aufsteigend) — keine eigene manuelle Reihenfolge, ein neu
+/// nachgetragenes Zwischenziel reiht sich also automatisch chronologisch
+/// richtig ein statt ans Ende zu rutschen.
+///
+/// "Erreicht" wird bewusst NICHT gespeichert, sondern aus den zugeordneten
+/// Aufgaben abgeleitet (siehe zwischenzieleAnzeige auf der Projekt-
+/// Detailseite): erreicht, sobald es mindestens eine Aufgabe hat und alle
+/// davon erledigt sind. Ein Zwischenziel ohne eigene Aufgaben gilt nicht
+/// automatisch als erreicht, und es gibt keinen manuellen "Erledigt"-Knopf
+/// mehr dafür.
+model Zwischenziel {
+  id        String   @id @default(cuid())
+  projektId String
+  titel     String
+  frist     DateTime
+
+  projekt  Projekt   @relation(fields: [projektId], references: [id], onDelete: Cascade)
+  aufgaben Aufgabe[]
+
+  @@index([projektId])
+}
+
+/// Dateipfad wie überall sonst (Regel 7) — die Datei liegt auf dem Volume,
+/// hier nur Pfad + Metadaten. Anders als bei TerminAnhang/AuftragAnhang
+/// KEIN `kommentarId`: Dokumente sind hier ein eigener Seitenbereich
+/// ("Liste/Upload/Download"), nicht an einzelne Thread-Nachrichten
+/// gehängt. Erlaubte Dateitypen bewusst breiter als bei den übrigen
+/// Anhang-Tabellen (zusätzlich Word/Excel, siehe
+/// projektDokumentAnhaengePruefen in src/lib/projekte/dokumente.ts) — in
+/// einem Projekt wird teils gemeinsam an Dokumenten/Tabellen gearbeitet.
+model ProjektDokument {
+  id               String   @id @default(cuid())
+  projektId        String
+  dateiname        String
+  pfad             String
+  mimetyp          String
+  groesseBytes     Int
+  hochgeladenAm    DateTime @default(now())
+  hochgeladenVonId String
+
+  projekt        Projekt @relation(fields: [projektId], references: [id], onDelete: Cascade)
+  hochgeladenVon Person  @relation("ProjektDokumentHochlader", fields: [hochgeladenVonId], references: [benutzername])
+
+  @@index([projektId])
+}
+
+/// Der projektweite Abstimmungs-Thread — chronologische Liste, KEIN
+/// Live-Chat/WebSocket (ein einfacher Neu-laden-Mechanismus reicht, siehe
+/// AuftragKommentar für dasselbe Prinzip in einem anderen Baustein).
+/// Bewusst ein schlichter `String` wie AuftragKommentar.text/
+/// TerminKommentar.text, KEIN Rich-Text: die bestehenden Kommentar-Modelle
+/// sanitisieren hier auch nicht, sie rendern per normalem JSX statt
+/// dangerouslySetInnerHTML.
+model Projektnachricht {
+  id         String   @id @default(cuid())
+  projektId  String
+  personId   String
+  text       String
+  erstelltAm DateTime @default(now())
+
+  projekt Projekt @relation(fields: [projektId], references: [id], onDelete: Cascade)
+  person  Person  @relation("ProjektnachrichtAutor", fields: [personId], references: [benutzername])
+
+  @@index([projektId, erstelltAm])
+}

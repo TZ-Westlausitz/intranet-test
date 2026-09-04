@@ -1,0 +1,44 @@
+# Entwicklungsumgebung.
+# Bewusst PostgreSQL im Container statt nativ per Homebrew: die lokale
+# Umgebung soll der späteren Serverumgebung gleichen.
+#
+# Version 17 statt der neuesten — eine Hauptversion Abstand ist für ein
+# System, das eine Person nebenbei betreibt, die richtige Wahl.
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: tpz-intranet-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tpz
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-entwicklung_nur_lokal}
+      POSTGRES_DB: tpz_intranet
+      # Deutsche Sortierung, damit "Ä" dort einsortiert wird, wo Menschen
+      # es erwarten. Muss beim ersten Start gesetzt sein — nachträglich
+      # ändern heißt Datenbank neu anlegen.
+      LANG: de_DE.utf8
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tpz -d tpz_intranet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Optionale Weboberfläche für die Datenbank. Wer lieber mit
+  # `npx prisma studio` arbeitet, kann diesen Dienst löschen.
+  adminer:
+    image: adminer:5
+    container_name: tpz-intranet-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:

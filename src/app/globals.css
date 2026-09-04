@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #333333;
+
+  /* Marke: aus dem Logo von therapiezentrum-westlausitz.de entnommen. */
+  --marke-gruen: #aec90b;
+  --marke-gruen-dunkel: #93ab00;
+  --marke-orange: #f6a841;
+  --marke-grau: #575756;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-marke-gruen: var(--marke-gruen);
+  --color-marke-gruen-dunkel: var(--marke-gruen-dunkel);
+  --color-marke-orange: var(--marke-orange);
+  --color-marke-grau: var(--marke-grau);
+  --font-sans: var(--font-lato);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Statusleiste (ProjektZeitstrahl): ein heller Schimmer läuft über die
+   grüne Füllung, damit sie auch dann lebendig wirkt, wenn sich ihre Breite
+   gerade nicht ändert — reiner Effekt, keine echte Bewegung. */
+@keyframes zwischenziel-balken-schimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.zwischenziel-balken-fuellung {
+  position: relative;
+  overflow: hidden;
+}
+
+.zwischenziel-balken-fuellung::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  animation: zwischenziel-balken-schimmer 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zwischenziel-balken-fuellung::after {
+    animation: none;
+  }
+}
