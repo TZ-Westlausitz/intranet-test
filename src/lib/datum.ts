@@ -59,6 +59,17 @@ export function zeitAusDate(datum: Date): string {
 }
 
 /**
+ * Date-Objekt → "2026-09-15T14:00" — wie
+ * datumUmMitternachtFuerDatumUhrzeitFeld, aber mit der echten Uhrzeit
+ * statt fix T00:00 (z. B. für den Defaultwert von Info.geplantAm im
+ * Bearbeiten-Dialog eines noch nicht veröffentlichten Entwurfs).
+ */
+export function datumUhrzeitFuerDatumUhrzeitFeld(datum: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0")
+  return `${datum.getFullYear()}-${pad(datum.getMonth() + 1)}-${pad(datum.getDate())}T${pad(datum.getHours())}:${pad(datum.getMinutes())}`
+}
+
+/**
  * Date-Objekt → "Heute"/"Morgen"/"Übermorgen"/"Gestern"/"Vorgestern" für
  * nahe Tage, sonst das formatierte Datum — für die Zwischenziel-Liste, wo
  * die Nähe zu "heute" auf den ersten Blick zählt, ein weiter entferntes

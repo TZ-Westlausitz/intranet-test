@@ -153,6 +153,33 @@ model Person {
   zweiFaktorAktiv             Boolean @default(false)
   zweiFaktorSecret            String?
 
+  /// Freiwilliges Kontakt-Zusatzfeld für die Kontakte-Übersicht — anders
+  /// als email kein Unique-Constraint (Diensthandys können geteilt sein).
+  telefon String?
+
+  /// Freier Text im eigenen Profil (z. B. Erreichbarkeit, Zuständigkeit) —
+  /// nach Vorbild Altsystem "Überblick" ("Weitere Informationen"), von
+  /// jeder Person selbst pflegbar, siehe profilAktualisieren.
+  weitereInformationen String?
+
+  /// Freiwilliges Profilbild — Regel 7: Datei aufs Volume (siehe
+  /// src/lib/ablage.ts), hier nur Pfad + Mimetyp. `null` = InfoAvatar
+  /// zeigt weiterhin den Initialen-Kreis. Immer derselbe Pfad je Person
+  /// (wird bei einem neuen Bild einfach überschrieben) statt einer neuen
+  /// Datei pro Upload — es gibt zu jeder Zeit nur genau ein aktuelles
+  /// Profilbild, kein Verlauf nötig.
+  profilbildPfad    String?
+  profilbildMimetyp String?
+
+  /// Grober Aktivitäts-Indikator für die Kontakte-Übersicht (siehe
+  /// berechtigung() für die throttled Aktualisierung) — KEIN
+  /// Verhaltens-Tracking im Sinne von Seitenaufrufen/Verweildauer, nur
+  /// ein grob gerundeter "zuletzt angemeldet genutzt"-Zeitpunkt, für
+  /// alle Kolleg:innen sichtbar (wie Präsenz-Anzeigen in Teams/Slack) —
+  /// DSGVO-Hinweis: neue, für alle sichtbare Aktivitätsangabe, vor
+  /// Go-Live mit MAV/Datenschutz abstimmen.
+  letzteAktivitaet DateTime?
+
   aktiv         Boolean   @default(true)
   eintrittAm    DateTime?
   austrittAm    DateTime?
@@ -162,6 +189,15 @@ model Person {
   /// HR-Angabe, noch nirgends gepflegt): Zugang sperren und Firma
   /// verlassen sind zwei unterschiedliche Ereignisse.
   deaktiviertAm DateTime?
+
+  /// Welches Modul aus dem Kopfzeilenpunkt "Weiteres" (siehe
+  /// src/lib/bausteine.ts) auf der Startseite als Kachel in Zeile 2,
+  /// Spalte 4 erscheint — die übrigen Module dieser Liste zeigen sich dort
+  /// nicht. `null` heißt "noch nicht eingestellt", dann greift auf der
+  /// Startseite ein Default (aktuell das erste Modul der Liste). Speichert
+  /// bewusst den Namen des Moduls, nicht dessen Pfad — der ist stabiler,
+  /// falls sich mal nur die Ziel-URL ändert.
+  startseiteWeiteresModul String?
 
   erstelltAm     DateTime @default(now())
   aktualisiertAm DateTime @updatedAt
@@ -195,6 +231,15 @@ model Person {
   projektDokumenteHochgeladen ProjektDokument[]  @relation("ProjektDokumentHochlader")
   projektNachrichten          Projektnachricht[] @relation("ProjektnachrichtAutor")
 
+  // --- Newsfeed --------------------------------------------------------
+  infosErstellt           Info[]                 @relation("InfoErsteller")
+  infoEmpfaenger          InfoEmpfaengerPerson[]
+  infoBestaetigungen      InfoBestaetigung[]
+  infoLikes               InfoLike[]
+  infoKommentare          InfoKommentar[]        @relation("InfoKommentarAutor")
+  infoAnhaengeHochgeladen InfoAnhang[]           @relation("InfoAnhangHochlader")
+  infoUmfrageStimmen      InfoUmfrageStimme[]
+
   @@index([aktiv])
   @@index([nachname, vorname])
 }
@@ -220,6 +265,7 @@ model Abteilung {
   aktiv   Boolean @default(true)
 
   zugehoerigkeiten Zugehoerigkeit[]
+  infoEmpfaenger   InfoEmpfaengerAbteilung[]
 }
 
 /// Person × Standort × Abteilung × Rolle. Mehrfachstandorte kommen vor —
@@ -254,14 +300,15 @@ model Zugehoerigkeit {
 /// Berufsgruppen wie "Physio (Kamenz)" oder funktionale Teams wie
 /// "Fahrdienst". Übernommen aus dem Rollenmodell des Altsystems
 /// (app.ueberblick.io); dient dort als Verteiler/Sichtbarkeits-Tag für
-/// Bausteine wie Wissen oder Newsfeed — hier zunächst nur verwaltbar,
-/// noch ohne erzwungene Wirkung, bis es die jeweiligen Bausteine gibt.
+/// Bausteine wie Wissen oder Newsfeed — seit dem Newsfeed-Baustein hier
+/// zum ersten Mal ausgewertet (siehe Info.empfaengerGruppen).
 model Gruppe {
   id    String  @id @default(cuid())
   name  String  @unique
   aktiv Boolean @default(true)
 
-  mitglieder PersonGruppe[]
+  mitglieder     PersonGruppe[]
+  infoEmpfaenger InfoEmpfaengerGruppe[]
 }
 
 model PersonGruppe {
@@ -859,6 +906,14 @@ model Aufgabe {
   beschreibung String?
   prioritaet   AufgabePrioritaet @default(MITTEL)
   faelligAm    DateTime?
+  /// Optionaler späterer Sichtbarkeitstermin — bis dahin taucht die Aufgabe
+  /// NICHT in der normalen To-Do-Liste auf (siehe aufgabenFuerPerson),
+  /// bearbeitbar/löschbar nur über die Kalenderseite "Geplante Aktionen"
+  /// (/geplante-aktionen). Pendant zu Info.geplantAm im Newsfeed — anders
+  /// als dort aber OHNE ein zweites Feld wie veroeffentlichtAm: eine aktiv
+  /// gewordene Aufgabe braucht keinen eingefrorenen Sortier-Zeitstempel,
+  /// sie sortiert nach faelligAm/Priorität/erstelltAm wie jede andere.
+  geplantAm    DateTime?
   erledigtAm   DateTime?
   erstelltAm   DateTime          @default(now())
 
@@ -887,6 +942,7 @@ model Aufgabe {
   anhaenge     AufgabeAnhang[]
 
   @@index([personId, erledigtAm])
+  @@index([personId, geplantAm])
   @@index([projektId, zwischenzielId])
   @@index([projektId, status])
   @@index([zugewiesenAnId])
@@ -942,6 +998,17 @@ model AufgabeAnhang {
   @@index([aufgabeId])
 }
 
+/// Status eines Auftrags — bewusst ein eigenes, einfacheres Enum als
+/// AufgabeStatus (kein IN_ARBEIT): OFFEN = noch nicht angenommen,
+/// ANGENOMMEN = die zugewiesene Person hat Kenntnis genommen, ERLEDIGT =
+/// abgeschlossen (erledigtAm läuft synchron mit, dieselbe Konvention wie
+/// bei den übrigen Aufgaben-Modellen).
+enum AuftragStatus {
+  OFFEN
+  ANGENOMMEN
+  ERLEDIGT
+}
+
 /// Der zweite Unterbereich des Aufgaben-Bausteins: eine einzelne Aufgabe,
 /// die eine Person einer ANDEREN Person gibt — anders als Aufgabe (rein
 /// persönlich) und bewusst nicht so komplex wie das geplante "Projekte"
@@ -949,16 +1016,29 @@ model AufgabeAnhang {
 /// Selbstauftrag (die Server Action weist das zurück — dafür gibt es
 /// Aufgabe).
 ///
-/// Nur `zugewiesenAnId` darf `erledigtAm` setzen (wer die Arbeit macht,
-/// hakt ab), nur `erstelltVonId` darf löschen — dieselbe Aufteilung wie
-/// bei Termin (Ersteller vs. Eingeladene).
+/// Nur `zugewiesenAnId` darf `status`/`erledigtAm` setzen (wer die Arbeit
+/// macht, nimmt an und hakt ab), nur `erstelltVonId` darf löschen —
+/// dieselbe Aufteilung wie bei Termin (Ersteller vs. Eingeladene). Der
+/// Ablauf ist linear (OFFEN → ANGENOMMEN → ERLEDIGT, siehe
+/// AuftragStatus) — kein Überspringen von ANGENOMMEN, damit auch bei
+/// einfachen Aufträgen sichtbar ist, ob die zugewiesene Person schon
+/// Kenntnis genommen hat.
 model Auftrag {
   id           String            @id @default(cuid())
   titel        String
   /// Sanitiertes HTML aus dem Rich-Text-Editor (siehe richTextSanitisieren) — bleibt frei/leer.
   beschreibung String?
   prioritaet   AufgabePrioritaet @default(MITTEL)
+  status       AuftragStatus     @default(OFFEN)
   faelligAm    DateTime?
+  /// Optionaler späterer Sichtbarkeitstermin — bis dahin sieht die
+  /// zugewiesene Person den Auftrag NICHT (siehe auftraegeFuerPerson),
+  /// auch keine Zuweisungs-Benachrichtigung. Pendant zu Info.geplantAm/
+  /// Aufgabe.geplantAm — hier mit echter Zwei-Parteien-Bedeutung (anders
+  /// als beim persönlichen To-do), da eine andere Person betroffen ist.
+  /// Verwaltbar bis zur Aktivierung nur über /geplante-aktionen (kein
+  /// Bearbeiten-Dialog für Auftrag, siehe Kommentar oben am Model).
+  geplantAm    DateTime?
   erledigtAm   DateTime?
   erstelltAm   DateTime          @default(now())
 
@@ -972,6 +1052,7 @@ model Auftrag {
 
   @@index([zugewiesenAnId, erledigtAm])
   @@index([erstelltVonId])
+  @@index([erstelltVonId, geplantAm])
 }
 
 /// Dateipfad wie überall sonst (Regel 7). Kein `hochgeladenVonId` wie bei
@@ -1165,4 +1246,244 @@ model Projektnachricht {
   person  Person  @relation("ProjektnachrichtAutor", fields: [personId], references: [benutzername])
 
   @@index([projektId, erstelltAm])
+}
+
+// =============================================================================
+//  Newsfeed — Firmenmitteilungen ("Info"), siehe src/lib/infos/
+// =============================================================================
+
+/// Im Adminbereich gepflegte, feste Liste (kein Freitext) — siehe
+/// src/app/(verwaltung)/admin/info-kategorien/page.tsx. Kein Löschen, nur
+/// Umbenennen/Deaktivieren, damit bestehende Info.kategorieId-Verweise
+/// ihre Kategorie behalten (dasselbe Prinzip wie bei Berechtigung).
+model InfoKategorie {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  aktiv Boolean @default(true)
+
+  infos Info[]
+}
+
+/// Eine Firmenmitteilung. Empfänger sind Personen und/oder Gruppen
+/// (mindestens einer von beidem, siehe infoErstellen) — sichtbar ist eine
+/// Info für eine Person, wenn sie direkt Empfänger ist ODER Mitglied einer
+/// Empfänger-Gruppe (siehe infoSichtbarFuer in src/lib/infos/sichtbarkeit.ts).
+model Info {
+  id          String  @id @default(cuid())
+  titel       String
+  /// Sanitiertes HTML aus dem Rich-Text-Editor, wie Termin.beschreibung —
+  /// NIE ungeprüftes Nutzer-HTML (dangerouslySetInnerHTML beim Anzeigen).
+  /// Optional wie bei Termin: ein kurzer Titel allein kann schon die
+  /// ganze Mitteilung sein (z. B. "Heute ist wieder Praxisleitersitzung!").
+  inhalt      String?
+  kategorieId String?
+
+  /// Zeigt beim Anzeigen "Therapie- und Pflegezentrum" statt der
+  /// tatsächlich erstellenden Person — nur setzbar mit Berechtigung
+  /// "Infos" UND aktiver Zugehörigkeit zur Abteilung "Geschäftsführung",
+  /// serverseitig geprüft (siehe infoErstellen, Regel 5). `erstelltVonId`
+  /// bleibt in jedem Fall die echte Person, unabhängig von diesem Feld —
+  /// nur die Anzeige wechselt, nie die Zurechenbarkeit.
+  alsUnternehmen Boolean @default(false)
+
+  /// Erzwingt pro Empfänger eine ausdrückliche Bestätigung (siehe
+  /// InfoBestaetigung) statt reiner Kenntnisnahme.
+  mitBestaetigung   Boolean @default(false)
+  /// Abschaltbar beim Anlegen, gleiches Prinzip wie Termin.kommentareErlaubt.
+  kommentareErlaubt Boolean @default(true)
+
+  erstelltVonId String
+  erstelltAm    DateTime @default(now())
+
+  /// Optionaler Wunschtermin fürs Veröffentlichen, vom Formular gesetzt
+  /// (leer = sofort). Bleibt auch nach Ablauf gespeichert (reine Anzeige/
+  /// Nachvollziehbarkeit) — für Sichtbarkeit und Sortierung zählt allein
+  /// `veroeffentlichtAm`.
+  geplantAm DateTime?
+
+  /// Der Zeitpunkt, ab dem diese Info für alle außer der erstellenden
+  /// Person sichtbar ist UND wonach der Feed sortiert (siehe
+  /// infoSichtbarFuer/infosFuerPerson) — bei sofortiger Veröffentlichung
+  /// gleich `erstelltAm`, bei "Geplant am" gleich `geplantAm`, einmalig
+  /// beim Anlegen "eingefroren" (dasselbe Prinzip wie
+  /// bruttolistenpreisCentBeiAusleihe in Baustein 1: bei der Erstellung
+  /// berechnet, nicht bei jeder Anzeige neu). `erstelltAm` bleibt daneben
+  /// unverändert die echte technische Erstellungszeit (Audit), wird aber
+  /// in der UI nicht mehr für die Anzeige/Sortierung verwendet.
+  veroeffentlichtAm DateTime
+
+  erstelltVon           Person                    @relation("InfoErsteller", fields: [erstelltVonId], references: [benutzername])
+  kategorie             InfoKategorie?            @relation(fields: [kategorieId], references: [id])
+  empfaengerPersonen    InfoEmpfaengerPerson[]
+  empfaengerGruppen     InfoEmpfaengerGruppe[]
+  empfaengerAbteilungen InfoEmpfaengerAbteilung[]
+  bestaetigungen        InfoBestaetigung[]
+  likes                 InfoLike[]
+  kommentare            InfoKommentar[]
+  anhaenge              InfoAnhang[]
+  umfrage               InfoUmfrage?
+
+  @@index([erstelltVonId])
+  @@index([kategorieId])
+  @@index([erstelltAm])
+  @@index([veroeffentlichtAm])
+}
+
+model InfoEmpfaengerPerson {
+  id       String @id @default(cuid())
+  infoId   String
+  personId String
+
+  info   Info   @relation(fields: [infoId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [benutzername])
+
+  @@unique([infoId, personId])
+  @@index([personId])
+}
+
+model InfoEmpfaengerGruppe {
+  id       String @id @default(cuid())
+  infoId   String
+  gruppeId String
+
+  info   Info   @relation(fields: [infoId], references: [id], onDelete: Cascade)
+  gruppe Gruppe @relation(fields: [gruppeId], references: [id])
+
+  @@unique([infoId, gruppeId])
+  @@index([gruppeId])
+}
+
+/// Dritte Empfänger-Art neben Person/Gruppe — sichtbar für jede Person mit
+/// aktiver Zugehoerigkeit zu dieser Abteilung (siehe infoSichtbarFuer).
+model InfoEmpfaengerAbteilung {
+  id          String @id @default(cuid())
+  infoId      String
+  abteilungId String
+
+  info      Info      @relation(fields: [infoId], references: [id], onDelete: Cascade)
+  abteilung Abteilung @relation(fields: [abteilungId], references: [id])
+
+  @@unique([infoId, abteilungId])
+  @@index([abteilungId])
+}
+
+/// Append-only, kein Update/Delete — eine Bestätigung ist ein
+/// abgeschlossener Vorgang, dieselbe Haltung wie bei Vereinbarung/
+/// Uebergabeprotokoll (Regel 2), hier nur nicht gesetzlich vorgeschrieben.
+model InfoBestaetigung {
+  id           String   @id @default(cuid())
+  infoId       String
+  personId     String
+  bestaetigtAm DateTime @default(now())
+
+  info   Info   @relation(fields: [infoId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [benutzername])
+
+  @@unique([infoId, personId])
+}
+
+/// Togglebar, anders als InfoBestaetigung — "Like" ist eine beiläufige
+/// Reaktion, kein abgeschlossener Vorgang (siehe Kommentar dort). Die
+/// Append-only-Regel (CLAUDE.md Regel 2) gilt nur für Vereinbarung/
+/// Uebergabeprotokoll in Baustein 1, nicht für den Newsfeed-Baustein.
+model InfoLike {
+  id       String   @id @default(cuid())
+  infoId   String
+  personId String
+  geliktAm DateTime @default(now())
+
+  info   Info   @relation(fields: [infoId], references: [id], onDelete: Cascade)
+  person Person @relation(fields: [personId], references: [benutzername])
+
+  @@unique([infoId, personId])
+}
+
+/// Rückfragen zu einer Info — sichtbar für dieselben Personen wie die Info
+/// selbst. Abschaltbar über Info.kommentareErlaubt.
+model InfoKommentar {
+  id         String   @id @default(cuid())
+  infoId     String
+  personId   String
+  text       String
+  erstelltAm DateTime @default(now())
+
+  info     Info         @relation(fields: [infoId], references: [id], onDelete: Cascade)
+  person   Person       @relation("InfoKommentarAutor", fields: [personId], references: [benutzername])
+  anhaenge InfoAnhang[]
+
+  @@index([infoId, erstelltAm])
+}
+
+/// Dateipfad wie überall sonst (Regel 7). `kommentarId` optional: ein
+/// Anhang gehört entweder direkt zur Info (kommentarId = null) oder zu
+/// einer einzelnen Rückfrage — `infoId` bleibt in jedem Fall gesetzt.
+model InfoAnhang {
+  id               String   @id @default(cuid())
+  infoId           String
+  kommentarId      String?
+  dateiname        String
+  pfad             String
+  mimetyp          String
+  groesseBytes     Int
+  hochgeladenAm    DateTime @default(now())
+  hochgeladenVonId String
+  /// Über den Bild-Knopf im Fließtext eingefügt (siehe RichTextEditor,
+  /// bilderErlaubt) statt als separater Datei-Anhang hochgeladen — taucht
+  /// deshalb NICHT zusätzlich in der allgemeinen Anhänge-Liste auf
+  /// (siehe infoDetailFuerPerson/infosFuerPerson), sondern nur inline im
+  /// gerenderten Inhalt.
+  eingebettet      Boolean  @default(false)
+
+  info           Info           @relation(fields: [infoId], references: [id], onDelete: Cascade)
+  kommentar      InfoKommentar? @relation(fields: [kommentarId], references: [id], onDelete: Cascade)
+  hochgeladenVon Person         @relation("InfoAnhangHochlader", fields: [hochgeladenVonId], references: [benutzername])
+
+  @@index([infoId])
+  @@index([kommentarId])
+}
+
+/// Eine Umfrage gehört zu genau einer Info (1:1) — Optionen und Stimmen
+/// hängen daran. `mehrfachauswahl` wird beim Anlegen fest entschieden und
+/// ist danach nicht mehr änderbar (siehe infoErstellen/InfoFormFelder:
+/// Umfragen sind nur beim ANLEGEN einer Info hinzufügbar, nicht nachträglich
+/// über infoAktualisieren — vermeidet verwaiste Stimmen bei nachträglich
+/// gelöschten/umgeschalteten Optionen).
+model InfoUmfrage {
+  id              String  @id @default(cuid())
+  infoId          String  @unique
+  /// Freiwillige Fragestellung, oberhalb der Optionen angezeigt — der
+  /// Info-Titel allein trägt nicht immer schon die konkrete Frage.
+  frage           String?
+  mehrfachauswahl Boolean @default(false)
+
+  info     Info                @relation(fields: [infoId], references: [id], onDelete: Cascade)
+  optionen InfoUmfrageOption[]
+}
+
+model InfoUmfrageOption {
+  id          String @id @default(cuid())
+  umfrageId   String
+  text        String
+  reihenfolge Int
+
+  umfrage InfoUmfrage         @relation(fields: [umfrageId], references: [id], onDelete: Cascade)
+  stimmen InfoUmfrageStimme[]
+
+  @@index([umfrageId])
+}
+
+/// Wer für welche Option gestimmt hat, bleibt intern (siehe umfrageErgebnis
+/// in abfragen.ts: an den Client geht nur die Zahl je Option plus die
+/// eigene Auswahl, nie eine Personenliste) — Rückmeldung vom 2026-09-08:
+/// Ergebnis immer sichtbar, aber nie WER wie abgestimmt hat.
+model InfoUmfrageStimme {
+  id           String   @id @default(cuid())
+  optionId     String
+  personId     String
+  abgestimmtAm DateTime @default(now())
+
+  option InfoUmfrageOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  person Person            @relation(fields: [personId], references: [benutzername])
+
+  @@unique([optionId, personId])
 }

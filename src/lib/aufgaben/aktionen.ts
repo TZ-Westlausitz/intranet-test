@@ -35,6 +35,16 @@ export async function aufgabeErstellen(formData: FormData) {
     redirect("/aufgaben/todos?fehler=pflichtfeld")
   }
 
+  // "Geplant für" — Datum-only wie faelligAm, kein datetime-local nötig.
+  // Bis zu diesem Datum taucht die Aufgabe nicht in aufgabenFuerPerson auf
+  // (siehe Kommentar am Feld Aufgabe.geplantAm), verwaltbar bis dahin nur
+  // über /geplante-aktionen.
+  const geplantEingabe = String(formData.get("geplantAm") ?? "")
+  const geplantAm = geplantEingabe ? new Date(`${geplantEingabe}T00:00:00`) : null
+  if (geplantAm && Number.isNaN(geplantAm.getTime())) {
+    redirect("/aufgaben/todos?fehler=pflichtfeld")
+  }
+
   const prioritaetEingabe = String(formData.get("prioritaet") ?? "")
   const prioritaet = Object.values(AufgabePrioritaet).includes(prioritaetEingabe as AufgabePrioritaet)
     ? (prioritaetEingabe as AufgabePrioritaet)
@@ -47,7 +57,7 @@ export async function aufgabeErstellen(formData: FormData) {
   }
 
   const aufgabe = await prisma.aufgabe.create({
-    data: { personId: kontext.personId, titel, beschreibung, prioritaet, faelligAm },
+    data: { personId: kontext.personId, titel, beschreibung, prioritaet, faelligAm, geplantAm },
   })
 
   if (neueAnhaenge.length > 0) {
@@ -55,6 +65,7 @@ export async function aufgabeErstellen(formData: FormData) {
   }
 
   revalidatePath("/")
+  revalidatePath("/geplante-aktionen")
   // redirect() statt nur revalidatePath: das Formular bleibt sonst mit
   // Titel und Notizen-Editor stehen (Server Actions ohne Navigation
   // setzen weder unkontrollierte Felder noch den Editor-Zustand zurück)
@@ -92,6 +103,24 @@ export async function aufgabeAktualisieren(aufgabeId: string, formData: FormData
     redirect("/aufgaben/todos?fehler=pflichtfeld")
   }
 
+  // "Geplant für" nur anfassen, solange die Aufgabe noch nicht aktiv ist —
+  // sonst bleibt sie unverändert, egal was im (dann gar nicht erst
+  // angezeigten) Formularfeld steht (Regel 5: nie dem Formularwert
+  // vertrauen, wenn er gar nicht gelten darf). Ein geleertes Feld bei
+  // einer noch nicht aktiven Aufgabe heißt "jetzt sofort aktivieren".
+  const jetzt = new Date()
+  const nochNichtAktiv = aufgabe.geplantAm !== null && aufgabe.geplantAm > jetzt
+  const geplantAmUpdate = nochNichtAktiv
+    ? (() => {
+        const eingabe = String(formData.get("geplantAm") ?? "")
+        const geplantAmNeu = eingabe ? new Date(`${eingabe}T00:00:00`) : null
+        if (geplantAmNeu && Number.isNaN(geplantAmNeu.getTime())) {
+          redirect("/aufgaben/todos?fehler=pflichtfeld")
+        }
+        return { geplantAm: geplantAmNeu }
+      })()
+    : {}
+
   const prioritaetEingabe = String(formData.get("prioritaet") ?? "")
   const prioritaet = Object.values(AufgabePrioritaet).includes(prioritaetEingabe as AufgabePrioritaet)
     ? (prioritaetEingabe as AufgabePrioritaet)
@@ -105,7 +134,7 @@ export async function aufgabeAktualisieren(aufgabeId: string, formData: FormData
 
   await prisma.aufgabe.update({
     where: { id: aufgabeId },
-    data: { titel, beschreibung, prioritaet, faelligAm },
+    data: { titel, beschreibung, prioritaet, faelligAm, ...geplantAmUpdate },
   })
 
   if (neueAnhaenge.length > 0) {
@@ -114,6 +143,7 @@ export async function aufgabeAktualisieren(aufgabeId: string, formData: FormData
 
   revalidatePath("/aufgaben/todos")
   revalidatePath("/")
+  revalidatePath("/geplante-aktionen")
 }
 
 /**
@@ -156,6 +186,7 @@ export async function aufgabeLoeschen(aufgabeId: string) {
 
   revalidatePath("/aufgaben/todos")
   revalidatePath("/")
+  revalidatePath("/geplante-aktionen")
 }
 
 /** Entfernt einen einzelnen Anhang — Anhänge lassen sich nur nachträglich löschen, nicht ergänzen (siehe Aufgaben-Seite). */
@@ -173,4 +204,5 @@ export async function aufgabeAnhangLoeschen(anhangId: string) {
   await aufgabeAnhangLoeschenIntern(anhangId)
 
   revalidatePath("/aufgaben/todos")
+  revalidatePath("/geplante-aktionen")
 }

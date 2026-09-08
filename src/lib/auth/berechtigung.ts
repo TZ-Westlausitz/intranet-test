@@ -112,6 +112,19 @@ export async function berechtigung(
     redirect("/passwort-aendern")
   }
 
+  // Grober Aktivitäts-Indikator für die Kontakte-Übersicht (Person.letzteAktivitaet)
+  // — throttled statt bei jeder Anfrage geschrieben, weil diese Funktion pro
+  // Seitenaufruf mehrfach läuft (u. a. über kontextOderNull() im
+  // Root-Layout). "Fire and forget": ein Fehler hier darf niemals die
+  // eigentliche Anfrage scheitern lassen, ein paar Sekunden Verzögerung
+  // bis zum Sichtbarwerden sind für einen groben Indikator irrelevant.
+  const FUENF_MINUTEN = 5 * 60 * 1000
+  if (!person.letzteAktivitaet || jetzt.getTime() - person.letzteAktivitaet.getTime() > FUENF_MINUTEN) {
+    void prisma.person
+      .update({ where: { benutzername: person.benutzername }, data: { letzteAktivitaet: jetzt } })
+      .catch(() => {})
+  }
+
   const rollen = [...new Set(person.zugehoerigkeiten.map((z) => z.rolle))]
   const standortIds = [
     ...new Set(person.zugehoerigkeiten.map((z) => z.standortId).filter((id): id is string => id !== null)),

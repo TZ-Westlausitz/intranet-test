@@ -5,7 +5,6 @@ import { useId, useRef, useState } from "react"
 import { TERMIN_FARBEN, TERMIN_ERINNERUNGEN } from "@/lib/termin-optionen"
 import { PersonenAuswahl } from "@/components/personen-auswahl"
 import { RichTextEditor } from "@/components/rich-text-editor"
-import { FeldInfo } from "@/components/feld-info"
 import { wiederholenOptionen } from "@/lib/termine/wiederholung"
 
 export type Person = { id: string; name: string }
@@ -256,7 +255,7 @@ export function TerminFormFelder({
 
       <div>
         <label htmlFor={`${id}-ort`} className="block text-xs font-medium text-neutral-600">
-          Ort <FeldInfo text="z. B. Besprechungsraum Königsbrück" />
+          Ort
         </label>
         <input
           id={`${id}-ort`}

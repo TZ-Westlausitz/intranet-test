@@ -5,7 +5,6 @@ import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { gruppeErstellen, gruppeUmbenennen, gruppeAktivSetzen } from "@/lib/admin/gruppen-aktionen"
 import { abteilungErstellen, abteilungUmbenennen, abteilungAktivSetzen } from "@/lib/admin/abteilungen-aktionen"
-import { FeldInfo } from "@/components/feld-info"
 
 /**
  * Gruppen UND Abteilungen in einem Fenster — entspricht der "Gruppen &
@@ -123,9 +122,6 @@ export default async function GruppenUndAbteilungenSeite() {
               maxLength={8}
               className="h-9 w-32 shrink-0 rounded-lg border border-neutral-300 px-2 text-sm"
             />
-            <span className="flex h-9 shrink-0 items-center">
-              <FeldInfo text="z. B. gf — wird für den automatisch gebildeten Benutzernamen genutzt (vorname.nachname@kuerzel)." />
-            </span>
             <button
               type="submit"
               className="h-9 shrink-0 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"

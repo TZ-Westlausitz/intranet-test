@@ -3,7 +3,6 @@
 import { useRef, useState } from "react"
 
 import { Hinweis } from "@/components/hinweis"
-import { FeldInfo } from "@/components/feld-info"
 import { heutigesDatumIso } from "@/lib/datum"
 
 /**
@@ -87,7 +86,7 @@ export function AusleiheAnlegenFormular({
 
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">
-          Zweck <FeldInfo text="z. B. Umzug, Familienfeier" />
+          Zweck
         </span>
         <input
           type="text"

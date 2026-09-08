@@ -6,8 +6,18 @@ import { AusleiheStatus, Rolle } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { MONATSNAMEN, istGleicherTag } from "@/lib/kalender"
 import { naechsterTermin, faelligeErinnerungenAnzahl } from "@/lib/termine/abfragen"
-import { aufgabenFuerPerson } from "@/lib/aufgaben/abfragen"
+import { aufgabenFuerPerson, naechsteGeplantAufgaben } from "@/lib/aufgaben/abfragen"
 import { aufgabeErledigtSetzen } from "@/lib/aufgaben/aktionen"
+import { auftraegeStatusAnzahl, naechsteGeplantAuftraege } from "@/lib/auftraege/abfragen"
+import { projektAufgabenFuerPerson } from "@/lib/projekte/abfragen"
+import {
+  infosFuerPerson,
+  offeneBestaetigungenAnzahl,
+  naechsteGeplantInfos,
+  UNTERNEHMENSNAME,
+} from "@/lib/infos/abfragen"
+import { NewsfeedHomeKachel } from "@/components/newsfeed-home-kachel"
+import { BAUSTEINE } from "@/lib/bausteine"
 
 /**
  * DIE ZWEI STUNDEN VERSICHERUNG — Fortsetzung.
@@ -20,11 +30,18 @@ import { aufgabeErledigtSetzen } from "@/lib/aufgaben/aktionen"
  * NICHT hier, sondern fest im Root-Layout (src/app/layout.tsx) — dort
  * gelten sie für jede Seite, nicht nur die Startseite.
  *
- * Die "modular einstellbare" sechste Kachel zeigt vorerst rollenbasiert die
- * Startansicht der Fahrzeugausleihe (Werkstattleitung sieht die
- * Reservierungsübersicht, alle anderen "Fahrzeug mieten") — eine echte
- * Auswahl durch die Mitarbeitenden selbst ist ein späterer Schritt, siehe
- * Memory kachel-dashboard-berechtigungen.
+ * Zeile 2, Spalte 4 ist die "modular einstellbare" Kachel: genau EIN Modul
+ * aus dem Kopfzeilenpunkt "Weiteres" (siehe src/lib/bausteine.ts, aktuell
+ * Fahrzeuge oder To-Do-Liste) — welches, stellt jede Person selbst unter
+ * /einstellungen/nutzeroberflaeche ein (Person.startseiteWeiteresModul).
+ * Die übrigen Module dieser Liste zeigen sich hier NICHT zusätzlich,
+ * bleiben aber über "Weiteres" in der Kopfzeile erreichbar — es ist also
+ * immer nur eins der beiden sichtbar, nie beide gleichzeitig. Bewusst
+ * Zeile 2 und keine dritte Raster-Zeile: Das sichtbare Raster ist auf 2×4
+ * Felder ausgelegt (passt so auf eine Bildschirmhöhe, siehe Kommentar
+ * weiter unten zum 4:3-Tablet) — eine dritte Zeile würde darunter
+ * verschwinden statt an derselben Stelle wie früher die Fahrzeuge-Kachel
+ * zu stehen.
  *
  * Beide Fassungen rendern serverseitig gleichzeitig, nur per Tailwind
  * `md:`-Klassen ein-/ausgeblendet — kein Geräte-Sniffing, keine zwei
@@ -33,14 +50,21 @@ import { aufgabeErledigtSetzen } from "@/lib/aufgaben/aktionen"
  * Ab Tablet/Desktop passt die Kachel-Startseite bewusst IMMER auf eine
  * Bildschirmhöhe, ohne Scrollen — die Kachelgröße ist deshalb nicht in
  * festen rem-Werten je Breakpoint gesetzt, sondern als
- * `min(19rem, Nvh)`: Sie wächst mit der Bildschirmhöhe, ist aber nach oben
- * (19rem) UND nach unten (durch den vh-Anteil) begrenzt. Genau das hat
- * vorher das Problem mit dem 4:3-Tablet in Landschaft gelöst (1024×768 —
- * schmal genug für die volle Breite, aber zu niedrig für feste große
- * Kacheln) und funktioniert jetzt automatisch für JEDE Bildschirmhöhe statt
- * nur für einen einzelnen getesteten Fall. Scrollen soll es später INNERHALB
- * einzelner Kacheln oder auf den Unterseiten geben, nicht auf dieser Seite
- * selbst.
+ * `min(23rem, Nvh, Mvw)`: Sie wächst mit Bildschirmhöhe UND -breite, ist
+ * aber nach oben (23rem) UND nach unten (durch vh-/vw-Anteil) begrenzt.
+ * Genau das hat vorher das Problem mit dem 4:3-Tablet in Landschaft
+ * gelöst (1024×768 — schmal genug für die volle Breite, aber zu niedrig
+ * für feste große Kacheln) und funktioniert automatisch für JEDE
+ * Bildschirmgröße statt nur für einen einzelnen getesteten Fall — deshalb
+ * genügt es, die drei Zahlen (rem-Obergrenze, vh-Anteil, vw-Anteil)
+ * gemeinsam moderat anzuheben (Rückmeldung: viel Leerraum über/unter dem
+ * Raster auf großen Desktop-Monitoren): Auf einem großen Bildschirm mit
+ * viel vh/vw wachsen die Kacheln entsprechend mit, auf einem schmalen/
+ * niedrigen Bildschirm wie dem 4:3-Tablet bleibt automatisch dieselbe
+ * engere Grenze wirksam wie vorher (nur ein wenig großzügiger) — dieselbe
+ * Rechnung, kein Breakpoint-Sonderfall nötig. Scrollen soll es später
+ * INNERHALB einzelner Kacheln oder auf den Unterseiten geben, nicht auf
+ * dieser Seite selbst.
  */
 
 const MODULE = [
@@ -67,8 +91,26 @@ export default async function Startseite() {
     kontext.rollen.includes(Rolle.WERKSTATTLEITER) ||
     kontext.rollen.includes(Rolle.ADMINISTRATION)
 
-  // Nur abfragen, wenn die Werkstatt-Kachel überhaupt sichtbar ist.
-  const [offeneAnfragen, naechsteReservierungen] = istWerkstatt
+  // Welches "Weiteres"-Modul für Zeile 2, Spalte 4 eingestellt ist (siehe
+  // /einstellungen/nutzeroberflaeche) — ohne eigene Einstellung greift der
+  // erste Eintrag der Liste als Default (aktuell Fahrzeuge, das bisherige
+  // Verhalten für alle, die die Einstellung noch nicht angefasst haben).
+  const [person, weiteresEintrag] = [
+    await prisma.person.findUniqueOrThrow({
+      where: { benutzername: kontext.personId },
+      select: { startseiteWeiteresModul: true },
+    }),
+    BAUSTEINE.find((baustein) => baustein.unterpunkte),
+  ]
+  const weiteresModule = weiteresEintrag?.unterpunkte ?? []
+  const ausgewaehltesModul = person.startseiteWeiteresModul ?? weiteresModule[0]?.name ?? ""
+  const zeigeFahrzeuge = ausgewaehltesModul === "Fahrzeuge"
+  const zeigeTodoListe = ausgewaehltesModul === "To-Do-Liste"
+  const zeigeGeplanteAktionen = ausgewaehltesModul === "Geplante Aktionen"
+
+  // Nur abfragen, wenn die Fahrzeuge-Kachel für diese Person überhaupt
+  // sichtbar ist (Werkstatt-Rolle UND als Startseiten-Modul ausgewählt).
+  const [offeneAnfragen, naechsteReservierungen] = istWerkstatt && zeigeFahrzeuge
     ? await Promise.all([
         prisma.ausleihe.count({ where: { status: AusleiheStatus.ANGEFRAGT } }),
         prisma.ausleihe.findMany({
@@ -80,15 +122,65 @@ export default async function Startseite() {
       ])
     : [0, []]
 
-  const [termin, faelligeErinnerungen, { offen: offeneAufgaben }] = await Promise.all([
-    naechsterTermin(kontext.personId, heute),
-    faelligeErinnerungenAnzahl(kontext.personId, heute),
-    aufgabenFuerPerson(kontext.personId),
-  ])
-  // Höchstens 3 in der Kachel, je nach Platz — auf schmaleren
-  // Bildschirmen (md, aber noch nicht lg) blendet sich die dritte Zeile
-  // per CSS wieder aus (siehe unten), damit die Kachel nicht überläuft.
-  const naechsteAufgaben = offeneAufgaben.slice(0, 3)
+  // Nur abfragen, wenn die "Geplante Aktionen"-Kachel überhaupt sichtbar ist.
+  const [naechsteGeplantInfosListe, naechsteGeplantAufgabenListe, naechsteGeplantAuftraegeListe] = zeigeGeplanteAktionen
+    ? await Promise.all([
+        naechsteGeplantInfos(kontext.personId, 5),
+        naechsteGeplantAufgaben(kontext.personId, 5),
+        naechsteGeplantAuftraege(kontext.personId, 5),
+      ])
+    : [[], [], []]
+
+  const [termin, faelligeErinnerungen, { offen: offeneAufgaben }, auftraegeStatus, offeneProjektAufgaben, infos, offeneBestaetigungen] =
+    await Promise.all([
+      naechsterTermin(kontext.personId, heute),
+      faelligeErinnerungenAnzahl(kontext.personId, heute),
+      aufgabenFuerPerson(kontext.personId),
+      auftraegeStatusAnzahl(kontext.personId),
+      projektAufgabenFuerPerson(kontext.personId),
+      infosFuerPerson(kontext),
+      offeneBestaetigungenAnzahl(kontext.personId),
+    ])
+  // Alle sichtbaren Infos statt einer festen Obergrenze — die Kachel
+  // bekommt dafür einen eigenen scrollbaren Bereich (siehe Rückmeldung:
+  // auch ältere Infos sollen dort erreichbar bleiben, nicht nur die
+  // neuesten zwei).
+  const naechsteTodos = offeneAufgaben.slice(0, 2)
+  // Für die "Geplante Aktionen"-Kachel: Infos, Aufgaben und Aufträge zu
+  // einer gemeinsamen, nach Datum sortierten Liste zusammenführen — Badge
+  // zählt die volle Anzahl, angezeigt werden nur die ersten drei.
+  const geplanteEintraege = [
+    ...naechsteGeplantInfosListe.map((i) => ({ id: i.id, titel: i.titel, datum: i.veroeffentlichtAm, typ: "info" as const })),
+    ...naechsteGeplantAufgabenListe.map((a) => ({ id: a.id, titel: a.titel, datum: a.geplantAm!, typ: "aufgabe" as const })),
+    ...naechsteGeplantAuftraegeListe.map((a) => ({ id: a.id, titel: a.titel, datum: a.geplantAm!, typ: "auftrag" as const })),
+  ].sort((a, b) => a.datum.getTime() - b.datum.getTime())
+  const naechsteGeplant = geplanteEintraege.slice(0, 3)
+  // Für NewsfeedHomeKachel (Client Component) vorberechnet — sie soll
+  // UNTERNEHMENSNAME nicht selbst aus abfragen.ts importieren, sonst würde
+  // dessen Prisma-Import mit in den Browser-Bundle wandern. previewHtml
+  // nur ohne titelbild: Bild ODER Text, nie beides (siehe ersteBildInfo).
+  // Geplante (noch nicht veröffentlichte) Infos bleiben hier außen vor —
+  // die Kachel zeigt nur wirklich live Beiträge, ihre Entwürfe verwaltet
+  // die erstellende Person im vollen /newsfeed-Feed (siehe "Geplant für").
+  const newsfeedKarten = infos
+    .filter((info) => !info.nochNichtVeroeffentlicht)
+    .map((info) => ({
+      id: info.id,
+      titel: info.titel,
+      erstelltAm: info.veroeffentlichtAm,
+      absenderName: info.alsUnternehmen ? UNTERNEHMENSNAME : `${info.erstelltVon.vorname} ${info.erstelltVon.nachname}`,
+      previewHtml: !info.titelbild && info.inhalt ? info.inhalt : null,
+      titelbild: info.titelbild,
+      anhaengeAnzahl: info.anhaenge.length,
+      kommentareAnzahl: info._count.kommentare,
+      likeAnzahl: info.likeAnzahl,
+      umfrage: info.umfrage !== null,
+    }))
+  // Die Aufgaben-Kachel zeigt jetzt nur noch Aufträge (mit Offen/
+  // Angenommen-Abstufung) und Projekt-Aufgaben — die To-Do-Liste hat eine
+  // eigene Kachel weiter unten im Raster.
+  const auftraegeGesamtOffen = auftraegeStatus.offen + auftraegeStatus.angenommen
+  const aufgabenGesamtOffen = auftraegeGesamtOffen + offeneProjektAufgaben.length
   const terminVorschau = termin
     ? `${
         istGleicherTag(termin.beginn, heute)
@@ -163,7 +255,7 @@ export default async function Startseite() {
           würde die Seite unter der Kopfzeile wieder über eine Bildschirm-
           höhe hinauswachsen. */}
       <main className="hidden h-full flex-col md:flex">
-        <div className="flex flex-1 items-center justify-center overflow-auto bg-gradient-to-br from-marke-gruen/5 via-white to-marke-orange/5 p-6">
+        <div className="flex flex-1 flex-col items-center justify-center overflow-auto bg-gradient-to-br from-marke-gruen/5 via-white to-marke-orange/5 p-6">
           {/* 4 Spalten statt 4 einzelne Kacheln: Newsfeed nimmt per
               col-span-2 zwei davon ein und bleibt durch row-span-2 genauso
               hoch wie breit — ein großer quadratischer Block statt eines
@@ -172,16 +264,8 @@ export default async function Startseite() {
               begrenzt (nicht nur wie bisher per rem/vh) — sonst würde das
               jetzt breitere Grid auf schmaleren Bildschirmen (z. B. das
               1024px-Tablet) über den Rand hinauswachsen. */}
-          <div className="grid grid-cols-[repeat(4,min(19rem,28vh,22vw))] grid-rows-[repeat(2,min(19rem,28vh,22vw))] gap-[min(2rem,3.5vh)]">
-            <div className="col-span-2 row-span-2 flex flex-col justify-between rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen bg-white p-5 shadow-sm">
-              <div>
-                <h2 className="text-xl font-semibold text-marke-grau">Newsfeed</h2>
-                <p className="mt-2 text-sm text-neutral-500">
-                  Hier entstehen künftig aktuelle Neuigkeiten und Ankündigungen aus dem TPZ.
-                </p>
-              </div>
-              <p className="text-xs text-neutral-400">Noch nicht verfügbar</p>
-            </div>
+          <div className="grid grid-cols-[repeat(4,min(23rem,33vh,26vw))] grid-rows-[repeat(2,min(23rem,33vh,26vw))] gap-[min(2.25rem,4vh)]">
+            <NewsfeedHomeKachel infos={newsfeedKarten} offeneBestaetigungen={offeneBestaetigungen} />
 
             <Link
               href="/kalender"
@@ -209,55 +293,57 @@ export default async function Startseite() {
               </p>
             </Link>
 
-            {/* Bewusst keine ganze Kachel als EIN Link (anders als
-                Kalender/Fahrzeuge) — hier gibt es mehrere unabhängige
-                Klickziele (Überschrift + je ein Abhak-Knopf pro Zeile),
-                und ein <button> in einem <a> ist ungültiges HTML. Der
-                Rahmen-Hover-Effekt bleibt trotzdem identisch: `hover:`
-                greift auch auf einem <div>, nicht nur auf Links. */}
-            <div className="col-start-4 row-start-1 flex flex-col rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen-dunkel bg-white p-4 shadow-sm transition hover:border-marke-gruen-dunkel">
-              <Link
-                href="/aufgaben"
-                className="flex items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
-              >
+            {/* Eine Kachel, ein Link — anders als früher, als die Zeilen
+                noch auf verschiedene Unterseiten zeigten (Aufträge vs.
+                Projekt-Aufgaben getrennt). Seit beides gemeinsam unter
+                /aufgaben liegt, gibt es nur noch EIN Klickziel, und
+                Aufträge/Projekt-Aufgaben stehen deshalb gleichwertig
+                nebeneinander statt in getrennten Abschnitten. */}
+            <Link
+              href="/aufgaben"
+              className="col-start-4 row-start-1 flex flex-col rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen-dunkel bg-white p-4 shadow-sm transition hover:border-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+            >
+              <div className="flex items-center justify-between gap-1.5">
                 <h2 className="text-lg font-semibold text-marke-grau hover:underline">Aufgaben</h2>
-                {offeneAufgaben.length > 0 && (
+                {aufgabenGesamtOffen > 0 && (
                   <span
-                    aria-label={`${offeneAufgaben.length} offene Aufgabe${offeneAufgaben.length === 1 ? "" : "n"}`}
+                    aria-label={`${aufgabenGesamtOffen} offene Aufgabe${aufgabenGesamtOffen === 1 ? "" : "n"}`}
                     className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
                   >
-                    {offeneAufgaben.length}
+                    {aufgabenGesamtOffen}
                   </span>
                 )}
-              </Link>
+              </div>
 
-              {naechsteAufgaben.length === 0 ? (
+              {aufgabenGesamtOffen === 0 ? (
                 <p className="mt-2 text-xs text-neutral-500">Alles erledigt</p>
               ) : (
-                <ul className="mt-2 flex flex-col gap-1.5">
-                  {naechsteAufgaben.map((aufgabe, index) => (
-                    <li
-                      key={aufgabe.id}
-                      title={aufgabe.titel}
-                      className={"flex items-center gap-1.5 " + (index === 2 ? "hidden lg:flex" : "")}
-                    >
-                      {/* Schnell-Abhaken direkt in der Kachel, wie bei den
-                          Erinnerungs-Apps am Handy — kein Umweg über die
-                          volle Aufgaben-Seite für den Alltagsfall
-                          "kurz was abhaken". */}
-                      <form action={aufgabeErledigtSetzen.bind(null, aufgabe.id, true)}>
-                        <button
-                          type="submit"
-                          aria-label={`"${aufgabe.titel}" als erledigt markieren`}
-                          className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-neutral-300 transition hover:border-marke-gruen-dunkel"
-                        />
-                      </form>
-                      <span className="truncate text-xs text-neutral-600">{aufgabe.titel}</span>
-                    </li>
-                  ))}
-                </ul>
+                <div className="mt-2 flex flex-1 flex-col gap-1.5">
+                  {/* Aufträge (Offen/Angenommen) und Projekt-Aufgaben als
+                      gleichwertige Zeilen — dieselbe Abstufung, kein
+                      Abschnitt optisch bevorzugt. Erledigtes taucht hier
+                      bewusst nicht auf, genau wie bei den anderen Kacheln. */}
+                  {auftraegeStatus.offen > 0 && (
+                    <div className="flex items-center justify-between text-xs text-neutral-600">
+                      <span>Offen</span>
+                      <span className="font-medium">{auftraegeStatus.offen}</span>
+                    </div>
+                  )}
+                  {auftraegeStatus.angenommen > 0 && (
+                    <div className="flex items-center justify-between text-xs text-neutral-600">
+                      <span>Angenommen</span>
+                      <span className="font-medium">{auftraegeStatus.angenommen}</span>
+                    </div>
+                  )}
+                  {offeneProjektAufgaben.length > 0 && (
+                    <div className="flex items-center justify-between text-xs text-neutral-600">
+                      <span>Projekt-Aufgaben</span>
+                      <span className="font-medium">{offeneProjektAufgaben.length}</span>
+                    </div>
+                  )}
+                </div>
               )}
-            </div>
+            </Link>
 
             <div className="col-start-3 row-start-2 flex flex-col justify-between rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-orange bg-white p-4 shadow-sm">
               <div>
@@ -269,54 +355,132 @@ export default async function Startseite() {
               <p className="text-xs text-neutral-400">Noch nicht verfügbar</p>
             </div>
 
-            {/* Modular einstellbare 6. Kachel — vorerst rollenbasiert die
-                Fahrzeugausleihe. Gleiches Kachel-Design wie Kalender/Aufgaben
-                (weiß, neutraler Rahmen, Hover hebt den Rahmen in der
-                eigenen Akzentfarbe hervor) statt der früheren
-                Sonderfarbgebung — eine Kachel soll nicht anders aussehen
-                als die übrigen, nur weil sie modular ist. */}
-            <Link
-              href={istWerkstatt ? "/fahrzeug-reservierungen" : "/fahrzeug-mieten"}
-              className="col-start-4 row-start-2 flex flex-col justify-between rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen bg-white p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
-            >
-              {istWerkstatt ? (
-                <>
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-lg font-semibold text-marke-grau">Fahrzeuge</h2>
-                      {offeneAnfragen > 0 && (
-                        <span
-                          aria-label={`${offeneAnfragen} offene Anfragen`}
-                          className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
-                        >
-                          {offeneAnfragen}
-                        </span>
+            {/* Zeile 2, Spalte 4: das in /einstellungen/nutzeroberflaeche
+                ausgewählte "Weiteres"-Modul — genau eins von beiden, nie
+                beide gleichzeitig (siehe Kommentar oben am Modul). Gleiches
+                Kachel-Design wie die übrigen (weiß, neutraler Rahmen, Hover
+                hebt den Rahmen in der eigenen Akzentfarbe hervor) statt
+                einer Sonderfarbgebung — eine Kachel soll nicht anders
+                aussehen, nur weil sie modular ist. */}
+            {zeigeFahrzeuge && (
+              <Link
+                href={istWerkstatt ? "/fahrzeug-reservierungen" : "/fahrzeug-mieten"}
+                className="col-start-4 row-start-2 flex flex-col justify-between rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen bg-white p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+              >
+                {istWerkstatt ? (
+                  <>
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold text-marke-grau">Fahrzeuge</h2>
+                        {offeneAnfragen > 0 && (
+                          <span
+                            aria-label={`${offeneAnfragen} offene Anfragen`}
+                            className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
+                          >
+                            {offeneAnfragen}
+                          </span>
+                        )}
+                      </div>
+                      {naechsteReservierungen.length === 0 ? (
+                        <p className="mt-2 text-xs text-neutral-500">Keine anstehenden Reservierungen.</p>
+                      ) : (
+                        <ul className="mt-2 flex flex-col gap-1 text-xs text-neutral-500">
+                          {naechsteReservierungen.map((r) => (
+                            <li key={r.id}>
+                              {r.geplantVon.toLocaleDateString("de-DE")} · {r.fahrzeug.bezeichnung}
+                            </li>
+                          ))}
+                        </ul>
                       )}
                     </div>
-                    {naechsteReservierungen.length === 0 ? (
-                      <p className="mt-2 text-xs text-neutral-500">Keine anstehenden Reservierungen.</p>
-                    ) : (
-                      <ul className="mt-2 flex flex-col gap-1 text-xs text-neutral-500">
-                        {naechsteReservierungen.map((r) => (
-                          <li key={r.id}>
-                            {r.geplantVon.toLocaleDateString("de-DE")} · {r.fahrzeug.bezeichnung}
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                  <span className="text-sm font-semibold text-marke-gruen-dunkel">Zum Reservierungsmenü →</span>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <h2 className="text-lg font-semibold text-marke-grau">Fahrzeug mieten</h2>
-                    <p className="mt-2 text-sm text-neutral-500">Privat ein Firmenfahrzeug anfragen.</p>
-                  </div>
-                  <span className="text-sm font-semibold text-marke-gruen-dunkel">Jetzt anfragen →</span>
-                </>
-              )}
-            </Link>
+                    <span className="text-sm font-semibold text-marke-gruen-dunkel">Zum Reservierungsmenü →</span>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <h2 className="text-lg font-semibold text-marke-grau">Fahrzeug mieten</h2>
+                      <p className="mt-2 text-sm text-neutral-500">Privat ein Firmenfahrzeug anfragen.</p>
+                    </div>
+                    <span className="text-sm font-semibold text-marke-gruen-dunkel">Jetzt anfragen →</span>
+                  </>
+                )}
+              </Link>
+            )}
+
+            {zeigeTodoListe && (
+              <div className="col-start-4 row-start-2 flex flex-col rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen bg-white p-4 shadow-sm transition hover:border-marke-gruen">
+                <Link
+                  href="/aufgaben/todos"
+                  className="flex items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+                >
+                  <h2 className="text-lg font-semibold text-marke-grau hover:underline">To-Do-Liste</h2>
+                  {offeneAufgaben.length > 0 && (
+                    <span
+                      aria-label={`${offeneAufgaben.length} offene Einträge in der To-Do-Liste`}
+                      className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
+                    >
+                      {offeneAufgaben.length}
+                    </span>
+                  )}
+                </Link>
+
+                {naechsteTodos.length === 0 ? (
+                  <p className="mt-2 text-xs text-neutral-500">Alles erledigt</p>
+                ) : (
+                  <ul className="mt-2 flex flex-col gap-1.5">
+                    {naechsteTodos.map((aufgabe) => (
+                      <li key={aufgabe.id} title={aufgabe.titel} className="flex items-center gap-1.5">
+                        <form action={aufgabeErledigtSetzen.bind(null, aufgabe.id, true)}>
+                          <button
+                            type="submit"
+                            aria-label={`"${aufgabe.titel}" als erledigt markieren`}
+                            className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-neutral-300 transition hover:border-marke-gruen-dunkel"
+                          />
+                        </form>
+                        <span className="truncate text-xs text-neutral-600">{aufgabe.titel}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {zeigeGeplanteAktionen && (
+              <div className="col-start-4 row-start-2 flex flex-col rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen bg-white p-4 shadow-sm transition hover:border-marke-gruen">
+                <Link
+                  href="/geplante-aktionen"
+                  className="flex items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+                >
+                  <h2 className="text-lg font-semibold text-marke-grau hover:underline">Geplante Aktionen</h2>
+                  {geplanteEintraege.length > 0 && (
+                    <span
+                      aria-label={`${geplanteEintraege.length} geplante Infos, Aufgaben und Aufträge`}
+                      className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
+                    >
+                      {geplanteEintraege.length}
+                    </span>
+                  )}
+                </Link>
+
+                {naechsteGeplant.length === 0 ? (
+                  <p className="mt-2 text-xs text-neutral-500">Keine geplanten Infos, Aufgaben oder Aufträge.</p>
+                ) : (
+                  <ul className="mt-2 flex flex-col gap-1.5">
+                    {naechsteGeplant.map((eintrag) => (
+                      <li key={eintrag.id} title={eintrag.titel} className="flex items-center gap-1.5 text-xs">
+                        <span aria-hidden className="shrink-0">
+                          {eintrag.typ === "info" ? "📰" : eintrag.typ === "aufgabe" ? "☑" : "📌"}
+                        </span>
+                        <span className="truncate text-neutral-600">{eintrag.titel}</span>
+                        <span className="ml-auto shrink-0 text-neutral-400">
+                          {eintrag.datum.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>

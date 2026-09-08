@@ -11,11 +11,81 @@ import sanitizeHtml from "sanitize-html"
  */
 export function richTextSanitisieren(html: string): string {
   return sanitizeHtml(html, {
-    allowedTags: ["p", "br", "strong", "em", "u", "s", "ul", "ol", "li", "a"],
-    allowedAttributes: { a: ["href", "target", "rel"] },
+    allowedTags: ["p", "br", "strong", "em", "u", "s", "ul", "ol", "li", "a", "img"],
+    allowedAttributes: {
+      // "data-mention-id" NUR für @Erwähnungen (siehe RichTextErwaehnung) —
+      // transformTags.a unten prüft, dass es zum tatsächlichen
+      // Benutzernamen-Zeichensatz passt UND exakt zum sichtbaren href, ein
+      // manipuliertes data-mention-id kann also nicht auf eine andere
+      // Person zeigen als der Link selbst.
+      a: ["href", "target", "rel", "data-mention-id"],
+      // "src" ist grundsätzlich erlaubt, aber nur mit einem gültigen Wert
+      // (siehe transformTags.img unten) — für frisch eingefügte, noch
+      // nicht gespeicherte Bilder liefert der Editor dafür nur eine
+      // clientseitige blob:-URL (siehe RichTextEditor, bilderErlaubt), die
+      // dort herausgefiltert wird; die erstellende/bearbeitende Server
+      // Action setzt den echten src selbst, nachdem die Datei gespeichert
+      // ist (siehe infoErstellen/infoAktualisieren). Größe läuft über die
+      // echten width/height-Attribute; "style" ist NUR für die
+      // Bildausrichtung erlaubt (siehe RichTextBild/transformTags.img
+      // unten) — nur eine von drei bekannten margin-Kombinationen kommt
+      // durch, kein beliebiges CSS.
+      img: ["data-cid", "width", "height", "src", "style"],
+      // "style" auf Absätzen NUR für die Textausrichtung (siehe
+      // RichTextEditor, TextAlign-Erweiterung) — der transformTags.p-
+      // Filter unten lässt ausschließlich einen der vier bekannten
+      // text-align-Werte durch, kein beliebiges CSS.
+      p: ["style"],
+    },
     allowedSchemes: ["http", "https", "mailto"],
     transformTags: {
-      a: sanitizeHtml.simpleTransform("a", { target: "_blank", rel: "noopener noreferrer" }),
+      // Jeder Link bekommt weiterhin target/rel wie bisher (vorher per
+      // sanitizeHtml.simpleTransform, jetzt hier mit übernommen, da eine
+      // zweite Prüfung für data-mention-id dazukommt) — ist
+      // "data-mention-id" gesetzt, muss es zum echten Benutzername-
+      // Zeichensatz passen (Kleinbuchstaben/Ziffern/".", "@", "-" — siehe
+      // nameNormalisieren in src/lib/admin/personen-aktionen.ts) UND href
+      // muss exakt "/kontakte/<data-mention-id>" sein — sonst wird
+      // data-mention-id verworfen. Verhindert, dass eine @Erwähnung durch
+      // Copy-Paste/Manipulation auf eine andere Person zeigt als sichtbar,
+      // oder an einen beliebigen externen Link drangehängt wird.
+      a: (tagName, attribs) => {
+        const rest: sanitizeHtml.Attributes = { ...attribs, target: "_blank", rel: "noopener noreferrer" }
+        const mentionId = rest["data-mention-id"]
+        if (typeof mentionId === "string") {
+          const gueltig = /^[a-z0-9.@-]+$/.test(mentionId) && rest.href === `/kontakte/${mentionId}`
+          if (!gueltig) delete rest["data-mention-id"]
+        }
+        return { tagName, attribs: rest }
+      },
+      // Lässt NUR bereits aufgelöste, eigene Info-Anhang-URLs durch (siehe
+      // infoErstellen/infoAktualisieren) — jeder andere src-Wert
+      // (insbesondere die blob:-URL eines frisch eingefügten, noch nicht
+      // aufgelösten Bildes) wird entfernt. Ohne diese Prüfung würde ein
+      // beim Bearbeiten bereits aufgelöstes Bild seinen src bei jedem
+      // erneuten Speichern wieder verlieren, weil sein data-cid dann
+      // nicht mehr Teil der aktuellen Inline-Bild-Auswahl ist.
+      img: (tagName, attribs) => {
+        const rest = { ...attribs }
+        const srcGueltig = typeof rest.src === "string" && /^\/api\/infos\/[a-zA-Z0-9]+\/anhaenge\/[a-zA-Z0-9]+$/.test(rest.src)
+        if (!srcGueltig) delete rest.src
+        // Die drei einzigen Werte, die RichTextBild für die Ausrichtung
+        // erzeugt (links = kein style, mittig, rechts) — alles andere fliegt raus.
+        const styleGueltig =
+          typeof rest.style === "string" &&
+          /^display:\s*block;\s*margin-left:\s*(auto|0);\s*margin-right:\s*(auto|0);?$/.test(rest.style.trim())
+        if (!styleGueltig) delete rest.style
+        return { tagName, attribs: rest }
+      },
+      // Nur exakt "text-align: left|center|right|justify" durchlassen —
+      // jeder andere style-Wert (auch mit Zusätzen dahinter) fliegt raus.
+      p: (tagName, attribs) => {
+        const gueltig = typeof attribs.style === "string" && /^text-align:\s*(left|center|right|justify);?$/.test(attribs.style.trim())
+        if (gueltig) return { tagName, attribs }
+        const rest = { ...attribs }
+        delete rest.style
+        return { tagName, attribs: rest }
+      },
     },
   }).trim()
 }

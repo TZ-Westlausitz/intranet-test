@@ -8,6 +8,7 @@ import { Rolle } from "@/generated/prisma/enums";
 import { BenutzerMenu } from "@/components/benutzer-menu";
 import { BenachrichtigungsGlocke } from "@/components/benachrichtigungs-glocke";
 import { ChatWidget } from "@/components/chat-widget";
+import { BausteinMehrMenu } from "@/components/baustein-mehr-menu";
 import { BAUSTEINE } from "@/lib/bausteine";
 import { neuesteBenachrichtigungen, ungeleseneAnzahl } from "@/lib/benachrichtigungen/abfragen";
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum";
@@ -109,7 +110,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-neutral-200 bg-neutral-50 px-8 py-3"
               >
                 {BAUSTEINE.map((baustein) =>
-                  baustein.href ? (
+                  baustein.unterpunkte ? (
+                    <BausteinMehrMenu key={baustein.name} name={baustein.name} unterpunkte={baustein.unterpunkte} />
+                  ) : baustein.href ? (
                     <Link
                       key={baustein.name}
                       href={baustein.href}

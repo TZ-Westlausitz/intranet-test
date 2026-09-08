@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { AufgabePrioritaet } from "@/generated/prisma/enums"
+import { AufgabePrioritaet, AuftragStatus } from "@/generated/prisma/enums"
 import { richTextSanitisieren } from "@/lib/rich-text"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
 import {
@@ -30,10 +30,10 @@ export async function auftragErstellen(formData: FormData) {
   const titel = String(formData.get("titel") ?? "").trim()
   const zugewiesenAnId = String(formData.get("zugewiesenAn") ?? "")
   if (!titel || !zugewiesenAnId) {
-    redirect("/aufgaben/auftraege?fehler=pflichtfeld")
+    redirect("/aufgaben?fehler=pflichtfeld")
   }
   if (zugewiesenAnId === kontext.personId) {
-    redirect("/aufgaben/auftraege?fehler=selbstauftrag")
+    redirect("/aufgaben?fehler=selbstauftrag")
   }
 
   const beschreibung = richTextSanitisieren(String(formData.get("beschreibung") ?? "")) || null
@@ -41,8 +41,20 @@ export async function auftragErstellen(formData: FormData) {
   const faelligEingabe = String(formData.get("faelligAm") ?? "")
   const faelligAm = faelligEingabe ? new Date(`${faelligEingabe}T00:00:00`) : null
   if (faelligAm && Number.isNaN(faelligAm.getTime())) {
-    redirect("/aufgaben/auftraege?fehler=pflichtfeld")
+    redirect("/aufgaben?fehler=pflichtfeld")
   }
+
+  // "Geplant für" — Datum-only wie faelligAm, kein datetime-local nötig.
+  // Bis zu diesem Datum sieht die zugewiesene Person den Auftrag NICHT
+  // (siehe Kommentar am Feld Auftrag.geplantAm), verwaltbar bis dahin nur
+  // über /geplante-aktionen.
+  const geplantEingabe = String(formData.get("geplantAm") ?? "")
+  const jetzt = new Date()
+  const geplantAm = geplantEingabe ? new Date(`${geplantEingabe}T00:00:00`) : null
+  if (geplantAm && Number.isNaN(geplantAm.getTime())) {
+    redirect("/aufgaben?fehler=pflichtfeld")
+  }
+  const istGeplant = geplantAm !== null && geplantAm > jetzt
 
   const prioritaetEingabe = String(formData.get("prioritaet") ?? "")
   const prioritaet = Object.values(AufgabePrioritaet).includes(prioritaetEingabe as AufgabePrioritaet)
@@ -52,32 +64,68 @@ export async function auftragErstellen(formData: FormData) {
   const neueAnhaenge = anhaengeAusFormData(formData)
   const anhaengeFehler = auftragAnhaengePruefen(neueAnhaenge)
   if (anhaengeFehler) {
-    redirect(`/aufgaben/auftraege?fehler=${anhaengeFehler}`)
+    redirect(`/aufgaben?fehler=${anhaengeFehler}`)
   }
 
   const auftrag = await prisma.auftrag.create({
-    data: { erstelltVonId: kontext.personId, zugewiesenAnId, titel, beschreibung, prioritaet, faelligAm },
+    data: { erstelltVonId: kontext.personId, zugewiesenAnId, titel, beschreibung, prioritaet, faelligAm, geplantAm },
   })
 
   if (neueAnhaenge.length > 0) {
     await auftragAnhaengeSpeichern(auftrag.id, neueAnhaenge)
   }
 
-  await benachrichtigungErstellen({
-    personId: zugewiesenAnId,
-    text: `${kontext.name} hat dir eine Aufgabe zugewiesen: "${titel}"`,
-    link: "/aufgaben/auftraege",
-  })
+  // Bei "Geplant für" bekommt die zugewiesene Person noch keine
+  // Benachrichtigung — sie kann den Auftrag ja noch gar nicht sehen
+  // (dieselbe Begründung wie bei infoErstellen).
+  if (!istGeplant) {
+    await benachrichtigungErstellen({
+      personId: zugewiesenAnId,
+      text: `${kontext.name} hat dir eine Aufgabe zugewiesen: "${titel}"`,
+      link: "/aufgaben",
+    })
+  }
 
   revalidatePath("/")
-  redirect("/aufgaben/auftraege")
+  revalidatePath("/geplante-aktionen")
+  redirect("/aufgaben")
+}
+
+/**
+ * OFFEN → ANGENOMMEN — nur die zugewiesene Person, nur solange noch
+ * niemand angenommen hat. Erst danach lässt sich der Auftrag erledigen
+ * (siehe auftragErledigtSetzen) — kein Überspringen dieses Schritts.
+ */
+export async function auftragAnnehmen(auftragId: string) {
+  const kontext = await berechtigung()
+
+  const auftrag = await prisma.auftrag.findUnique({ where: { id: auftragId } })
+  if (!auftrag || auftrag.zugewiesenAnId !== kontext.personId) {
+    throw new NichtBerechtigt("nicht der eigene Auftrag")
+  }
+  if (auftrag.status !== AuftragStatus.OFFEN) {
+    throw new NichtBerechtigt("Auftrag ist nicht mehr offen")
+  }
+
+  await prisma.auftrag.update({ where: { id: auftragId }, data: { status: AuftragStatus.ANGENOMMEN } })
+
+  await benachrichtigungErstellen({
+    personId: auftrag.erstelltVonId,
+    text: `${kontext.name} hat "${auftrag.titel}" angenommen`,
+    link: "/aufgaben",
+  })
+
+  revalidatePath("/aufgaben")
+  revalidatePath("/")
 }
 
 /**
  * Erledigt-Umschalter — nur die zugewiesene Person darf abhaken (sie
- * macht die Arbeit), nicht die erstellende. Benachrichtigt die
- * erstellende Person beim Abhaken, damit sie mitbekommt, dass sich was
- * getan hat, ohne selbst nachschauen zu müssen.
+ * macht die Arbeit), nicht die erstellende. Erledigt ist erst ab
+ * ANGENOMMEN erreichbar, "wieder öffnen" geht zurück auf ANGENOMMEN, nicht
+ * auf OFFEN — ERLEDIGT setzt ja voraus, dass die Person schon angenommen
+ * hatte. Benachrichtigt die erstellende Person beim Abhaken, damit sie
+ * mitbekommt, dass sich was getan hat, ohne selbst nachschauen zu müssen.
  */
 export async function auftragErledigtSetzen(auftragId: string, erledigt: boolean) {
   const kontext = await berechtigung()
@@ -86,21 +134,28 @@ export async function auftragErledigtSetzen(auftragId: string, erledigt: boolean
   if (!auftrag || auftrag.zugewiesenAnId !== kontext.personId) {
     throw new NichtBerechtigt("nicht der eigene Auftrag")
   }
+  const erwarteterStatus = erledigt ? AuftragStatus.ANGENOMMEN : AuftragStatus.ERLEDIGT
+  if (auftrag.status !== erwarteterStatus) {
+    throw new NichtBerechtigt("Auftrag ist nicht im erwarteten Status")
+  }
 
   await prisma.auftrag.update({
     where: { id: auftragId },
-    data: { erledigtAm: erledigt ? new Date() : null },
+    data: {
+      status: erledigt ? AuftragStatus.ERLEDIGT : AuftragStatus.ANGENOMMEN,
+      erledigtAm: erledigt ? new Date() : null,
+    },
   })
 
   if (erledigt) {
     await benachrichtigungErstellen({
       personId: auftrag.erstelltVonId,
       text: `${kontext.name} hat "${auftrag.titel}" erledigt`,
-      link: "/aufgaben/auftraege",
+      link: "/aufgaben",
     })
   }
 
-  revalidatePath("/aufgaben/auftraege")
+  revalidatePath("/aufgaben")
   revalidatePath("/")
 }
 
@@ -115,13 +170,20 @@ export async function auftragLoeschen(auftragId: string) {
 
   await prisma.auftrag.delete({ where: { id: auftragId } })
 
-  await benachrichtigungErstellen({
-    personId: auftrag.zugewiesenAnId,
-    text: `${kontext.name} hat die Aufgabe "${auftrag.titel}" zurückgezogen`,
-  })
+  // War der Auftrag noch versteckt geplant, hat die zugewiesene Person ihn
+  // nie zu Gesicht bekommen — eine "zurückgezogen"-Benachrichtigung wäre
+  // dann nur verwirrend.
+  const warNochVersteckt = auftrag.geplantAm !== null && auftrag.geplantAm > new Date()
+  if (!warNochVersteckt) {
+    await benachrichtigungErstellen({
+      personId: auftrag.zugewiesenAnId,
+      text: `${kontext.name} hat die Aufgabe "${auftrag.titel}" zurückgezogen`,
+    })
+  }
 
-  revalidatePath("/aufgaben/auftraege")
+  revalidatePath("/aufgaben")
   revalidatePath("/")
+  revalidatePath("/geplante-aktionen")
 }
 
 /** Anhänge lassen sich nur nachträglich löschen, nicht ergänzen — dieselbe Regel wie bei Aufgabe. */
@@ -135,7 +197,7 @@ export async function auftragAnhangLoeschen(anhangId: string) {
 
   await auftragAnhangLoeschenIntern(anhangId)
 
-  revalidatePath("/aufgaben/auftraege")
+  revalidatePath("/aufgaben")
 }
 
 /**
@@ -158,7 +220,7 @@ export async function auftragKommentarErstellen(auftragId: string, formData: For
   const neueAnhaenge = anhaengeAusFormData(formData)
   const anhaengeFehler = auftragAnhaengePruefen(neueAnhaenge)
   if (anhaengeFehler) {
-    redirect(`/aufgaben/auftraege?fehler=${anhaengeFehler}`)
+    redirect(`/aufgaben?fehler=${anhaengeFehler}`)
   }
 
   const text = String(formData.get("text") ?? "").trim()
@@ -174,8 +236,8 @@ export async function auftragKommentarErstellen(auftragId: string, formData: For
   await benachrichtigungErstellen({
     personId: empfaengerId,
     text: `${kontext.name} hat zu "${auftrag.titel}" kommentiert`,
-    link: "/aufgaben/auftraege",
+    link: "/aufgaben",
   })
 
-  revalidatePath("/aufgaben/auftraege")
+  revalidatePath("/aufgaben")
 }

@@ -1,8 +1,6 @@
-"use client"
-
 import { RichTextEditor } from "@/components/rich-text-editor"
-import { FeldInfo } from "@/components/feld-info"
 import { AUFGABE_PRIORITAETEN } from "@/lib/aufgaben-optionen"
+import { datumIsoAusDate } from "@/lib/datum"
 
 export type AufgabeAnhangAnzeige = { id: string; dateiname: string; groesseBytes: number; mimetyp: string }
 
@@ -11,6 +9,15 @@ export type AufgabeStandardwerte = {
   beschreibung: string
   faelligAm: string
   prioritaet: string
+  /** datumIsoAusDate-formatiert, leer = kein Termin gesetzt. */
+  geplantAm: string
+  /**
+   * Ob das "Geplant für"-Feld überhaupt angezeigt wird — beim Anlegen
+   * immer `true`, beim Bearbeiten nur solange die Aufgabe noch nicht aktiv
+   * ist (siehe aufgabeZuStandardwerte). Auf einer schon aktiven Aufgabe
+   * wäre das Feld irreführend leer.
+   */
+  geplantAmBearbeitbar: boolean
 }
 
 export const LEERE_AUFGABE_STANDARDWERTE: AufgabeStandardwerte = {
@@ -18,6 +25,32 @@ export const LEERE_AUFGABE_STANDARDWERTE: AufgabeStandardwerte = {
   beschreibung: "",
   faelligAm: "",
   prioritaet: "MITTEL",
+  geplantAm: "",
+  geplantAmBearbeitbar: true,
+}
+
+/**
+ * Wandelt eine geladene Aufgabe (To-do-Liste oder Kalendereintrag unter
+ * "Geplante Aktionen") in `AufgabeStandardwerte` für den Bearbeiten-Dialog
+ * um — an EINER Stelle statt an jeder aufrufenden Komponente einzeln
+ * nachgebaut (Muster: infoZuStandardwerte in info-form-felder.tsx).
+ */
+export function aufgabeZuStandardwerte(aufgabe: {
+  titel: string
+  beschreibung: string | null
+  faelligAm: Date | null
+  prioritaet: string
+  geplantAm: Date | null
+}): AufgabeStandardwerte {
+  const jetzt = new Date()
+  return {
+    titel: aufgabe.titel,
+    beschreibung: aufgabe.beschreibung ?? "",
+    faelligAm: aufgabe.faelligAm ? datumIsoAusDate(aufgabe.faelligAm) : "",
+    prioritaet: aufgabe.prioritaet,
+    geplantAm: aufgabe.geplantAm ? datumIsoAusDate(aufgabe.geplantAm) : "",
+    geplantAmBearbeitbar: aufgabe.geplantAm === null || aufgabe.geplantAm > jetzt,
+  }
 }
 
 /**
@@ -50,7 +83,7 @@ export function AufgabeFormFelder({
     <>
       <div>
         <label className="block text-xs font-medium text-neutral-600">
-          Titel <FeldInfo text="z. B. Dienstplan für Oktober vorbereiten" />
+          Titel
         </label>
         <input
           name="titel"
@@ -112,6 +145,19 @@ export function AufgabeFormFelder({
               </div>
             </fieldset>
           </div>
+
+          {standardwerte.geplantAmBearbeitbar && (
+            <div>
+              <label className="block text-xs font-medium text-neutral-600">Geplant für (optional)</label>
+              <input
+                name="geplantAm"
+                type="date"
+                defaultValue={standardwerte.geplantAm}
+                className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+              />
+              <p className="mt-1.5 text-xs text-neutral-500">Taucht erst ab diesem Datum in der To-Do-Liste auf.</p>
+            </div>
+          )}
 
           {bestehendeAnhaenge.length > 0 && aufgabeId && (
             <div>

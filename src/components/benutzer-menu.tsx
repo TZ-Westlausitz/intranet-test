@@ -6,10 +6,10 @@ import Link from "next/link"
 import { abmelden } from "@/lib/auth/aktionen"
 
 /**
- * Ausklappbares Menü (Profil, Admin, Kontaktstelle, Ausloggen) hinter dem
- * Namen — aus der Kopfleiste herausgelöst, damit dieselbe Funktion auch im
- * festen Desktop-Header (src/app/layout.tsx) verfügbar ist, statt sie dort
- * zu duplizieren.
+ * Ausklappbares Menü (Profil, Admin, Einstellungen, Kontaktstelle,
+ * Ausloggen) hinter dem Namen — aus der Kopfleiste herausgelöst, damit
+ * dieselbe Funktion auch im festen Desktop-Header (src/app/layout.tsx)
+ * verfügbar ist, statt sie dort zu duplizieren.
  *
  * `istAdmin` blendet den Admin-Link aus, wenn die Person keine
  * ADMINISTRATION-Rolle hat — reine Anzeige-Entscheidung wie bei jedem
@@ -78,6 +78,18 @@ export function BenutzerMenu({ name, istAdmin = false }: { name: string; istAdmi
               Admin
             </Link>
           )}
+
+          {/* Führt auf eine eigene Übersichtsseite (/einstellungen), nicht
+              direkt auf einen Unterpunkt — dort sollen mit der Zeit weitere
+              Einstellungsbereiche neben "Nutzeroberfläche" dazukommen. */}
+          <Link
+            href="/einstellungen"
+            role="menuitem"
+            onClick={() => setOffen(false)}
+            className="block px-4 py-2.5 text-sm text-neutral-600 transition hover:bg-marke-gruen/10"
+          >
+            Einstellungen
+          </Link>
 
           <span
             role="menuitem"

@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Rolle } from "@/generated/prisma/enums"
@@ -9,6 +11,11 @@ import { ortErstellen, ortUmbenennen, ortAktivSetzen } from "@/lib/admin/orte-ak
  * Orte sind feinere Standorte innerhalb eines Standorts, z. B. "Kamenz -
  * Praxis" (siehe Model Ort) — gedacht für eine spätere Orts-Auswahl bei
  * Terminen statt Freitext. Kein Löschen, nur Umbenennen und Deaktivieren.
+ *
+ * Die Admin-Übersichtskachel "Orte & Kategorien" führt weiterhin hierher
+ * (historisch, weil es Info-Kategorien noch nicht gab) — deshalb der
+ * kleine Querverweis oben, damit beide von derselben Kachel aus erreichbar
+ * bleiben.
  */
 export default async function OrteSeite() {
   const kontext = await berechtigung([Rolle.ADMINISTRATION])
@@ -17,7 +24,12 @@ export default async function OrteSeite() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-center text-2xl font-semibold text-marke-grau md:text-left">Orte</h1>
+      <div className="flex items-center justify-center gap-3 md:justify-start">
+        <h1 className="text-2xl font-semibold text-marke-grau">Orte</h1>
+        <Link href="/admin/info-kategorien" className="text-sm font-medium text-marke-gruen-dunkel hover:underline">
+          Info-Kategorien →
+        </Link>
+      </div>
 
       <form action={ortErstellen} className="mt-6 flex gap-2 rounded-xl border border-neutral-200 bg-white p-4">
         <input

@@ -4,7 +4,6 @@ import { useRef, useState, useTransition } from "react"
 
 import { ROLLEN_OPTIONEN } from "@/lib/rollen-optionen"
 import { Rolle } from "@/generated/prisma/enums"
-import { FeldInfo } from "@/components/feld-info"
 
 type Option = { id: string; name: string }
 
@@ -74,8 +73,7 @@ export function PersonErstellenFormular({
         <div className="flex flex-wrap gap-3">
           <div className="flex-1">
             <label htmlFor="pe-vorname" className="block text-xs font-medium text-neutral-600">
-              Vorname{" "}
-              <FeldInfo text="Bei Namensgleichheit in derselben Abteilung hier den vollständigen Vornamen inkl. Zweitname eintragen, z. B. „Jonas Heinz“ statt „Jonas“." />
+              Vorname
             </label>
             <input
               id="pe-vorname"

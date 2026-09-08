@@ -1,7 +1,15 @@
+export type BausteinUnterpunkt = { name: string; href: string }
+
 export type BausteinEintrag = {
   name: string
   /** Fehlt, solange der Baustein noch nicht existiert — dann nur Platzhaltertext. */
   href?: string
+  /**
+   * Für einen Sammelpunkt ohne eigenes Ziel, der stattdessen ein
+   * Untermenü öffnet (z. B. "Weiteres") — schließt sich mit `href`
+   * gegenseitig aus.
+   */
+  unterpunkte?: BausteinUnterpunkt[]
 }
 
 /**
@@ -14,15 +22,24 @@ export type BausteinEintrag = {
  */
 export const BAUSTEINE: BausteinEintrag[] = [
   { name: "Home", href: "/" },
-  { name: "Newsfeed" },
+  { name: "Newsfeed", href: "/newsfeed" },
   { name: "Aufgaben", href: "/aufgaben" },
   { name: "Formulare" },
   { name: "Wissen" },
   { name: "Kalender", href: "/kalender" },
-  { name: "Kontakte" },
+  { name: "Kontakte", href: "/kontakte" },
   { name: "Chat" },
-  // Ganz hinten: künftig ausklappbar mit weiteren Fahrzeug-Funktionen
-  // (Fahrzeug mieten, Meine Anfragen, Fahrzeug Reservierungen, Abrechnung).
-  // Bis dahin ein einfacher Link auf die Anfrage-Seite.
-  { name: "Fahrzeuge", href: "/fahrzeug-mieten" },
+  // Sammelpunkt für kleinere/seltener gebrauchte Bausteine, statt jeden
+  // einzeln in die Zeile zu packen — die soll mit den Hauptpunkten gefüllt
+  // bleiben, nicht mit einem Dutzend Funktionen auf einen Blick. Weitere
+  // Bausteine landen hier erstmal mit, bis sie einen eigenen Platz
+  // verdienen (siehe BausteinMehrMenu für die Desktop-Umsetzung).
+  {
+    name: "Weiteres",
+    unterpunkte: [
+      { name: "Fahrzeuge", href: "/fahrzeug-mieten" },
+      { name: "To-Do-Liste", href: "/aufgaben/todos" },
+      { name: "Geplante Aktionen", href: "/geplante-aktionen" },
+    ],
+  },
 ]
