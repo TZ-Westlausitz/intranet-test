@@ -240,6 +240,11 @@ model Person {
   infoAnhaengeHochgeladen InfoAnhang[]           @relation("InfoAnhangHochlader")
   infoUmfrageStimmen      InfoUmfrageStimme[]
 
+  // --- Wissensbereich ----------------------------------------------------
+  wissensArtikelErstellt     WissensArtikel[]          @relation("WissensArtikelErsteller")
+  wissensEmpfaenger          WissensEmpfaengerPerson[]
+  wissensAnhaengeHochgeladen WissensAnhang[]           @relation("WissensAnhangHochlader")
+
   @@index([aktiv])
   @@index([nachname, vorname])
 }
@@ -264,8 +269,9 @@ model Abteilung {
   kuerzel String? @unique
   aktiv   Boolean @default(true)
 
-  zugehoerigkeiten Zugehoerigkeit[]
-  infoEmpfaenger   InfoEmpfaengerAbteilung[]
+  zugehoerigkeiten  Zugehoerigkeit[]
+  infoEmpfaenger    InfoEmpfaengerAbteilung[]
+  wissensEmpfaenger WissensEmpfaengerAbteilung[]
 }
 
 /// Person × Standort × Abteilung × Rolle. Mehrfachstandorte kommen vor —
@@ -307,8 +313,9 @@ model Gruppe {
   name  String  @unique
   aktiv Boolean @default(true)
 
-  mitglieder     PersonGruppe[]
-  infoEmpfaenger InfoEmpfaengerGruppe[]
+  mitglieder        PersonGruppe[]
+  infoEmpfaenger    InfoEmpfaengerGruppe[]
+  wissensEmpfaenger WissensEmpfaengerGruppe[]
 }
 
 model PersonGruppe {
@@ -1486,4 +1493,119 @@ model InfoUmfrageStimme {
   person Person            @relation(fields: [personId], references: [benutzername])
 
   @@unique([optionId, personId])
+}
+
+// =============================================================================
+//  MODUL — Wissensbereich (Ordner/Unterordner mit Artikeln), siehe src/lib/wissen/
+// =============================================================================
+
+/// Oberste Ebene, für jede angemeldete Person sichtbar (wie ein
+/// Inhaltsverzeichnis) — nur Wissensmanager-Personen legen/verwalten sie
+/// (siehe /wissen). Kein echtes Löschen, nur Umbenennen/Deaktivieren
+/// (Muster: InfoKategorie) — ein Ordner kann unbemerkt Artikel enthalten.
+model WissensOrdner {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  aktiv      Boolean  @default(true)
+  erstelltAm DateTime @default(now())
+
+  unterordner WissensUnterordner[]
+  artikel     WissensArtikel[]
+}
+
+/// Genau eine Ebene unter WissensOrdner, keine weitere Verschachtelung.
+model WissensUnterordner {
+  id       String  @id @default(cuid())
+  ordnerId String
+  name     String
+  aktiv    Boolean @default(true)
+
+  ordner  WissensOrdner    @relation(fields: [ordnerId], references: [id], onDelete: Cascade)
+  artikel WissensArtikel[]
+
+  @@unique([ordnerId, name])
+}
+
+/// Liegt ENTWEDER direkt in einem Ordner ODER in einem Unterordner —
+/// genau ein Elternfeld gesetzt, dieselbe Mutual-Exclusivity wie bei
+/// Aufgabe.personId/projektId (siehe Kommentar dort). Sichtbarkeit läuft
+/// über die drei Empfänger-Tabellen unten (Muster: InfoEmpfaengerPerson/
+/// -Gruppe/-Abteilung), keine Zeit-/Freigabelogik wie bei Info.
+model WissensArtikel {
+  id             String   @id @default(cuid())
+  titel          String
+  /// Sanitiertes HTML aus dem Rich-Text-Editor — wie überall, NIE
+  /// ungeprüftes Nutzer-HTML.
+  inhalt         String?
+  ordnerId       String?
+  unterordnerId  String?
+  erstelltVonId  String
+  erstelltAm     DateTime @default(now())
+  aktualisiertAm DateTime @updatedAt
+
+  ordner                WissensOrdner?               @relation(fields: [ordnerId], references: [id], onDelete: Cascade)
+  unterordner           WissensUnterordner?          @relation(fields: [unterordnerId], references: [id], onDelete: Cascade)
+  erstelltVon           Person                       @relation("WissensArtikelErsteller", fields: [erstelltVonId], references: [benutzername])
+  anhaenge              WissensAnhang[]
+  empfaengerPersonen    WissensEmpfaengerPerson[]
+  empfaengerGruppen     WissensEmpfaengerGruppe[]
+  empfaengerAbteilungen WissensEmpfaengerAbteilung[]
+
+  @@index([ordnerId])
+  @@index([unterordnerId])
+  @@index([erstelltVonId])
+  @@index([aktualisiertAm])
+}
+
+model WissensEmpfaengerPerson {
+  id        String @id @default(cuid())
+  artikelId String
+  personId  String
+
+  artikel WissensArtikel @relation(fields: [artikelId], references: [id], onDelete: Cascade)
+  person  Person         @relation(fields: [personId], references: [benutzername])
+
+  @@unique([artikelId, personId])
+  @@index([personId])
+}
+
+model WissensEmpfaengerGruppe {
+  id        String @id @default(cuid())
+  artikelId String
+  gruppeId  String
+
+  artikel WissensArtikel @relation(fields: [artikelId], references: [id], onDelete: Cascade)
+  gruppe  Gruppe         @relation(fields: [gruppeId], references: [id])
+
+  @@unique([artikelId, gruppeId])
+  @@index([gruppeId])
+}
+
+model WissensEmpfaengerAbteilung {
+  id          String @id @default(cuid())
+  artikelId   String
+  abteilungId String
+
+  artikel   WissensArtikel @relation(fields: [artikelId], references: [id], onDelete: Cascade)
+  abteilung Abteilung      @relation(fields: [abteilungId], references: [id])
+
+  @@unique([artikelId, abteilungId])
+  @@index([abteilungId])
+}
+
+/// Dateipfad wie überall (Regel 7) — Datei aufs Volume, nur Pfad in die DB.
+model WissensAnhang {
+  id               String   @id @default(cuid())
+  artikelId        String
+  dateiname        String
+  pfad             String
+  mimetyp          String
+  groesseBytes     Int
+  hochgeladenAm    DateTime @default(now())
+  hochgeladenVonId String
+
+  artikel        WissensArtikel @relation(fields: [artikelId], references: [id], onDelete: Cascade)
+  hochgeladenVon Person         @relation("WissensAnhangHochlader", fields: [hochgeladenVonId], references: [benutzername])
+
+  @@index([artikelId])
 }

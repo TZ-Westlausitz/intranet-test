@@ -25,7 +25,7 @@ export const BAUSTEINE: BausteinEintrag[] = [
   { name: "Newsfeed", href: "/newsfeed" },
   { name: "Aufgaben", href: "/aufgaben" },
   { name: "Formulare" },
-  { name: "Wissen" },
+  { name: "Wissen", href: "/wissen" },
   { name: "Kalender", href: "/kalender" },
   { name: "Kontakte", href: "/kontakte" },
   { name: "Chat" },
