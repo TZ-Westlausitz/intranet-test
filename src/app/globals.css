@@ -26,6 +26,19 @@ body {
   color: var(--foreground);
 }
 
+/* `showModal()` verschiebt den Fokus auf das <dialog>-Element selbst,
+   solange kein Kind-Element ihn von sich aus beansprucht (Auto-Fokus-Regel
+   der HTML-Spezifikation) — Browser zeichnen dafür standardmäßig einen
+   Fokusring um den Dialog-Rahmen (blau in Chromium), obwohl niemand mit
+   der Tastatur navigiert. Betrifft alle Pop-Ups im Projekt (Info/Auftrag/
+   Formular/Termin/Aufgabe), deshalb hier zentral statt in jeder einzelnen
+   Dialog-Komponente. Fokus-Ringe auf echten interaktiven Elementen INNEN
+   (Knöpfe, Felder) bleiben unangetastet — das ist absichtlich nur auf das
+   <dialog>-Element selbst beschränkt. */
+dialog:focus {
+  outline: none;
+}
+
 /* Statusleiste (ProjektZeitstrahl): ein heller Schimmer läuft über die
    grüne Füllung, damit sie auch dann lebendig wirkt, wenn sich ihre Breite
    gerade nicht ändert — reiner Effekt, keine echte Bewegung. */
