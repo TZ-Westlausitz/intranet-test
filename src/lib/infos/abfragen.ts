@@ -134,6 +134,28 @@ export async function infosFuerPerson(kontext: InfoKontext) {
   )
 }
 
+/**
+ * Eigene, unfertige Entwürfe (siehe infoAlsEntwurfSpeichern) — bewusst
+ * NICHT über `infoSichtbarFuer` (die schließt Entwürfe ja gerade aus),
+ * sondern direkt nach `erstelltVonId` gefiltert: rein privat, für
+ * "Entwürfe anzeigen" neben "+ Info".
+ */
+export async function eigeneInfoEntwuerfe(personId: string) {
+  return prisma.info.findMany({
+    where: { erstelltVonId: personId, istEntwurf: true },
+    include: {
+      anhaenge: {
+        where: { kommentarId: null, eingebettet: false },
+        select: { id: true, dateiname: true, groesseBytes: true, mimetyp: true },
+      },
+      empfaengerPersonen: { select: { personId: true } },
+      empfaengerGruppen: { select: { gruppeId: true } },
+      empfaengerAbteilungen: { select: { abteilungId: true } },
+    },
+    orderBy: { erstelltAm: "desc" },
+  })
+}
+
 /** Volle Detailansicht — `null`, wenn die Info für diese Person nicht sichtbar ist. */
 export async function infoDetailFuerPerson(infoId: string, kontext: InfoKontext) {
   const jetzt = new Date()

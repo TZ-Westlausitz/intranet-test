@@ -46,8 +46,9 @@ export const GeplanteAuftragPunkt = forwardRef<
           <p className="mt-1 text-xs text-neutral-500">
             🕒 Geplant für {auftrag.geplantAm && formatiereDatumAusDate(auftrag.geplantAm)}
           </p>
+          {/* auftraegeGeplantFuerZeitraum schließt Entwürfe aus (istEntwurf: false) — zugewiesenAn ist hier immer gesetzt. */}
           <p className="mt-1 text-xs text-neutral-500">
-            Zugewiesen an {auftrag.zugewiesenAn.vorname} {auftrag.zugewiesenAn.nachname}
+            Zugewiesen an {auftrag.zugewiesenAn!.vorname} {auftrag.zugewiesenAn!.nachname}
           </p>
         </div>
         <div className="flex justify-end gap-2 border-t border-neutral-200 px-5 py-3">

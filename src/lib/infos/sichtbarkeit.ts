@@ -9,20 +9,27 @@ import { prisma } from "@/lib/db"
  * analog zu `projektSichtbarFuer` in src/lib/projekte/mitgliedschaft.ts —
  * UND zusätzlich schon veröffentlicht ist (siehe Info.veroeffentlichtAm),
  * es sei denn die anfragende Person hat sie selbst erstellt (damit sie
- * einen noch nicht veröffentlichten, geplanten Entwurf im eigenen Feed
- * kontrollieren/bearbeiten kann, siehe "Geplant am").
+ * einen noch nicht veröffentlichten, per "Geplant am" vorgemerkten
+ * Beitrag im eigenen Feed kontrollieren/bearbeiten kann).
  *
- * Bekannte, bewusst nicht behobene Lücke: die Ausnahme greift nur, wenn
- * die erstellende Person selbst auch technisch Empfänger ist — postet
- * jemand an eine Abteilung, der er selbst nicht angehört, sieht er seinen
- * eigenen Beitrag im eigenen Feed nicht. Bestand schon vor "Geplant am"
- * genauso (keine Ausnahme für die erstellende Person), hier nicht
+ * `istEntwurf` (Rückmeldung 2026-09-09, nicht zu verwechseln mit "Geplant
+ * am" oben — ein geplanter Beitrag ist fertig und wartet nur auf seinen
+ * Termin, ein Entwurf ist unfertig) ist IMMER ausgeschlossen, auch für die
+ * erstellende Person selbst — Entwürfe laufen über eine eigene, private
+ * Liste (siehe eigeneInfoEntwuerfe), nicht über den normalen Feed.
+ *
+ * Bekannte, bewusst nicht behobene Lücke: die "Geplant am"-Ausnahme greift
+ * nur, wenn die erstellende Person selbst auch technisch Empfänger ist —
+ * postet jemand an eine Abteilung, der er selbst nicht angehört, sieht er
+ * seinen eigenen Beitrag im eigenen Feed nicht. Bestand schon vor "Geplant
+ * am" genauso (keine Ausnahme für die erstellende Person), hier nicht
  * mitrepariert.
  */
 export function infoSichtbarFuer(personId: string): Prisma.InfoWhereInput {
   const jetzt = new Date()
   return {
     AND: [
+      { istEntwurf: false },
       { OR: [{ veroeffentlichtAm: { lte: jetzt } }, { erstelltVonId: personId }] },
       {
         OR: [

@@ -19,20 +19,19 @@ function anhaengeAusFormData(formData: FormData): File[] {
 }
 
 /**
- * Legt einen Auftrag für eine ANDERE Person an — für die eigene Liste
- * gibt es Aufgabe (To-do), kein Selbstauftrag hier. Keine Rollenprüfung:
- * jede aktive Person darf jeder anderen einen Auftrag geben, genau wie
- * beim Einladen zu einem Termin.
+ * Liest und prüft die Felder, die sich echtes Anlegen/Finalisieren und
+ * Entwurf-Speichern teilen — `entwurf: true` (siehe
+ * auftragAlsEntwurfSpeichern, Rückmeldung 2026-09-09) schaltet die
+ * Titel-/Zuweisen-Pflicht ab, der Selbstauftrag-Check bleibt aber IMMER
+ * aktiv (auch ein Entwurf soll das nicht klammheimlich zulassen).
  */
-export async function auftragErstellen(formData: FormData) {
-  const kontext = await berechtigung()
-
+function auftragFelderLesenOderFehler(formData: FormData, personId: string, entwurf: boolean) {
   const titel = String(formData.get("titel") ?? "").trim()
-  const zugewiesenAnId = String(formData.get("zugewiesenAn") ?? "")
-  if (!titel || !zugewiesenAnId) {
+  const zugewiesenAnId = String(formData.get("zugewiesenAn") ?? "") || null
+  if (!entwurf && (!titel || !zugewiesenAnId)) {
     redirect("/aufgaben?fehler=pflichtfeld")
   }
-  if (zugewiesenAnId === kontext.personId) {
+  if (zugewiesenAnId === personId) {
     redirect("/aufgaben?fehler=selbstauftrag")
   }
 
@@ -67,21 +66,47 @@ export async function auftragErstellen(formData: FormData) {
     redirect(`/aufgaben?fehler=${anhaengeFehler}`)
   }
 
-  const auftrag = await prisma.auftrag.create({
-    data: { erstelltVonId: kontext.personId, zugewiesenAnId, titel, beschreibung, prioritaet, faelligAm, geplantAm },
-  })
+  return { titel, zugewiesenAnId, beschreibung, faelligAm, geplantAm, istGeplant, prioritaet, neueAnhaenge }
+}
 
-  if (neueAnhaenge.length > 0) {
-    await auftragAnhaengeSpeichern(auftrag.id, neueAnhaenge)
+/**
+ * Legt einen Auftrag an ODER finalisiert einen vorhandenen Entwurf
+ * (`entwurfId` gesetzt, siehe auftragEntwurfFinalisieren) — bei
+ * `istEntwurf: false` bekommt die zugewiesene Person hier zum ERSTEN Mal
+ * überhaupt eine Benachrichtigung, ein Entwurf hatte sie ja rein privat
+ * gehalten.
+ */
+async function auftragSpeichern(
+  kontext: { personId: string; name: string },
+  felder: ReturnType<typeof auftragFelderLesenOderFehler>,
+  istEntwurf: boolean,
+  entwurfId?: string,
+) {
+  const daten = {
+    erstelltVonId: kontext.personId,
+    zugewiesenAnId: felder.zugewiesenAnId,
+    titel: felder.titel || "Entwurf ohne Titel",
+    beschreibung: felder.beschreibung,
+    prioritaet: felder.prioritaet,
+    faelligAm: felder.faelligAm,
+    geplantAm: felder.geplantAm,
+    istEntwurf,
+  }
+  const auftrag = entwurfId
+    ? await prisma.auftrag.update({ where: { id: entwurfId }, data: daten })
+    : await prisma.auftrag.create({ data: daten })
+
+  if (felder.neueAnhaenge.length > 0) {
+    await auftragAnhaengeSpeichern(auftrag.id, felder.neueAnhaenge)
   }
 
   // Bei "Geplant für" bekommt die zugewiesene Person noch keine
   // Benachrichtigung — sie kann den Auftrag ja noch gar nicht sehen
   // (dieselbe Begründung wie bei infoErstellen).
-  if (!istGeplant) {
+  if (!istEntwurf && !felder.istGeplant && felder.zugewiesenAnId) {
     await benachrichtigungErstellen({
-      personId: zugewiesenAnId,
-      text: `${kontext.name} hat dir eine Aufgabe zugewiesen: "${titel}"`,
+      personId: felder.zugewiesenAnId,
+      text: `${kontext.name} hat dir eine Aufgabe zugewiesen: "${felder.titel}"`,
       link: "/aufgaben",
     })
   }
@@ -89,6 +114,73 @@ export async function auftragErstellen(formData: FormData) {
   revalidatePath("/")
   revalidatePath("/geplante-aktionen")
   redirect("/aufgaben")
+}
+
+/**
+ * Legt einen Auftrag für eine ANDERE Person an — für die eigene Liste
+ * gibt es Aufgabe (To-do), kein Selbstauftrag hier. Keine Rollenprüfung:
+ * jede aktive Person darf jeder anderen einen Auftrag geben, genau wie
+ * beim Einladen zu einem Termin.
+ */
+export async function auftragErstellen(formData: FormData) {
+  const kontext = await berechtigung()
+  const felder = auftragFelderLesenOderFehler(formData, kontext.personId, false)
+  await auftragSpeichern(kontext, felder, false)
+}
+
+/**
+ * Vervollständigt einen eigenen Entwurf (siehe auftragAlsEntwurfSpeichern)
+ * zu einem echten Auftrag — dieselbe Pflichtprüfung wie beim frischen
+ * Anlegen (Titel + Zuweisen). Nur die erstellende Person darf das.
+ */
+export async function auftragEntwurfFinalisieren(entwurfId: string, formData: FormData) {
+  const kontext = await berechtigung()
+
+  const entwurf = await prisma.auftrag.findUnique({
+    where: { id: entwurfId },
+    select: { erstelltVonId: true, istEntwurf: true },
+  })
+  if (!entwurf?.istEntwurf || entwurf.erstelltVonId !== kontext.personId) {
+    throw new NichtBerechtigt("Entwurf nicht gefunden")
+  }
+
+  const felder = auftragFelderLesenOderFehler(formData, kontext.personId, false)
+  await auftragSpeichern(kontext, felder, false, entwurfId)
+}
+
+/**
+ * Speichert den "+ Auftrag"-Dialog als NEUEN Entwurf — ausgelöst, wenn er
+ * ohne normales Zuweisen geschlossen wird (Abbrechen/Escape, siehe
+ * AuftragErstellenDialog/EntwurfBestaetigenDialog) und sich die Person
+ * dagegen entscheidet, die Eingaben zu verwerfen. Ohne die
+ * Pflichtprüfungen von auftragErstellen, ohne Benachrichtigung. Für einen
+ * bereits bestehenden Entwurf (erneutes Entwurf-Speichern beim "Weiter
+ * bearbeiten") siehe auftragEntwurfAktualisieren — zwei getrennte
+ * Funktionen statt eines optionalen führenden Parameters, weil Server
+ * Actions als `<form action>`/`formAction` FormData immer als LETZTES
+ * Argument nach gebundenen Parametern bekommen (siehe `.bind(null, id)`
+ * überall sonst in diesem Projekt).
+ */
+export async function auftragAlsEntwurfSpeichern(formData: FormData) {
+  const kontext = await berechtigung()
+  const felder = auftragFelderLesenOderFehler(formData, kontext.personId, true)
+  await auftragSpeichern(kontext, felder, true)
+}
+
+/** Speichert einen BEREITS BESTEHENDEN Entwurf erneut — siehe auftragAlsEntwurfSpeichern. */
+export async function auftragEntwurfAktualisieren(entwurfId: string, formData: FormData) {
+  const kontext = await berechtigung()
+
+  const entwurf = await prisma.auftrag.findUnique({
+    where: { id: entwurfId },
+    select: { erstelltVonId: true, istEntwurf: true },
+  })
+  if (!entwurf?.istEntwurf || entwurf.erstelltVonId !== kontext.personId) {
+    throw new NichtBerechtigt("Entwurf nicht gefunden")
+  }
+
+  const felder = auftragFelderLesenOderFehler(formData, kontext.personId, true)
+  await auftragSpeichern(kontext, felder, true, entwurfId)
 }
 
 /**
@@ -159,7 +251,11 @@ export async function auftragErledigtSetzen(auftragId: string, erledigt: boolean
   revalidatePath("/")
 }
 
-/** Löschen ist wie bei Aufgabe/Termin der erstellenden Person vorbehalten. */
+/**
+ * Löschen ist wie bei Aufgabe/Termin der erstellenden Person vorbehalten —
+ * löscht auch einen eigenen Entwurf (siehe auftragAlsEntwurfSpeichern),
+ * eine eigene Lösch-Aktion dafür ist nicht nötig.
+ */
 export async function auftragLoeschen(auftragId: string) {
   const kontext = await berechtigung()
 
@@ -170,11 +266,13 @@ export async function auftragLoeschen(auftragId: string) {
 
   await prisma.auftrag.delete({ where: { id: auftragId } })
 
-  // War der Auftrag noch versteckt geplant, hat die zugewiesene Person ihn
-  // nie zu Gesicht bekommen — eine "zurückgezogen"-Benachrichtigung wäre
-  // dann nur verwirrend.
+  // Ein Entwurf war nie sichtbar (siehe auftraegeFuerPerson) — die
+  // zugewiesene Person (falls überhaupt schon gewählt) hat ihn nie zu
+  // Gesicht bekommen, eine "zurückgezogen"-Benachrichtigung wäre nur
+  // verwirrend. Dieselbe Begründung gilt für einen noch versteckt
+  // geplanten Auftrag.
   const warNochVersteckt = auftrag.geplantAm !== null && auftrag.geplantAm > new Date()
-  if (!warNochVersteckt) {
+  if (!auftrag.istEntwurf && !warNochVersteckt && auftrag.zugewiesenAnId) {
     await benachrichtigungErstellen({
       personId: auftrag.zugewiesenAnId,
       text: `${kontext.name} hat die Aufgabe "${auftrag.titel}" zurückgezogen`,
@@ -232,7 +330,9 @@ export async function auftragKommentarErstellen(auftragId: string, formData: For
     await auftragAnhaengeSpeichern(auftragId, neueAnhaenge, kommentar.id)
   }
 
-  const empfaengerId = auftrag.erstelltVonId === kontext.personId ? auftrag.zugewiesenAnId : auftrag.erstelltVonId
+  // Kommentare gibt es in der UI nur bei echten (sichtbaren) Aufträgen,
+  // nie bei einem Entwurf — `zugewiesenAnId` ist hier also immer gesetzt.
+  const empfaengerId = auftrag.erstelltVonId === kontext.personId ? auftrag.zugewiesenAnId! : auftrag.erstelltVonId
   await benachrichtigungErstellen({
     personId: empfaengerId,
     text: `${kontext.name} hat zu "${auftrag.titel}" kommentiert`,

@@ -26,18 +26,21 @@ function anhaengeAusFormData(formData: FormData, feldname = "anhaenge"): File[] 
  * (Titel, Inhalt, Kategorie, Empfänger ×3, Bestätigung/Kommentare,
  * Anhänge, Inline-Bilder) — `fehlerBasisPfad` ist die Seite, auf die bei
  * einem Validierungsfehler zurückgeleitet wird (`/newsfeed` beim Anlegen,
- * `/newsfeed/<id>` beim Bearbeiten).
+ * `/newsfeed/<id>` beim Bearbeiten). `entwurf: true` (siehe
+ * infoAlsEntwurfSpeichern, Rückmeldung 2026-09-09) schaltet Titel-/
+ * Empfänger-Pflicht ab — ein Entwurf darf unvollständig sein.
  */
-async function infoFelderLesenOderFehler(formData: FormData, fehlerBasisPfad: string) {
+async function infoFelderLesenOderFehler(formData: FormData, fehlerBasisPfad: string, opts?: { entwurf?: boolean }) {
+  const entwurf = opts?.entwurf ?? false
   const titel = String(formData.get("titel") ?? "").trim()
-  if (!titel) {
+  if (!titel && !entwurf) {
     redirect(`${fehlerBasisPfad}?fehler=pflichtfeld`)
   }
 
   const empfaengerPersonen = formData.getAll("empfaengerPersonen").map(String).filter(Boolean)
   const empfaengerGruppen = formData.getAll("empfaengerGruppen").map(String).filter(Boolean)
   const empfaengerAbteilungen = formData.getAll("empfaengerAbteilungen").map(String).filter(Boolean)
-  if (empfaengerPersonen.length === 0 && empfaengerGruppen.length === 0 && empfaengerAbteilungen.length === 0) {
+  if (empfaengerPersonen.length === 0 && empfaengerGruppen.length === 0 && empfaengerAbteilungen.length === 0 && !entwurf) {
     redirect(`${fehlerBasisPfad}?fehler=keinEmpfaenger`)
   }
 
@@ -238,6 +241,85 @@ export async function infoErstellen(formData: FormData) {
   revalidatePath("/newsfeed")
   revalidatePath("/")
   redirect("/newsfeed")
+}
+
+/**
+ * Speichert den "+ Info"-Dialog als Entwurf — ausgelöst, wenn er ohne
+ * normales Veröffentlichen geschlossen wird (Abbrechen/Escape, siehe
+ * InfoErstellenDialog/EntwurfBestaetigenDialog) und sich die Person
+ * dagegen entscheidet, die Eingaben zu verwerfen. Anders als
+ * `infoErstellen` keine Pflichtprüfungen (siehe infoFelderLesenOderFehler,
+ * `entwurf: true`), keine Benachrichtigung, keine Umfrage — ein Entwurf
+ * ist rein privat und unvollständig, bis er über `infoAktualisieren`
+ * normal fertiggestellt wird.
+ */
+export async function infoAlsEntwurfSpeichern(formData: FormData) {
+  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Infos" })
+
+  const {
+    titel,
+    inhalt,
+    kategorieId,
+    empfaengerPersonen,
+    empfaengerGruppen,
+    empfaengerAbteilungen,
+    mitBestaetigung,
+    kommentareErlaubt,
+    neueAnhaenge,
+    inlineBilder,
+    inlineCids,
+  } = await infoFelderLesenOderFehler(formData, "/newsfeed", { entwurf: true })
+
+  const info = await prisma.info.create({
+    data: {
+      titel: titel || "Entwurf ohne Titel",
+      inhalt,
+      kategorieId,
+      mitBestaetigung,
+      kommentareErlaubt,
+      istEntwurf: true,
+      // Muss technisch gesetzt sein (Spalte NOT NULL), spielt aber keine
+      // Rolle — Entwürfe sind komplett aus infosFuerPerson ausgeschlossen
+      // und bekommen bei der Fertigstellung über infoAktualisieren einen
+      // frischen, echten Wert (siehe dortiger Kommentar).
+      veroeffentlichtAm: new Date(),
+      erstelltVonId: kontext.personId,
+      empfaengerPersonen: { create: empfaengerPersonen.map((personId) => ({ personId })) },
+      empfaengerGruppen: { create: empfaengerGruppen.map((gruppeId) => ({ gruppeId })) },
+      empfaengerAbteilungen: { create: empfaengerAbteilungen.map((abteilungId) => ({ abteilungId })) },
+    },
+  })
+
+  if (neueAnhaenge.length > 0) {
+    await infoAnhaengeSpeichern(info.id, neueAnhaenge, kontext.personId)
+  }
+
+  const aufgeloestesInhalt = await inlineBilderAufloesenUndSpeichern(info.id, kontext.personId, inhalt, inlineBilder, inlineCids)
+  if (aufgeloestesInhalt !== inhalt) {
+    await prisma.info.update({ where: { id: info.id }, data: { inhalt: aufgeloestesInhalt } })
+  }
+
+  revalidatePath("/newsfeed")
+  redirect("/newsfeed")
+}
+
+/**
+ * Löscht einen eigenen Entwurf — anders als `infoLoeschen` (Berechtigung
+ * "Löschen & Bearbeiten", unabhängig von Autorenschaft) hier bewusst
+ * autorenscharf: ein Entwurf ist rein privat, seine Berechtigung "Infos"
+ * (zum Anlegen) reicht deshalb, um ihn auch wieder zu löschen — ohne dass
+ * dafür die zusätzliche Löschen-Berechtigung nötig wäre.
+ */
+export async function infoEntwurfLoeschen(infoId: string) {
+  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Infos" })
+
+  const info = await prisma.info.findUnique({ where: { id: infoId }, select: { erstelltVonId: true, istEntwurf: true } })
+  if (!info?.istEntwurf || info.erstelltVonId !== kontext.personId) {
+    throw new NichtBerechtigt("Entwurf nicht gefunden")
+  }
+
+  await prisma.info.delete({ where: { id: infoId } })
+  revalidatePath("/newsfeed")
 }
 
 /**
@@ -449,9 +531,12 @@ export async function infoAktualisieren(infoId: string, formData: FormData) {
   // angezeigten) Formularfeld steht (Regel 5: nie dem Formularwert
   // vertrauen, wenn er gar nicht gelten darf). Ein geleertes Feld bei
   // einem noch nicht veröffentlichten Entwurf heißt "jetzt sofort
-  // veröffentlichen".
+  // veröffentlichen". Ein ECHTER Entwurf (`istEntwurf`, siehe
+  // infoAlsEntwurfSpeichern) zählt hier IMMER als "noch nicht
+  // veröffentlicht" — sein gespeichertes `veroeffentlichtAm` ist nur ein
+  // technischer Platzhalter vom Entwurf-Speichern, kein echter Termin.
   const jetzt = new Date()
-  const nochNichtVeroeffentlicht = info.veroeffentlichtAm > jetzt
+  const nochNichtVeroeffentlicht = info.istEntwurf || info.veroeffentlichtAm > jetzt
   const geplantAmUpdate = nochNichtVeroeffentlicht
     ? (() => {
         const roh = String(formData.get("geplantAm") ?? "").trim()
@@ -472,7 +557,9 @@ export async function infoAktualisieren(infoId: string, formData: FormData) {
     }),
     prisma.info.update({
       where: { id: infoId },
-      data: { titel, inhalt, kategorieId, mitBestaetigung, kommentareErlaubt, alsUnternehmen, ...geplantAmUpdate },
+      // Jede erfolgreiche normale Speicherung graduiert einen Entwurf
+      // endgültig zu einer echten Info (no-op, falls schon echt).
+      data: { titel, inhalt, kategorieId, mitBestaetigung, kommentareErlaubt, alsUnternehmen, istEntwurf: false, ...geplantAmUpdate },
     }),
   ])
 
@@ -483,6 +570,25 @@ export async function infoAktualisieren(infoId: string, formData: FormData) {
   const aufgeloestesInhalt = await inlineBilderAufloesenUndSpeichern(infoId, kontext.personId, inhalt, inlineBilder, inlineCids)
   if (aufgeloestesInhalt !== inhalt) {
     await prisma.info.update({ where: { id: infoId }, data: { inhalt: aufgeloestesInhalt } })
+  }
+
+  // Ein Entwurf (siehe infoAlsEntwurfSpeichern) hat beim Speichern noch
+  // niemanden benachrichtigt, weil er rein privat war — diese Speicherung
+  // ist also das ERSTE Mal, dass Empfänger überhaupt von der Info
+  // erfahren, anders als bei einer normalen Nachbesserung. Nur bei
+  // sofortiger (nicht "Geplant am") Veröffentlichung, wie bei infoErstellen.
+  if (info.istEntwurf && !("geplantAm" in geplantAmUpdate && geplantAmUpdate.geplantAm)) {
+    const absenderName = alsUnternehmen ? UNTERNEHMENSNAME : kontext.name
+    const empfaengerIds = (await infoEmpfaengerIds(infoId)).filter((id) => id !== kontext.personId)
+    await Promise.all(
+      empfaengerIds.map((personId) =>
+        benachrichtigungErstellen({
+          personId,
+          text: `${absenderName} hat eine neue Info veröffentlicht: "${titel}"`,
+          link: `/newsfeed?info=${infoId}`,
+        }),
+      ),
+    )
   }
 
   revalidatePath("/newsfeed")

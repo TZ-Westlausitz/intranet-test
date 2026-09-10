@@ -3,11 +3,12 @@ import { prisma } from "@/lib/db"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { InfoErstellenDialog } from "@/components/info-erstellen-dialog"
+import { InfoEntwuerfeDialog } from "@/components/info-entwuerfe-dialog"
 import { NewsfeedListe } from "@/components/newsfeed-liste"
 import type { InfoFormularOptionen } from "@/components/info-form-felder"
-import { infosFuerPerson, UNTERNEHMENSNAME } from "@/lib/infos/abfragen"
+import { infosFuerPerson, eigeneInfoEntwuerfe, UNTERNEHMENSNAME } from "@/lib/infos/abfragen"
 import { istGeschaeftsfuehrung } from "@/lib/infos/sichtbarkeit"
-import { infoErstellen } from "@/lib/infos/aktionen"
+import { infoErstellen, infoAlsEntwurfSpeichern, infoAktualisieren, infoEntwurfLoeschen, infoAnhangLoeschen } from "@/lib/infos/aktionen"
 import { richTextZuText } from "@/lib/rich-text"
 
 const FEHLER_TEXTE: Record<string, string> = {
@@ -48,8 +49,9 @@ export default async function NewsfeedSeite({
   const darfErstellen = kontext.berechtigungen.includes("Infos")
   const brauchtOptionen = kontext.berechtigungen.some((b) => RELEVANTE_BERECHTIGUNGEN.includes(b))
 
-  const [infos, darfAlsUnternehmen, personen, gruppen, abteilungen, kategorien] = await Promise.all([
+  const [infos, entwuerfe, darfAlsUnternehmen, personen, gruppen, abteilungen, kategorien] = await Promise.all([
     infosFuerPerson(kontext),
+    darfErstellen ? eigeneInfoEntwuerfe(kontext.personId) : Promise.resolve([]),
     brauchtOptionen ? istGeschaeftsfuehrung(kontext.personId) : Promise.resolve(false),
     brauchtOptionen
       ? prisma.person.findMany({
@@ -88,7 +90,20 @@ export default async function NewsfeedSeite({
       <Kopfleiste name={kontext.name} />
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-marke-grau">Newsfeed</h1>
-        {darfErstellen && <InfoErstellenDialog optionen={optionen} erstellenAktion={infoErstellen} />}
+        <div className="flex shrink-0 items-center gap-2">
+          {darfErstellen && entwuerfe.length > 0 && (
+            <InfoEntwuerfeDialog
+              entwuerfe={entwuerfe}
+              optionen={optionen}
+              aktualisierenAktion={infoAktualisieren}
+              entwurfLoeschenAktion={infoEntwurfLoeschen}
+              anhangLoeschenAktion={infoAnhangLoeschen}
+            />
+          )}
+          {darfErstellen && (
+            <InfoErstellenDialog optionen={optionen} erstellenAktion={infoErstellen} entwurfSpeichernAktion={infoAlsEntwurfSpeichern} />
+          )}
+        </div>
       </div>
 
       {fehler && (

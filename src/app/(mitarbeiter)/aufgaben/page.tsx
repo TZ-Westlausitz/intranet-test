@@ -3,20 +3,23 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
-import { RichTextEditor } from "@/components/rich-text-editor"
-import { PersonenAuswahl } from "@/components/personen-auswahl"
 import { AuftragKommentare, type AuftragKommentarAnzeige } from "@/components/auftrag-kommentare"
-import { auftraegeFuerPerson } from "@/lib/auftraege/abfragen"
+import { AuftragErstellenDialog } from "@/components/auftrag-erstellen-dialog"
+import { auftragZuStandardwerte } from "@/components/auftrag-form-felder"
+import { auftraegeFuerPerson, eigeneAuftragEntwuerfe } from "@/lib/auftraege/abfragen"
 import { projektAufgabenFuerPerson, projekteFuerPerson } from "@/lib/projekte/abfragen"
 import {
   auftragErstellen,
+  auftragAlsEntwurfSpeichern,
+  auftragEntwurfAktualisieren,
+  auftragEntwurfFinalisieren,
   auftragAnnehmen,
   auftragErledigtSetzen,
   auftragLoeschen,
   auftragAnhangLoeschen,
   auftragKommentarErstellen,
 } from "@/lib/auftraege/aktionen"
-import { AUFGABE_PRIORITAETEN, AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAET_NAMEN } from "@/lib/aufgaben-optionen"
+import { AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAET_NAMEN } from "@/lib/aufgaben-optionen"
 import { AUFGABE_STATUS_KLASSEN, AUFGABE_STATUS_NAMEN } from "@/lib/projekte-optionen"
 import { richTextZuText } from "@/lib/rich-text"
 import { datumIsoAusDate } from "@/lib/datum"
@@ -167,11 +170,13 @@ export default async function AufgabenSeite({
 
   const [
     { zugewiesenOffen, zugewiesenErledigt, vergebenOffen, vergebenErledigt },
+    entwuerfe,
     personen,
     projektAufgabenOffen,
     projekte,
   ] = await Promise.all([
     auftraegeFuerPerson(kontext.personId),
+    eigeneAuftragEntwuerfe(kontext.personId),
     prisma.person.findMany({
       where: { aktiv: true, benutzername: { not: kontext.personId } },
       orderBy: [{ nachname: "asc" }, { vorname: "asc" }],
@@ -213,123 +218,6 @@ export default async function AufgabenSeite({
           {FEHLER_TEXTE[fehler] ?? "Das hat nicht geklappt."}
         </p>
       )}
-
-      <form action={auftragErstellen} className="mt-6 flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
-        <div>
-          <label htmlFor="titel" className="block text-xs font-medium text-neutral-600">
-            Neue Aufgabe
-          </label>
-          <input
-            id="titel"
-            name="titel"
-            type="text"
-            required
-            className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="auftrag-zuweisen-suche" className="block text-xs font-medium text-neutral-600">
-            Zuweisen an
-          </label>
-          <div className="mt-1.5">
-            <PersonenAuswahl
-              personen={personenAnzeige}
-              ausgewaehlteIds={[]}
-              name="zugewiesenAn"
-              mehrfach={false}
-              id="auftrag-zuweisen"
-            />
-          </div>
-        </div>
-
-        <details>
-          <summary className="cursor-pointer text-xs font-medium text-marke-gruen-dunkel">
-            + Weitere Optionen (Notizen, Fälligkeit, Priorität, Anhänge)
-          </summary>
-
-          <div className="mt-3 flex flex-col gap-3">
-            <div>
-              <label className="block text-xs font-medium text-neutral-600">Notizen (optional)</label>
-              <div className="mt-1">
-                <RichTextEditor name="beschreibung" defaultValue="" />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-end gap-3">
-              <div>
-                <label htmlFor="faelligAm" className="block text-xs font-medium text-neutral-600">
-                  Fällig am
-                </label>
-                <input
-                  id="faelligAm"
-                  name="faelligAm"
-                  type="date"
-                  className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
-                />
-              </div>
-
-              <fieldset>
-                <legend className="text-xs font-medium text-neutral-600">Priorität</legend>
-                <div className="mt-1.5 flex gap-2">
-                  {AUFGABE_PRIORITAETEN.map((prioritaet) => (
-                    <label
-                      key={prioritaet.wert}
-                      className="flex cursor-pointer items-center gap-1.5"
-                      title={prioritaet.name}
-                    >
-                      <input
-                        type="radio"
-                        name="prioritaet"
-                        value={prioritaet.wert}
-                        defaultChecked={prioritaet.wert === "MITTEL"}
-                        className="peer sr-only"
-                      />
-                      <span
-                        className={
-                          "flex h-7 w-7 items-center justify-center rounded-full ring-offset-2 peer-checked:ring-2 peer-checked:ring-marke-grau peer-focus-visible:ring-2 " +
-                          prioritaet.klasse
-                        }
-                      />
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            </div>
-
-            <div>
-              <label htmlFor="geplantAm" className="block text-xs font-medium text-neutral-600">
-                Geplant für (optional)
-              </label>
-              <input
-                id="geplantAm"
-                name="geplantAm"
-                type="date"
-                className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
-              />
-              <p className="mt-1.5 text-xs text-neutral-500">Die zugewiesene Person sieht den Auftrag erst ab diesem Datum.</p>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-neutral-600">Anhänge (Dokumente/Fotos)</label>
-              <input
-                type="file"
-                name="anhaenge"
-                multiple
-                accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
-                className="mt-1.5 w-full text-sm text-neutral-600 file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
-              />
-            </div>
-          </div>
-        </details>
-
-        <button
-          type="submit"
-          className="ml-auto h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
-        >
-          Zuweisen
-        </button>
-      </form>
 
       <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-marke-grau">Dir zugewiesen ({zugewiesenOffen.length})</h2>
@@ -471,7 +359,38 @@ export default async function AufgabenSeite({
       )}
 
       <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-marke-grau">Von dir vergeben ({vergebenOffen.length})</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-marke-grau">Von dir vergeben ({vergebenOffen.length})</h2>
+          <AuftragErstellenDialog personen={personenAnzeige} erstellenAktion={auftragErstellen} entwurfSpeichernAktion={auftragAlsEntwurfSpeichern} />
+        </div>
+
+        {entwuerfe.length > 0 && (
+          <ul className="mt-3 flex flex-col divide-y divide-neutral-100 rounded-lg bg-marke-orange/5">
+            {entwuerfe.map((entwurf) => (
+              <li key={entwurf.id} className="flex items-center justify-between gap-3 px-2 py-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm text-neutral-700">{entwurf.titel || "Entwurf ohne Titel"}</p>
+                  <span className="rounded-full bg-marke-orange/15 px-1.5 py-0.5 text-[11px] font-medium text-marke-orange">
+                    Entwurf
+                  </span>
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  <AuftragErstellenDialog
+                    personen={personenAnzeige}
+                    erstellenAktion={auftragEntwurfFinalisieren.bind(null, entwurf.id)}
+                    entwurfSpeichernAktion={auftragEntwurfAktualisieren.bind(null, entwurf.id)}
+                    entwurf={{ id: entwurf.id, standardwerte: auftragZuStandardwerte(entwurf) }}
+                  />
+                  <form action={auftragLoeschen.bind(null, entwurf.id)}>
+                    <button type="submit" className="text-xs text-neutral-400 hover:text-red-600">
+                      Löschen
+                    </button>
+                  </form>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
 
         {vergebenOffen.length === 0 ? (
           <p className="mt-3 text-sm text-neutral-500">Nichts Offenes.</p>
@@ -480,10 +399,11 @@ export default async function AufgabenSeite({
             {vergebenOffen.map((auftrag) => (
               <li key={auftrag.id} className="flex items-start gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
+                  {/* auftraegeFuerPerson schließt Entwürfe aus (istEntwurf: false) — zugewiesenAn ist hier immer gesetzt. */}
                   <AuftragInhalt
                     auftrag={auftrag}
                     heute={heute}
-                    name={`an ${auftrag.zugewiesenAn.vorname} ${auftrag.zugewiesenAn.nachname}`}
+                    name={`an ${auftrag.zugewiesenAn!.vorname} ${auftrag.zugewiesenAn!.nachname}`}
                   />
                   <AnhaengeAnzeige auftragId={auftrag.id} anhaenge={auftrag.anhaenge} loeschbar />
                   <AuftragKommentare
@@ -519,7 +439,7 @@ export default async function AufgabenSeite({
                   <AuftragInhalt
                     auftrag={auftrag}
                     heute={heute}
-                    name={`an ${auftrag.zugewiesenAn.vorname} ${auftrag.zugewiesenAn.nachname}`}
+                    name={`an ${auftrag.zugewiesenAn!.vorname} ${auftrag.zugewiesenAn!.nachname}`}
                   />
                   <AnhaengeAnzeige auftragId={auftrag.id} anhaenge={auftrag.anhaenge} loeschbar />
                   <AuftragKommentare
