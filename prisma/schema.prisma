@@ -245,6 +245,12 @@ model Person {
   wissensEmpfaenger          WissensEmpfaengerPerson[]
   wissensAnhaengeHochgeladen WissensAnhang[]           @relation("WissensAnhangHochlader")
 
+  // --- Formulare -----------------------------------------------------
+  formulareErstellt     FormularVorlage[]          @relation("FormularErsteller")
+  formulareEmpfaenger   FormularEmpfaengerPerson[]
+  formulareBenutzbar    FormularBenutzbarPerson[]
+  formularEinreichungen FormularEinreichung[]
+
   @@index([aktiv])
   @@index([nachname, vorname])
 }
@@ -269,9 +275,11 @@ model Abteilung {
   kuerzel String? @unique
   aktiv   Boolean @default(true)
 
-  zugehoerigkeiten  Zugehoerigkeit[]
-  infoEmpfaenger    InfoEmpfaengerAbteilung[]
-  wissensEmpfaenger WissensEmpfaengerAbteilung[]
+  zugehoerigkeiten    Zugehoerigkeit[]
+  infoEmpfaenger      InfoEmpfaengerAbteilung[]
+  wissensEmpfaenger   WissensEmpfaengerAbteilung[]
+  formulareBenutzbar  FormularBenutzbarAbteilung[]
+  formulareEmpfaenger FormularEmpfaengerAbteilung[]
 }
 
 /// Person × Standort × Abteilung × Rolle. Mehrfachstandorte kommen vor —
@@ -313,9 +321,11 @@ model Gruppe {
   name  String  @unique
   aktiv Boolean @default(true)
 
-  mitglieder        PersonGruppe[]
-  infoEmpfaenger    InfoEmpfaengerGruppe[]
-  wissensEmpfaenger WissensEmpfaengerGruppe[]
+  mitglieder          PersonGruppe[]
+  infoEmpfaenger      InfoEmpfaengerGruppe[]
+  wissensEmpfaenger   WissensEmpfaengerGruppe[]
+  formulareEmpfaenger FormularEmpfaengerGruppe[]
+  formulareBenutzbar  FormularBenutzbarGruppe[]
 }
 
 model PersonGruppe {
@@ -1030,6 +1040,15 @@ enum AuftragStatus {
 /// AuftragStatus) — kein Überspringen von ANGENOMMEN, damit auch bei
 /// einfachen Aufträgen sichtbar ist, ob die zugewiesene Person schon
 /// Kenntnis genommen hat.
+///
+/// `zugewiesenAnId` ist NUR bei `istEntwurf` leer — ein echter Auftrag
+/// (istEntwurf false) hat sie immer gesetzt, durchgesetzt von
+/// auftragErstellen/auftragEntwurfFinalisieren, nicht von der Datenbank.
+/// Ein Entwurf entsteht, wenn der "+ Auftrag"-Dialog ohne zu speichern
+/// geschlossen wird (siehe auftragAlsEntwurfSpeichern) — bleibt bis zur
+/// Fertigstellung durch die erstellende Person unsichtbar für die
+/// zugewiesene Person (siehe auftraegeFuerPerson) und bekommt bis dahin
+/// auch keine Benachrichtigung.
 model Auftrag {
   id           String            @id @default(cuid())
   titel        String
@@ -1048,12 +1067,13 @@ model Auftrag {
   geplantAm    DateTime?
   erledigtAm   DateTime?
   erstelltAm   DateTime          @default(now())
+  istEntwurf   Boolean           @default(false)
 
   erstelltVonId  String
-  zugewiesenAnId String
+  zugewiesenAnId String?
 
   erstelltVon  Person             @relation("AuftragErsteller", fields: [erstelltVonId], references: [benutzername])
-  zugewiesenAn Person             @relation("AuftragZugewiesen", fields: [zugewiesenAnId], references: [benutzername])
+  zugewiesenAn Person?            @relation("AuftragZugewiesen", fields: [zugewiesenAnId], references: [benutzername])
   anhaenge     AuftragAnhang[]
   kommentare   AuftragKommentar[]
 
@@ -1301,6 +1321,14 @@ model Info {
 
   erstelltVonId String
   erstelltAm    DateTime @default(now())
+
+  /// Beim Schließen des "+ Info"-Dialogs ohne zu speichern entstanden
+  /// (siehe infoAlsEntwurfSpeichern) — komplett aus dem normalen Feed
+  /// ausgeschlossen (siehe infosFuerPerson), nur über "Entwürfe anzeigen"
+  /// für die erstellende Person selbst sichtbar (siehe
+  /// eigeneInfoEntwuerfe). Wird bei der ersten normalen Speicherung über
+  /// infoAktualisieren endgültig auf false gesetzt.
+  istEntwurf Boolean @default(false)
 
   /// Optionaler Wunschtermin fürs Veröffentlichen, vom Formular gesetzt
   /// (leer = sofort). Bleibt auch nach Ablauf gespeichert (reine Anzeige/
@@ -1608,4 +1636,283 @@ model WissensAnhang {
   hochgeladenVon Person         @relation("WissensAnhangHochlader", fields: [hochgeladenVonId], references: [benutzername])
 
   @@index([artikelId])
+}
+
+// =============================================================================
+//  MODUL — Formulare
+// =============================================================================
+
+enum FormularElementTyp {
+  TEXT_EINZEILIG
+  TEXT_MEHRZEILIG
+  ZAHL
+  DATUM
+  AUSWAHL_EINZEL
+  AUSWAHL_MEHRFACH
+  CHECKBOX
+  DATEI
+  ORT
+  TEXTBLOCK
+  TRENNZEICHEN
+}
+
+enum FormularEinreichungStatus {
+  OFFEN
+  IN_BEARBEITUNG
+  ERLEDIGT
+}
+
+/// Eine Formular-Vorlage, frei aus Elementen zusammengestellt (Baukasten,
+/// siehe /formulare/erstellen) — nur Personen mit der Berechtigung
+/// "Wissensmanager" (wiederverwendet, siehe Wissensbereich) legen an oder
+/// bearbeiten. Struktur (Elemente/Optionen) friert ein, sobald es
+/// Einreichungen gibt (siehe vorlageHatEinreichungen/vorlageAktualisieren)
+/// — sonst würden alte Einreichungen zu Feldern gehören, die es so nicht
+/// mehr gibt. Ohne Einreichungen echt löschbar, mit Einreichungen nur
+/// noch deaktivierbar (Regel-2-artiger Schutz echter eingereichter
+/// Daten).
+model FormularVorlage {
+  id             String   @id @default(cuid())
+  titel          String
+  /// Sanitiertes Rich-Text-HTML, wie überall.
+  beschreibung   String?
+  aktiv          Boolean  @default(true)
+  /// Ob beim Absenden einer Einreichung zusätzlich eine ausgefüllte PDF
+  /// erzeugt wird (siehe FormularEinreichung.pdfPfad).
+  pdfExport      Boolean  @default(false)
+  /// Beim Schließen des Baukastens ohne zu speichern entstanden (siehe
+  /// vorlageAlsEntwurfSpeichern) — nur für die erstellende Person sichtbar
+  /// (siehe alleVorlagenFuerVerwaltung), nicht aktivierbar (siehe
+  /// vorlageAktivSetzen). Wird bei der ersten normalen Speicherung über
+  /// vorlageAktualisieren endgültig auf false gesetzt.
+  istEntwurf     Boolean  @default(false)
+  erstelltVonId  String
+  erstelltAm     DateTime @default(now())
+  aktualisiertAm DateTime @updatedAt
+
+  erstelltVon Person @relation("FormularErsteller", fields: [erstelltVonId], references: [benutzername])
+
+  elemente              FormularElement[]
+  // Wer Einreichungen bekommt — dasselbe Empfänger-Modell wie
+  // "benutzbarPersonen/-Gruppen/-Abteilungen" (Personen/Gruppen/
+  // Abteilungen gleichzeitig wählbar, nicht mehr nur EINE Person ODER EINE
+  // Gruppe — siehe Kontext im Plan, 2026-09-09 nachträglich geändert).
+  empfaengerPersonen    FormularEmpfaengerPerson[]
+  empfaengerGruppen     FormularEmpfaengerGruppe[]
+  empfaengerAbteilungen FormularEmpfaengerAbteilung[]
+  benutzbarPersonen     FormularBenutzbarPerson[]
+  benutzbarGruppen      FormularBenutzbarGruppe[]
+  benutzbarAbteilungen  FormularBenutzbarAbteilung[]
+  einreichungen         FormularEinreichung[]
+  bilder                FormularVorlageBild[]
+
+  @@index([aktiv])
+}
+
+/// Empfänger einer Vorlage (bekommen ihre Einreichungen) — dasselbe
+/// dreiteilige Modell wie FormularBenutzbarPerson/-Gruppe/-Abteilung
+/// (Zielgruppe), nur für die Empfänger-Seite statt die Sichtbarkeits-Seite.
+model FormularEmpfaengerPerson {
+  id        String @id @default(cuid())
+  vorlageId String
+  personId  String
+
+  vorlage FormularVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  person  Person          @relation(fields: [personId], references: [benutzername])
+
+  @@unique([vorlageId, personId])
+  @@index([personId])
+}
+
+model FormularEmpfaengerGruppe {
+  id        String @id @default(cuid())
+  vorlageId String
+  gruppeId  String
+
+  vorlage FormularVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  gruppe  Gruppe          @relation(fields: [gruppeId], references: [id])
+
+  @@unique([vorlageId, gruppeId])
+  @@index([gruppeId])
+}
+
+model FormularEmpfaengerAbteilung {
+  id          String @id @default(cuid())
+  vorlageId   String
+  abteilungId String
+
+  vorlage   FormularVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  abteilung Abteilung       @relation(fields: [abteilungId], references: [id])
+
+  @@unique([vorlageId, abteilungId])
+  @@index([abteilungId])
+}
+
+/// Inline in `FormularVorlage.beschreibung` eingefügte Bilder (Muster:
+/// Info.inhalt/InfoAnhang mit `eingebettet: true`) — eigene, schlankere
+/// Tabelle statt Wiederverwendung von FormularEinreichungAnhang, weil
+/// diese Bilder an der VORLAGE hängen, nicht an einer Einreichung.
+/// Dateipfad wie überall (Regel 7).
+model FormularVorlageBild {
+  id            String   @id @default(cuid())
+  vorlageId     String
+  dateiname     String
+  pfad          String
+  mimetyp       String
+  groesseBytes  Int
+  hochgeladenAm DateTime @default(now())
+
+  vorlage FormularVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+
+  @@index([vorlageId])
+}
+
+/// Ein Baustein innerhalb einer Vorlage, in `reihenfolge` sortiert.
+/// `label`/`pflicht` gelten für alle Eingabetypen; `inhalt` (Rich Text)
+/// nur für TEXTBLOCK (reine Anzeige, keine Eingabe durch den
+/// Ausfüllenden). `optionen` nur für AUSWAHL_EINZEL/AUSWAHL_MEHRFACH.
+/// Bei TRENNZEICHEN steckt der gewählte Linienstil
+/// ("PUNKTIERT"/"DURCHGEZOGEN"/"GESTRICHELT") im sonst für Fragetexte
+/// genutzten `label` — kein eigenes Feld für eine einzelne Konfigurations-
+/// Option, die genau wie ein Label ein einfacher kurzer String ist.
+///
+/// `bedingungElementId`/`bedingungWert` (Rückmeldung 2026-09-09): ein
+/// Element kann bedingt an ein ANDERES Element DERSELBEN Vorlage geknüpft
+/// werden — sichtbar nur, wenn jenes Element (muss AUSWAHL_EINZEL sein,
+/// siehe elementeLesenOderFehler) exakt `bedingungWert` beantwortet ist.
+/// Zeigt server- wie clientseitig immer auf ein Element mit KLEINERER
+/// `reihenfolge` (keine Vorwärts-/Ringverweise) — geprüft beim Speichern,
+/// nicht per DB-Constraint (die Reihenfolge selbst ist ja frei sortierbar).
+model FormularElement {
+  id                 String             @id @default(cuid())
+  vorlageId          String
+  typ                FormularElementTyp
+  reihenfolge        Int
+  label              String?
+  pflicht            Boolean            @default(false)
+  inhalt             String?
+  bedingungElementId String?
+  bedingungWert      String?
+
+  vorlage          FormularVorlage             @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  optionen         FormularElementOption[]
+  antworten        FormularAntwort[]
+  anhaenge         FormularEinreichungAnhang[]
+  bedingungElement FormularElement?           @relation("FormularElementBedingung", fields: [bedingungElementId], references: [id], onDelete: SetNull)
+  abhaengigeElemente FormularElement[]        @relation("FormularElementBedingung")
+
+  @@index([vorlageId])
+  @@index([bedingungElementId])
+}
+
+model FormularElementOption {
+  id          String @id @default(cuid())
+  elementId   String
+  wert        String
+  reihenfolge Int
+
+  element FormularElement @relation(fields: [elementId], references: [id], onDelete: Cascade)
+
+  @@index([elementId])
+}
+
+/// Zielgruppe eines Formulars ("Benutzbar für") — dasselbe Empfänger-
+/// Modell wie bei Info/Wissen (Personen/Gruppen/Abteilungen).
+model FormularBenutzbarPerson {
+  id        String @id @default(cuid())
+  vorlageId String
+  personId  String
+
+  vorlage FormularVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  person  Person          @relation(fields: [personId], references: [benutzername])
+
+  @@unique([vorlageId, personId])
+  @@index([personId])
+}
+
+model FormularBenutzbarGruppe {
+  id        String @id @default(cuid())
+  vorlageId String
+  gruppeId  String
+
+  vorlage FormularVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  gruppe  Gruppe          @relation(fields: [gruppeId], references: [id])
+
+  @@unique([vorlageId, gruppeId])
+  @@index([gruppeId])
+}
+
+model FormularBenutzbarAbteilung {
+  id          String @id @default(cuid())
+  vorlageId   String
+  abteilungId String
+
+  vorlage   FormularVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  abteilung Abteilung       @relation(fields: [abteilungId], references: [id])
+
+  @@unique([vorlageId, abteilungId])
+  @@index([abteilungId])
+}
+
+/// Eine Ausfüllung — append-only wie Vereinbarung/Uebergabeprotokoll:
+/// nach dem Absenden ändert sich nur noch `status`, nie die Antworten
+/// selbst.
+model FormularEinreichung {
+  id               String                    @id @default(cuid())
+  vorlageId        String
+  eingereichtVonId String
+  eingereichtAm    DateTime                  @default(now())
+  status           FormularEinreichungStatus @default(OFFEN)
+  /// Pfad der serverseitig erzeugten PDF (nur wenn vorlage.pdfExport zum
+  /// Zeitpunkt des Absendens an war) — liegt zusätzlich als
+  /// FormularEinreichungAnhang (ohne elementId) vor.
+  pdfPfad          String?
+
+  vorlage        FormularVorlage             @relation(fields: [vorlageId], references: [id])
+  eingereichtVon Person                      @relation(fields: [eingereichtVonId], references: [benutzername])
+  antworten      FormularAntwort[]
+  anhaenge       FormularEinreichungAnhang[]
+
+  @@index([vorlageId])
+  @@index([eingereichtVonId])
+}
+
+/// Eine Antwort pro Element — welches der drei `wert*`-Felder gilt, folgt
+/// aus `element.typ` (TEXT_EINZEILIG/TEXT_MEHRZEILIG/ZAHL/DATUM/
+/// AUSWAHL_EINZEL/ORT → wertText, AUSWAHL_MEHRFACH → wertMehrfach,
+/// CHECKBOX → wertJa). DATEI-Elemente erzeugen stattdessen einen
+/// FormularEinreichungAnhang, keine Antwort-Zeile.
+model FormularAntwort {
+  id            String   @id @default(cuid())
+  einreichungId String
+  elementId     String
+  wertText      String?
+  wertMehrfach  String[]
+  wertJa        Boolean?
+
+  einreichung FormularEinreichung @relation(fields: [einreichungId], references: [id], onDelete: Cascade)
+  element     FormularElement     @relation(fields: [elementId], references: [id])
+
+  @@unique([einreichungId, elementId])
+  @@index([elementId])
+}
+
+/// Dateipfad wie überall (Regel 7). `elementId` nur bei einer DATEI-
+/// Antwort gesetzt; `null` beim generierten PDF-Export der ganzen
+/// Einreichung (siehe FormularEinreichung.pdfPfad) — landet damit
+/// automatisch in derselben Anhänge-Liste wie Datei-Antworten.
+model FormularEinreichungAnhang {
+  id            String   @id @default(cuid())
+  einreichungId String
+  elementId     String?
+  dateiname     String
+  pfad          String
+  mimetyp       String
+  groesseBytes  Int
+  hochgeladenAm DateTime @default(now())
+
+  einreichung FormularEinreichung @relation(fields: [einreichungId], references: [id], onDelete: Cascade)
+  element     FormularElement?    @relation(fields: [elementId], references: [id])
+
+  @@index([einreichungId])
 }

@@ -4,8 +4,11 @@ import { useEffect, useRef, useState } from "react"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import TextAlign from "@tiptap/extension-text-align"
+import { Table } from "@tiptap/extension-table"
+import { TableRow } from "@tiptap/extension-table-row"
 import { Bild } from "@/components/rich-text-bild"
 import { Erwaehnung } from "@/components/rich-text-mention"
+import { TableCell, TableHeader, type VertikaleZellAusrichtung } from "@/components/rich-text-tabelle"
 
 /**
  * Formatierbares Freitextfeld — bewusst generisch gehalten (nicht
@@ -34,17 +37,31 @@ import { Erwaehnung } from "@/components/rich-text-mention"
  * `mentionPersonen` (Default aus): schaltet @Erwähnungen frei — Liste der
  * erwähnbaren Personen kommt als Prop rein (siehe Erwaehnung), kein
  * eigener Query in dieser Komponente.
+ *
+ * `tabelleErlaubt` (Default aus): schaltet einen Knopf frei, der eine
+ * zweispaltige Tabelle einfügt ("Zeile in zwei Spalten teilen") — Tiptaps
+ * eigene Table-Erweiterung, nur ohne die Zeilen/Spalten-Hinzufügen-UI, weil
+ * hier bewusst nur der einfache Zwei-Spalten-Fall gebraucht wird.
+ *
+ * `onChange` (optional): für Aufrufer, die den aktuellen HTML-Stand auch
+ * außerhalb dieser Komponente brauchen (z. B. eine Live-Vorschau) — ruft
+ * bei jeder Änderung mit dem neuen HTML auf, zusätzlich zum versteckten
+ * Formularfeld.
  */
 export function RichTextEditor({
   name,
   defaultValue,
   bilderErlaubt = false,
+  tabelleErlaubt = false,
   mentionPersonen,
+  onChange,
 }: {
   name: string
   defaultValue: string
   bilderErlaubt?: boolean
+  tabelleErlaubt?: boolean
   mentionPersonen?: { id: string; name: string }[]
+  onChange?: (html: string) => void
 }) {
   const [html, setHtml] = useState(defaultValue)
   const [bilder, setBilder] = useState<{ cid: string; datei: File }[]>([])
@@ -60,14 +77,19 @@ export function RichTextEditor({
       TextAlign.configure({ types: ["paragraph"] }),
       ...(bilderErlaubt ? [Bild] : []),
       ...(mentionPersonen ? [Erwaehnung(mentionPersonen)] : []),
+      ...(tabelleErlaubt ? [Table.configure({ resizable: false }), TableRow, TableHeader, TableCell] : []),
     ],
     content: defaultValue,
     immediatelyRender: false,
-    onUpdate: ({ editor }) => setHtml(editor.getHTML()),
+    onUpdate: ({ editor }) => {
+      const neuesHtml = editor.getHTML()
+      setHtml(neuesHtml)
+      onChange?.(neuesHtml)
+    },
     editorProps: {
       attributes: {
         class:
-          "min-h-24 px-3 py-2 text-sm focus:outline-none [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-marke-gruen-dunkel [&_a]:underline [&_img]:max-w-full",
+          "min-h-24 px-3 py-2 text-sm focus:outline-none [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-marke-gruen-dunkel [&_a]:underline [&_img]:max-w-full [&_table]:w-full [&_table]:table-fixed [&_table]:border-collapse [&_td]:border [&_td]:border-neutral-300 [&_td]:p-2 [&_td]:align-top [&_th]:border [&_th]:border-neutral-300 [&_th]:p-2 [&_th]:align-top",
       },
     },
   })
@@ -84,6 +106,28 @@ export function RichTextEditor({
     bildSammelRef.current.files = datenTransfer.files
   }, [bilder])
 
+  // Verfügbare Breite an der Einfügestelle — innerhalb einer Tabellenzelle
+  // (siehe RichTextEditor, tabelleErlaubt) deren Innenbreite (abzüglich des
+  // Zell-Innenabstands `[&_td]:p-2` unten), sonst die Breite des
+  // Editor-Inhalts selbst. Wird SOFORT beim Auswählen gemessen (nicht erst
+  // im onload der Bildvorschau), solange Cursor/Auswahl noch an der
+  // Einfügestelle stehen.
+  function verfuegbareBreiteAmCursor(): number {
+    if (!editor) return Infinity
+    try {
+      const { node } = editor.view.domAtPos(editor.state.selection.from)
+      const startElement = node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as HTMLElement)
+      const zelle = startElement?.closest("td, th") as HTMLElement | null
+      if (zelle) {
+        const zellInnenabstand = 16 // [&_td]/[&_th]:p-2, siehe editorProps.attributes.class unten
+        return Math.max(60, zelle.getBoundingClientRect().width - zellInnenabstand)
+      }
+      return editor.view.dom.getBoundingClientRect().width
+    } catch {
+      return editor.view.dom.getBoundingClientRect().width
+    }
+  }
+
   function bildAusgewaehlt(ereignis: React.ChangeEvent<HTMLInputElement>) {
     const datei = ereignis.target.files?.[0]
     ereignis.target.value = ""
@@ -91,14 +135,20 @@ export function RichTextEditor({
 
     const cid = crypto.randomUUID()
     const url = URL.createObjectURL(datei)
+    const verfuegbareBreite = verfuegbareBreiteAmCursor()
     const bildElement = new window.Image()
     bildElement.onload = () => {
+      // Auf die verfügbare Breite herunterskaliert (nie hochskaliert) —
+      // sonst würde ein in eine Tabellenspalte eingefügtes Bild die Zelle
+      // sprengen (fixe Pixelbreite am Wrapper-Div, siehe RichTextBild).
+      const breite = Math.round(Math.min(bildElement.naturalWidth, verfuegbareBreite))
+      const hoehe = Math.round(breite * (bildElement.naturalHeight / bildElement.naturalWidth))
       editor
         .chain()
         .focus()
         .insertContent({
           type: "image",
-          attrs: { src: url, cid, width: bildElement.naturalWidth, height: bildElement.naturalHeight },
+          attrs: { src: url, cid, width: breite, height: hoehe },
         })
         .run()
     }
@@ -124,6 +174,25 @@ export function RichTextEditor({
   function ausrichtungAktiv(wert: "left" | "center" | "right"): boolean {
     if (!editor) return false
     return editor.isActive("image") ? editor.isActive("image", { ausrichtung: wert }) : editor.isActive({ textAlign: wert })
+  }
+
+  // Gilt für die Tabellenzelle, in der der Cursor gerade steht (siehe
+  // RichTextEditor, tabelleErlaubt) — eine Kopf- ("th") oder normale Zelle
+  // ("td"), je nachdem welche der beiden gerade aktiv ist. Außerhalb einer
+  // Zelle ohne Wirkung (updateAttributes auf einen nicht aktiven Knotentyp
+  // ist ein No-op), genau wie die anderen Werkzeugleisten-Knöpfe außerhalb
+  // ihres Anwendungsfalls.
+  function zellAusrichtungSetzen(wert: VertikaleZellAusrichtung) {
+    if (!editor) return
+    const typ = editor.isActive("tableHeader") ? "tableHeader" : "tableCell"
+    editor.chain().focus().updateAttributes(typ, { verticalAlign: wert }).run()
+  }
+
+  function zellAusrichtungAktiv(wert: VertikaleZellAusrichtung): boolean {
+    if (!editor) return false
+    return (
+      editor.isActive("tableCell", { verticalAlign: wert }) || editor.isActive("tableHeader", { verticalAlign: wert })
+    )
   }
 
   return (
@@ -184,6 +253,27 @@ export function RichTextEditor({
               onChange={bildAusgewaehlt}
               className="hidden"
             />
+          </>
+        )}
+        {tabelleErlaubt && (
+          <>
+            <span className="mx-1 my-1 w-px bg-neutral-200" />
+            <WerkzeugKnopf
+              label="Zeile in zwei Spalten teilen"
+              onClick={() => editor?.chain().focus().insertTable({ rows: 1, cols: 2, withHeaderRow: false }).run()}
+            >
+              ⫲
+            </WerkzeugKnopf>
+            <span className="mx-1 my-1 w-px bg-neutral-200" />
+            <WerkzeugKnopf label="Zellinhalt oben ausrichten" aktiv={zellAusrichtungAktiv("top")} onClick={() => zellAusrichtungSetzen("top")}>
+              ⬒
+            </WerkzeugKnopf>
+            <WerkzeugKnopf label="Zellinhalt mittig ausrichten" aktiv={zellAusrichtungAktiv("middle")} onClick={() => zellAusrichtungSetzen("middle")}>
+              ▬
+            </WerkzeugKnopf>
+            <WerkzeugKnopf label="Zellinhalt unten ausrichten" aktiv={zellAusrichtungAktiv("bottom")} onClick={() => zellAusrichtungSetzen("bottom")}>
+              ⬓
+            </WerkzeugKnopf>
           </>
         )}
       </div>

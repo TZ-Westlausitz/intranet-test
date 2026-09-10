@@ -1,5 +1,14 @@
 import sanitizeHtml from "sanitize-html"
 
+/** Lässt auf "td"/"th" nur "vertical-align: top|middle|bottom" als style durch — siehe RichTextTabelle. */
+function zellAusrichtungTransform(tagName: string, attribs: sanitizeHtml.Attributes) {
+  const gueltig = typeof attribs.style === "string" && /^vertical-align:\s*(top|middle|bottom);?$/.test(attribs.style.trim())
+  if (gueltig) return { tagName, attribs }
+  const rest = { ...attribs }
+  delete rest.style
+  return { tagName, attribs: rest }
+}
+
 /**
  * Saniert HTML aus dem Rich-Text-Editor (RichTextEditor) vor dem
  * Speichern — unabhängig vom Baustein wiederverwendbar (Termine, später
@@ -11,8 +20,15 @@ import sanitizeHtml from "sanitize-html"
  */
 export function richTextSanitisieren(html: string): string {
   return sanitizeHtml(html, {
-    allowedTags: ["p", "br", "strong", "em", "u", "s", "ul", "ol", "li", "a", "img"],
+    allowedTags: ["p", "br", "strong", "em", "u", "s", "ul", "ol", "li", "a", "img", "table", "tbody", "tr", "td", "th"],
     allowedAttributes: {
+      // Zellzusammenführung + vertikale Ausrichtung, die Tiptaps
+      // Table-Erweiterung selbst setzen kann (siehe RichTextEditor,
+      // tabelleErlaubt/RichTextTabelle) — kein "colwidth", da die
+      // Spaltenbreite fest über CSS läuft (resizable: false); "style" ist
+      // NUR für "vertical-align" erlaubt (siehe transformTags.td/th unten).
+      td: ["colspan", "rowspan", "style"],
+      th: ["colspan", "rowspan", "style"],
       // "data-mention-id" NUR für @Erwähnungen (siehe RichTextErwaehnung) —
       // transformTags.a unten prüft, dass es zum tatsächlichen
       // Benutzernamen-Zeichensatz passt UND exakt zum sichtbaren href, ein
@@ -86,6 +102,13 @@ export function richTextSanitisieren(html: string): string {
         delete rest.style
         return { tagName, attribs: rest }
       },
+      // Nur exakt "vertical-align: top|middle|bottom" durchlassen (siehe
+      // RichTextTabelle) — jeder andere style-Wert fliegt raus. "top" wird
+      // vom Editor ohnehin nie als style geschrieben (Standardwert, siehe
+      // RichTextTabelle), die Prüfung erlaubt es trotzdem, falls jemand
+      // per Copy-Paste HTML mit explizitem "vertical-align: top" einfügt.
+      td: zellAusrichtungTransform,
+      th: zellAusrichtungTransform,
     },
   }).trim()
 }
