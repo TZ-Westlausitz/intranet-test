@@ -28,7 +28,7 @@ export const BAUSTEINE: BausteinEintrag[] = [
   { name: "Wissen", href: "/wissen" },
   { name: "Kalender", href: "/kalender" },
   { name: "Kontakte", href: "/kontakte" },
-  { name: "Chat" },
+  { name: "Chat", href: "/chat" },
   // Sammelpunkt für kleinere/seltener gebrauchte Bausteine, statt jeden
   // einzeln in die Zeile zu packen — die soll mit den Hauptpunkten gefüllt
   // bleiben, nicht mit einem Dutzend Funktionen auf einen Blick. Weitere

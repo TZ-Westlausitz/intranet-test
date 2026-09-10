@@ -251,6 +251,11 @@ model Person {
   formulareBenutzbar    FormularBenutzbarPerson[]
   formularEinreichungen FormularEinreichung[]
 
+  // --- Chat --------------------------------------------------------------
+  chatKonversationen ChatKonversationTeilnehmer[]
+  chatNachrichten    ChatNachricht[]              @relation("ChatNachrichtAbsender")
+  chatGelesen        ChatKonversationGelesen[]
+
   @@index([aktiv])
   @@index([nachname, vorname])
 }
@@ -326,6 +331,7 @@ model Gruppe {
   wissensEmpfaenger   WissensEmpfaengerGruppe[]
   formulareEmpfaenger FormularEmpfaengerGruppe[]
   formulareBenutzbar  FormularBenutzbarGruppe[]
+  chatKonversation    ChatKonversation?
 }
 
 model PersonGruppe {
@@ -1915,4 +1921,116 @@ model FormularEinreichungAnhang {
   element     FormularElement?    @relation(fields: [elementId], references: [id])
 
   @@index([einreichungId])
+}
+
+// =============================================================================
+//  Chat — Direktnachrichten + automatische Gruppenchats, siehe src/lib/chat/
+// =============================================================================
+
+/// Zugriffskontrolle statt Ende-zu-Ende-Verschlüsselung (bewusst
+/// entschieden, siehe Plan/Memory chat-baustein): Nur Teilnehmer bzw.
+/// aktuelle Gruppenmitglieder (siehe chatSichtbarFuer) können eine
+/// Konversation überhaupt abrufen — dasselbe Muster wie bei
+/// Formular/Info/Wissen. Drei sich gegenseitig ausschließende Arten
+/// (Rückmeldung 2026-09-10 ergänzt die dritte):
+/// - Direktnachricht: `direktSchluessel` gesetzt, `titel`/`gruppeId` leer.
+/// - Automatischer Gruppenchat (einer pro `Gruppe`): `gruppeId` gesetzt,
+///   `direktSchluessel`/`titel` leer, Mitglieder kommen live aus
+///   `Gruppe.mitglieder` (siehe chatSichtbarFuer/konversationTeilnehmerIds).
+/// - Frei angelegte Gruppe (Rückmeldung 2026-09-10: "+ Neue Gruppe", feste
+///   Mitgliederliste ab Anlage statt live aus einer Gruppe): `titel`
+///   gesetzt, `direktSchluessel`/`gruppeId` leer, Mitglieder stehen wie bei
+///   der Direktnachricht in `ChatKonversationTeilnehmer`.
+model ChatKonversation {
+  id String @id @default(cuid())
+
+  /// Gesetzt NUR beim automatischen Gruppenchat — Teilnehmer werden
+  /// dynamisch aus Gruppe.mitglieder aufgelöst (wie Formular/Info-
+  /// Sichtbarkeit), keine eigene Teilnehmerliste. Genau EIN Gruppenchat
+  /// pro Gruppe, lazy angelegt beim ersten Aufruf statt im Voraus für
+  /// jede Gruppe.
+  gruppeId String? @unique
+
+  /// Gesetzt NUR bei Direktnachricht — sortiertes "personId1:personId2"
+  /// als Duplikat-Schutz (verhindert zwei Konversationen zwischen
+  /// denselben zwei Personen), siehe direktSchluesselBilden.
+  direktSchluessel String? @unique
+
+  /// Gesetzt NUR bei einer frei angelegten Gruppe (siehe
+  /// gruppenchatErstellen) — bei Direktnachricht/automatischem Gruppenchat
+  /// wird der Anzeigename stattdessen aus dem anderen Teilnehmer bzw. dem
+  /// Gruppennamen abgeleitet, siehe meineKonversationen.
+  titel String?
+
+  erstelltAm DateTime @default(now())
+
+  gruppe      Gruppe?                      @relation(fields: [gruppeId], references: [id])
+  teilnehmer  ChatKonversationTeilnehmer[]
+  nachrichten ChatNachricht[]
+  gelesen     ChatKonversationGelesen[]
+}
+
+/// Bei Direktnachricht befüllt (genau 2 Zeilen) UND bei einer frei
+/// angelegten Gruppe (Rückmeldung 2026-09-10, beliebig viele Zeilen,
+/// feste Mitgliederliste ab Anlage) — NICHT beim automatischen Gruppenchat
+/// (dessen Teilnehmerliste live aus PersonGruppe kommt, siehe
+/// chatSichtbarFuer).
+model ChatKonversationTeilnehmer {
+  konversationId String
+  personId       String
+
+  konversation ChatKonversation @relation(fields: [konversationId], references: [id], onDelete: Cascade)
+  person       Person           @relation(fields: [personId], references: [benutzername])
+
+  @@id([konversationId, personId])
+}
+
+/// Bewusst ein schlichter String wie Projektnachricht.text/
+/// AuftragKommentar.text, KEIN Rich-Text — normales JSX-Rendern statt
+/// dangerouslySetInnerHTML.
+/// `text` ist optional — eine Nachricht kann auch nur aus Anhängen
+/// bestehen (Foto/Dokument ohne Bildunterschrift). Mindestens eines von
+/// beidem ist Pflicht, siehe nachrichtSenden.
+model ChatNachricht {
+  id             String   @id @default(cuid())
+  konversationId String
+  absenderId     String
+  text           String?
+  erstelltAm     DateTime @default(now())
+
+  konversation ChatKonversation      @relation(fields: [konversationId], references: [id], onDelete: Cascade)
+  absender     Person                @relation("ChatNachrichtAbsender", fields: [absenderId], references: [benutzername])
+  anhaenge     ChatNachrichtAnhang[]
+
+  @@index([konversationId, erstelltAm])
+}
+
+/// Dateipfad wie überall (Regel 7). Muster InfoAnhang, hier ohne
+/// eingebettet/Kommentar-Unterscheidung — eine Chat-Nachricht ist immer
+/// direkt, es gibt keine Rückfragen-Ebene wie bei Info.
+model ChatNachrichtAnhang {
+  id            String   @id @default(cuid())
+  nachrichtId   String
+  dateiname     String
+  pfad          String
+  mimetyp       String
+  groesseBytes  Int
+  hochgeladenAm DateTime @default(now())
+
+  nachricht ChatNachricht @relation(fields: [nachrichtId], references: [id], onDelete: Cascade)
+
+  @@index([nachrichtId])
+}
+
+/// Ein Zeitstempel statt einer Zeile pro gelesener Nachricht — reicht für
+/// den Ungelesen-Zähler (Muster: Benachrichtigung.gelesenAm).
+model ChatKonversationGelesen {
+  konversationId   String
+  personId         String
+  zuletztGelesenAm DateTime @default(now())
+
+  konversation ChatKonversation @relation(fields: [konversationId], references: [id], onDelete: Cascade)
+  person       Person           @relation(fields: [personId], references: [benutzername])
+
+  @@id([konversationId, personId])
 }
