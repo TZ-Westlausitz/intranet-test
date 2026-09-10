@@ -1,17 +1,38 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
+
+export type ChatWidgetKonversation = {
+  konversationId: string | null
+  gruppeId: string | null
+  titel: string
+  istGruppe: boolean
+  letzteNachricht: { text: string; von: string; erstelltAm: Date } | null
+  ungelesen: boolean
+}
 
 /**
- * Platzhalter für den künftigen Chat-Baustein (siehe Memory
- * kuenftige-bausteine-aus-altsystem) — nur die Fenster-Hülle: ein rundes
- * Icon unten rechts, das sich wie bei bekannten Messengern nach oben zu
- * einem Fenster ausklappt. Zeigt noch keine echten Chats — die
- * Verschlüsselungs- und Datenmodell-Entscheidung für den echten Baustein
- * (Ende-zu-Ende vs. Transport, siehe Regel 10 CLAUDE.md) steht noch aus.
+ * Rundes Icon unten rechts, das sich wie bei bekannten Messengern nach
+ * oben zu einem Fenster mit den letzten Konversationen ausklappt — bis
+ * 2026-09-10 nur eine "kommt bald"-Hülle (siehe Git-Historie), jetzt mit
+ * echten Daten aus demselben `meineKonversationen` wie die volle
+ * Übersicht `/chat` (Rückmeldung: Menüpunkt "Chat" und dieses Icon liefen
+ * sichtbar auseinander). Zeigt bewusst nur die 5 aktivsten BESTEHENDEN
+ * Konversationen (keine "noch nicht begonnenen" Gruppenchats — die
+ * gehören in die volle Übersicht, hier soll es ein schneller Überblick
+ * bleiben) — ein Klick öffnet die jeweilige Konversation direkt, "Alle
+ * Chats ansehen" führt zu `/chat`.
  */
-export function ChatWidget() {
+export function ChatWidget({
+  konversationen,
+  ungeleseneAnzahl,
+}: {
+  konversationen: ChatWidgetKonversation[]
+  ungeleseneAnzahl: number
+}) {
   const [offen, setOffen] = useState(false)
+  const angezeigt = konversationen.filter((k) => k.konversationId !== null).slice(0, 5)
 
   return (
     <div className="fixed right-4 bottom-4 z-40 flex flex-col items-end gap-3">
@@ -33,12 +54,47 @@ export function ChatWidget() {
             </button>
           </div>
 
-          <div className="flex flex-1 flex-col items-center justify-center gap-1 px-6 text-center">
-            <p className="text-sm font-medium text-neutral-600">Chatfunktion kommt bald</p>
-            <p className="text-xs text-neutral-400">
-              Hier können Kolleginnen und Kollegen künftig direkt miteinander schreiben.
-            </p>
+          <div className="flex-1 overflow-y-auto">
+            {angezeigt.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-1 px-6 text-center">
+                <p className="text-sm font-medium text-neutral-600">Noch keine Konversationen</p>
+                <p className="text-xs text-neutral-400">Schreib über den Menüpunkt Chat jemandem eine Nachricht.</p>
+              </div>
+            ) : (
+              angezeigt.map((k) => (
+                <Link
+                  key={k.konversationId}
+                  href={`/chat/${k.konversationId}`}
+                  onClick={() => setOffen(false)}
+                  className={
+                    "block border-b border-neutral-50 px-4 py-2.5 transition hover:bg-marke-gruen/5 " +
+                    (k.ungelesen ? "bg-marke-gruen/5" : "")
+                  }
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className={"truncate text-sm " + (k.ungelesen ? "font-semibold text-marke-grau" : "text-neutral-700")}>
+                      {k.istGruppe && "👥 "}
+                      {k.titel}
+                    </p>
+                    {k.ungelesen && <span className="h-2 w-2 shrink-0 rounded-full bg-marke-orange" />}
+                  </div>
+                  {k.letzteNachricht && (
+                    <p className="truncate text-xs text-neutral-400">
+                      {k.letzteNachricht.von}: {k.letzteNachricht.text}
+                    </p>
+                  )}
+                </Link>
+              ))
+            )}
           </div>
+
+          <Link
+            href="/chat"
+            onClick={() => setOffen(false)}
+            className="border-t border-neutral-100 px-4 py-2.5 text-center text-sm font-medium text-marke-gruen-dunkel hover:underline"
+          >
+            Alle Chats ansehen
+          </Link>
         </div>
       )}
 
@@ -47,7 +103,7 @@ export function ChatWidget() {
         onClick={() => setOffen((v) => !v)}
         aria-expanded={offen}
         aria-label={offen ? "Chats schließen" : "Chats öffnen"}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-marke-gruen text-neutral-900 shadow-lg transition hover:bg-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marke-gruen-dunkel"
+        className="relative flex h-14 w-14 items-center justify-center rounded-full bg-marke-gruen text-neutral-900 shadow-lg transition hover:bg-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marke-gruen-dunkel"
       >
         <svg
           viewBox="0 0 24 24"
@@ -61,6 +117,15 @@ export function ChatWidget() {
         >
           <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
         </svg>
+
+        {ungeleseneAnzahl > 0 && (
+          <span
+            aria-label={`${ungeleseneAnzahl} ungelesene Chats`}
+            className="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-marke-orange px-1 text-[10px] font-bold text-neutral-900"
+          >
+            {ungeleseneAnzahl}
+          </span>
+        )}
       </button>
     </div>
   )

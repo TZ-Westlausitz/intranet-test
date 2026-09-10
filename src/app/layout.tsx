@@ -11,6 +11,7 @@ import { ChatWidget } from "@/components/chat-widget";
 import { BausteinMehrMenu } from "@/components/baustein-mehr-menu";
 import { BAUSTEINE } from "@/lib/bausteine";
 import { neuesteBenachrichtigungen, ungeleseneAnzahl } from "@/lib/benachrichtigungen/abfragen";
+import { meineKonversationen } from "@/lib/chat/abfragen";
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum";
 import "./globals.css";
 
@@ -31,12 +32,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // fällt dann einfach weg, statt die Seite mit einem Fehler abzubrechen.
   const kontext = await kontextOderNull();
 
-  const [benachrichtigungenRoh, anzahlUngelesen] = kontext
+  const [benachrichtigungenRoh, anzahlUngelesen, chatKonversationen] = kontext
     ? await Promise.all([
         neuesteBenachrichtigungen(kontext.personId),
         ungeleseneAnzahl(kontext.personId),
+        meineKonversationen(kontext),
       ])
-    : [[], 0];
+    : [[], 0, []];
+  const chatUngeleseneAnzahl = chatKonversationen.filter((k) => k.ungelesen).length;
 
   const benachrichtigungen = benachrichtigungenRoh.map((b) => ({
     id: b.id,
@@ -137,7 +140,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">{children}</div>
         </div>
 
-        {kontext && <ChatWidget />}
+        {kontext && <ChatWidget konversationen={chatKonversationen} ungeleseneAnzahl={chatUngeleseneAnzahl} />}
       </body>
     </html>
   );
