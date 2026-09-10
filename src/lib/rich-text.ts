@@ -1,5 +1,19 @@
 import sanitizeHtml from "sanitize-html"
 
+/**
+ * Bereits aufgelöste Inline-Bild-URLs, die dieser Sanitizer als echten
+ * `src` akzeptiert — eine pro Baustein, der `bilderErlaubt` nutzt (siehe
+ * RichTextEditor). Ohne einen Eintrag hier verliert ein Bild seinen `src`
+ * bei jedem erneuten Speichern (nicht nur beim ersten), weil das dann
+ * schon aufgelöste `src` hier fälschlich als unbekannt/unsicher gilt und
+ * herausgefiltert wird (Rückmeldung 2026-09-10: Formular-Bild in einer
+ * Tabelle verschwand nach einer weiteren Bearbeitung der Vorlage).
+ */
+const GUELTIGE_BILD_SRC_MUSTER = [
+  /^\/api\/infos\/[a-zA-Z0-9]+\/anhaenge\/[a-zA-Z0-9]+$/,
+  /^\/api\/formulare\/vorlagen\/[a-zA-Z0-9]+\/bilder\/[a-zA-Z0-9]+$/,
+]
+
 /** Lässt auf "td"/"th" nur "vertical-align: top|middle|bottom" als style durch — siehe RichTextTabelle. */
 function zellAusrichtungTransform(tagName: string, attribs: sanitizeHtml.Attributes) {
   const gueltig = typeof attribs.style === "string" && /^vertical-align:\s*(top|middle|bottom);?$/.test(attribs.style.trim())
@@ -36,13 +50,14 @@ export function richTextSanitisieren(html: string): string {
       // Person zeigen als der Link selbst.
       a: ["href", "target", "rel", "data-mention-id"],
       // "src" ist grundsätzlich erlaubt, aber nur mit einem gültigen Wert
-      // (siehe transformTags.img unten) — für frisch eingefügte, noch
-      // nicht gespeicherte Bilder liefert der Editor dafür nur eine
-      // clientseitige blob:-URL (siehe RichTextEditor, bilderErlaubt), die
-      // dort herausgefiltert wird; die erstellende/bearbeitende Server
-      // Action setzt den echten src selbst, nachdem die Datei gespeichert
-      // ist (siehe infoErstellen/infoAktualisieren). Größe läuft über die
-      // echten width/height-Attribute; "style" ist NUR für die
+      // (siehe GUELTIGE_BILD_SRC_MUSTER/transformTags.img unten) — für
+      // frisch eingefügte, noch nicht gespeicherte Bilder liefert der
+      // Editor dafür nur eine clientseitige blob:-URL (siehe
+      // RichTextEditor, bilderErlaubt), die dort herausgefiltert wird; die
+      // erstellende/bearbeitende Server Action setzt den echten src selbst,
+      // nachdem die Datei gespeichert ist (siehe infoErstellen/
+      // vorlageAktualisieren). Größe läuft über die echten width/height-
+      // Attribute; "style" ist NUR für die
       // Bildausrichtung erlaubt (siehe RichTextBild/transformTags.img
       // unten) — nur eine von drei bekannten margin-Kombinationen kommt
       // durch, kein beliebiges CSS.
@@ -74,16 +89,13 @@ export function richTextSanitisieren(html: string): string {
         }
         return { tagName, attribs: rest }
       },
-      // Lässt NUR bereits aufgelöste, eigene Info-Anhang-URLs durch (siehe
-      // infoErstellen/infoAktualisieren) — jeder andere src-Wert
+      // Lässt NUR bereits aufgelöste, eigene Anhang-URLs durch (siehe
+      // GUELTIGE_BILD_SRC_MUSTER oben) — jeder andere src-Wert
       // (insbesondere die blob:-URL eines frisch eingefügten, noch nicht
-      // aufgelösten Bildes) wird entfernt. Ohne diese Prüfung würde ein
-      // beim Bearbeiten bereits aufgelöstes Bild seinen src bei jedem
-      // erneuten Speichern wieder verlieren, weil sein data-cid dann
-      // nicht mehr Teil der aktuellen Inline-Bild-Auswahl ist.
+      // aufgelösten Bildes) wird entfernt.
       img: (tagName, attribs) => {
         const rest = { ...attribs }
-        const srcGueltig = typeof rest.src === "string" && /^\/api\/infos\/[a-zA-Z0-9]+\/anhaenge\/[a-zA-Z0-9]+$/.test(rest.src)
+        const srcGueltig = typeof rest.src === "string" && GUELTIGE_BILD_SRC_MUSTER.some((muster) => muster.test(rest.src as string))
         if (!srcGueltig) delete rest.src
         // Die drei einzigen Werte, die RichTextBild für die Ausrichtung
         // erzeugt (links = kein style, mittig, rechts) — alles andere fliegt raus.

@@ -125,7 +125,7 @@ function kopfUndFusszeileZeichnen(
 
   seiten.forEach((seite, index) => {
     seite.drawImage(logo, {
-      x: RAND,
+      x: SEITE_BREITE - RAND - logoBreite,
       y: SEITE_HOEHE - RAND - LOGO_HOEHE,
       width: logoBreite,
       height: LOGO_HOEHE,

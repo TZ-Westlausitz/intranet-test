@@ -59,6 +59,8 @@ export default async function EinreichungDetailSeite({ params }: { params: Promi
       {pdfAnhang && (
         <a
           href={`/api/formulare/einreichungen/${einreichung.id}/anhaenge/${pdfAnhang.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
           className="mt-3 inline-block text-sm font-medium text-marke-gruen-dunkel hover:underline"
         >
           📄 {pdfAnhang.dateiname} herunterladen
