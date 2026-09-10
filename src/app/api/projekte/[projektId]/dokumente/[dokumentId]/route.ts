@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { dateiLesen } from "@/lib/ablage"
+import { contentDispositionHeader } from "@/lib/http"
 import { istAktivesProjektmitglied } from "@/lib/projekte/mitgliedschaft"
 
 /**
@@ -30,7 +31,7 @@ export async function GET(
   return new Response(new Blob([new Uint8Array(datei)]), {
     headers: {
       "Content-Type": dokument.mimetyp,
-      "Content-Disposition": `inline; filename="${dokument.dateiname.replace(/"/g, "")}"`,
+      "Content-Disposition": contentDispositionHeader(dokument.dateiname),
     },
   })
 }
