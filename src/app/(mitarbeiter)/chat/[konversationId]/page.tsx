@@ -4,7 +4,7 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { ChatKonversationAnsicht } from "@/components/chat-konversation-ansicht"
-import { konversationMitZugriff, konversationNachrichten } from "@/lib/chat/abfragen"
+import { konversationMitZugriff, konversationNachrichten, konversationTeilnehmerUndGelesenStand } from "@/lib/chat/abfragen"
 import { nachrichtSenden, konversationNachrichtenLaden, konversationAlsGelesenMarkieren } from "@/lib/chat/aktionen"
 
 export default async function ChatKonversationSeite({ params }: { params: Promise<{ konversationId: string }> }) {
@@ -14,7 +14,10 @@ export default async function ChatKonversationSeite({ params }: { params: Promis
   const konversation = await konversationMitZugriff(konversationId, kontext)
   if (!konversation) notFound()
 
-  const nachrichten = await konversationNachrichten(konversationId)
+  const [nachrichten, { teilnehmerIds, gelesenStand }] = await Promise.all([
+    konversationNachrichten(konversationId),
+    konversationTeilnehmerUndGelesenStand(konversation),
+  ])
   const anderer = konversation.teilnehmer.map((t) => t.person).find((p) => p.benutzername !== kontext.personId)
   const istGruppe = konversation.gruppe !== null || konversation.titel !== null
   const titel = konversation.titel ?? (konversation.gruppe ? konversation.gruppe.name : anderer ? `${anderer.vorname} ${anderer.nachname}` : "Direktnachricht")
@@ -31,6 +34,8 @@ export default async function ChatKonversationSeite({ params }: { params: Promis
         konversationId={konversationId}
         eigenePersonId={kontext.personId}
         anfangsNachrichten={nachrichten}
+        anfangsTeilnehmerIds={teilnehmerIds}
+        anfangsGelesenStand={gelesenStand}
         nachrichtenLadenAktion={konversationNachrichtenLaden}
         sendenAktion={nachrichtSenden}
         alsGelesenMarkierenAktion={konversationAlsGelesenMarkieren}

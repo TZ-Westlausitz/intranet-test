@@ -3,10 +3,26 @@ import { randomUUID } from "node:crypto"
 import { dateiAblegen } from "@/lib/ablage"
 import { prisma } from "@/lib/db"
 
-/** Reicht für Fotos/Dokumente im Chat — kein Videoschnittplatz. Muster infos/anhaenge.ts. */
+/** Reicht für Fotos/Dokumente/Sprachnachrichten im Chat — kein Videoschnittplatz. Muster infos/anhaenge.ts. */
 const MAX_DATEIGROESSE_BYTES = 15 * 1024 * 1024
 
-const ERLAUBTE_MIMETYPEN = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic"])
+/**
+ * Audio-Typen für Sprachnachrichten (Rückmeldung 2026-09-10) — je nach
+ * Browser liefert `MediaRecorder` unterschiedliche Formate (Chrome/
+ * Firefox meist "audio/webm", Safari nur "audio/mp4"), siehe
+ * ChatKonversationAnsicht/sprachaufnahmeMimetyp.
+ */
+const ERLAUBTE_MIMETYPEN = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "audio/webm",
+  "audio/mp4",
+  "audio/ogg",
+  "audio/mpeg",
+])
 
 /** Prüft hochgeladene Dateien, BEVOR irgendetwas gespeichert wird — Muster infoAnhaengePruefen. */
 export function chatAnhaengePruefen(dateien: File[]): "zuGross" | "typUngueltig" | null {

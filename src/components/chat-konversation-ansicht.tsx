@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react"
 
-import type { konversationNachrichten } from "@/lib/chat/abfragen"
 import type { nachrichtSenden, konversationAlsGelesenMarkieren, konversationNachrichtenLaden } from "@/lib/chat/aktionen"
 
-type Nachricht = Awaited<ReturnType<typeof konversationNachrichten>>[number]
+type LadeErgebnis = Awaited<ReturnType<typeof konversationNachrichtenLaden>>
+type Nachricht = LadeErgebnis["nachrichten"][number]
+type NachrichtAnzeige = Nachricht & { optimistisch?: boolean }
+type GelesenStand = LadeErgebnis["gelesenStand"]
 
 const POLL_INTERVALL_MS = 10_000
 
@@ -18,7 +20,37 @@ function dateigroesseAnzeige(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-/** Anhänge einer Nachricht — Bilder als anklickbare Vorschau, alles andere als Datei-Link (Muster: Anhang-Listen bei Info/Termin, hier mit Bildvorschau, weil das im Chat-Kontext erwartbar ist). */
+function aufnahmeZeitAnzeige(sekunden: number): string {
+  const min = Math.floor(sekunden / 60)
+  const sek = String(sekunden % 60).padStart(2, "0")
+  return `${min}:${sek}`
+}
+
+/** Dateiendung passend zum tatsächlich von MediaRecorder gelieferten Basis-Mimetyp (ohne ";codecs=..."), siehe sprachaufnahmeStarten. */
+const DATEIENDUNG_NACH_MIMETYP: Record<string, string> = {
+  "audio/webm": "webm",
+  "audio/mp4": "m4a",
+  "audio/ogg": "ogg",
+  "audio/mpeg": "mp3",
+}
+
+/**
+ * Bevorzugte, vom Browser tatsächlich unterstützte Aufnahmeformate für
+ * Sprachnachrichten (Rückmeldung 2026-09-10). "audio/mp4" bewusst ZUERST,
+ * nicht nach Verbreitung sortiert: Safari meldet über
+ * `MediaRecorder.isTypeSupported("audio/webm")` fälschlich Unterstützung
+ * (nimmt tatsächlich als WebM auf — die Datei ist auch technisch gültig),
+ * kann eigene WebM-Aufnahmen aber selbst nicht wieder ABSPIELEN
+ * (Rückmeldung 2026-09-10: "Fehler" im Player nach dem Senden — Safaris
+ * `<audio>` unterstützt WebM nur als Aufnahme-, nicht als Wiedergabeformat).
+ * "audio/mp4" spielt dagegen überall zuverlässig ab, auch dort, wo es nicht
+ * aufgenommen werden kann (Chrome/Firefox fallen dann automatisch auf
+ * "audio/webm" zurück, weil sie "audio/mp4" für MediaRecorder gar nicht
+ * erst als unterstützt melden).
+ */
+const AUFNAHME_MIMETYP_KANDIDATEN = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/ogg"]
+
+/** Anhänge einer Nachricht — Bilder als anklickbare Vorschau, Audio (Sprachnachrichten) als abspielbarer Player, alles andere als Datei-Link (Muster: Anhang-Listen bei Info/Termin, hier mit Bild-/Audio-Vorschau, weil das im Chat-Kontext erwartbar ist). */
 function NachrichtAnhaenge({ nachrichtId, anhaenge }: { nachrichtId: string; anhaenge: Nachricht["anhaenge"] }) {
   if (anhaenge.length === 0) return null
   return (
@@ -32,6 +64,9 @@ function NachrichtAnhaenge({ nachrichtId, anhaenge }: { nachrichtId: string; anh
               <img src={url} alt={anhang.dateiname} className="max-h-56 max-w-full rounded-lg border border-neutral-200" />
             </a>
           )
+        }
+        if (anhang.mimetyp.startsWith("audio/")) {
+          return <audio key={anhang.id} controls src={url} className="h-9 max-w-full" />
         }
         return (
           <a
@@ -51,14 +86,48 @@ function NachrichtAnhaenge({ nachrichtId, anhaenge }: { nachrichtId: string; anh
 }
 
 /**
+ * WhatsApp-artige Haken für eigene Nachrichten (Rückmeldung 2026-09-10):
+ * ein Haken = wird gerade gesendet (optimistisch, siehe beiSenden), zwei
+ * graue Haken = auf dem Server bestätigt ("zugestellt" fällt bei uns
+ * praktisch mit "gesendet" zusammen — es gibt keine Warteschlange, jeder
+ * aktuelle Teilnehmer kann die Nachricht sofort abrufen), zwei grüne Haken
+ * = JEDER andere aktuelle Teilnehmer hat sie gelesen (bei einer Gruppe
+ * also alle Mitglieder, nicht nur eines).
+ */
+function NachrichtHaken({ optimistisch, gelesenVonAllen }: { optimistisch: boolean; gelesenVonAllen: boolean }) {
+  if (optimistisch) {
+    return (
+      <svg viewBox="0 0 16 12" className="h-3 w-3.5" aria-label="Wird gesendet">
+        <path d="M1 6.5 L5.5 11 L15 1" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )
+  }
+  return (
+    <svg
+      viewBox="0 0 20 12"
+      className={"h-3 w-4 " + (gelesenVonAllen ? "text-marke-gruen-dunkel" : "text-neutral-400")}
+      aria-label={gelesenVonAllen ? "Von allen gelesen" : "Zugestellt"}
+    >
+      <path d="M1 6.5 L5.5 11 L15 1" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 6.5 L10.5 11 L20 1" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+/**
  * Nachrichtenliste + Sendeformular — leichtes Hintergrund-Polling statt
  * WebSocket (bewusst so entschieden, siehe Plan/Memory chat-baustein):
  * alle 10s wird per Server Action nach Nachrichten NEUER als die zuletzt
  * gesehene gefragt (Muster `vorlageZumBearbeitenLaden`: direkter Aufruf
  * einer "use server"-Funktion aus einer Client Component, kein
- * `<form action>` nötig). Nach dem eigenen Senden wird sofort einmal
- * zusätzlich abgefragt, statt auf das nächste Intervall zu warten, damit
- * die eigene Nachricht ohne spürbare Verzögerung erscheint.
+ * `<form action>` nötig) — die Antwort bringt IMMER auch den aktuellen
+ * Gelesen-Stand mit, damit sich die Haken bereits angezeigter eigener
+ * Nachrichten nachträglich einfärben, sobald die Gegenseite liest.
+ *
+ * Eigene Nachrichten erscheinen sofort optimistisch (ein Haken, siehe
+ * NachrichtHaken) — nach Bestätigung durch den Server wird der
+ * Platzhalter durch die echte(n), gerade eingetroffene(n) Nachricht(en)
+ * ersetzt, bei einem Fehler wieder entfernt.
  *
  * Anhänge (Rückmeldung 2026-09-10): Text ODER mindestens eine Datei
  * reicht zum Senden (siehe nachrichtSenden). Der Datei-Input bleibt
@@ -69,6 +138,8 @@ export function ChatKonversationAnsicht({
   konversationId,
   eigenePersonId,
   anfangsNachrichten,
+  anfangsTeilnehmerIds,
+  anfangsGelesenStand,
   nachrichtenLadenAktion,
   sendenAktion,
   alsGelesenMarkierenAktion,
@@ -76,18 +147,37 @@ export function ChatKonversationAnsicht({
   konversationId: string
   eigenePersonId: string
   anfangsNachrichten: Nachricht[]
+  anfangsTeilnehmerIds: string[]
+  anfangsGelesenStand: GelesenStand
   nachrichtenLadenAktion: typeof konversationNachrichtenLaden
   sendenAktion: typeof nachrichtSenden
   alsGelesenMarkierenAktion: typeof konversationAlsGelesenMarkieren
 }) {
-  const [nachrichten, setNachrichten] = useState(anfangsNachrichten)
+  const [nachrichten, setNachrichten] = useState<NachrichtAnzeige[]>(anfangsNachrichten)
+  const [teilnehmerIds, setTeilnehmerIds] = useState(anfangsTeilnehmerIds)
+  const [gelesenStand, setGelesenStand] = useState(anfangsGelesenStand)
   const [text, setText] = useState("")
   const [dateiNamen, setDateiNamen] = useState<string[]>([])
   const [sendet, setSendet] = useState(false)
   const [fehler, setFehler] = useState<string | null>(null)
+  const [aufnahmeLaeuft, setAufnahmeLaeuft] = useState(false)
+  const [aufnahmeSekunden, setAufnahmeSekunden] = useState(0)
   const letzteZeitRef = useRef(anfangsNachrichten.at(-1)?.erstelltAm ?? null)
   const listeEndeRef = useRef<HTMLDivElement>(null)
   const dateiInputRef = useRef<HTMLInputElement>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const aufnahmeChunksRef = useRef<Blob[]>([])
+  const aufnahmeIntervallRef = useRef<number | null>(null)
+  const aufnahmeStreamRef = useRef<MediaStream | null>(null)
+
+  // Gibt das Mikrofon frei, falls die Seite mitten in einer Aufnahme
+  // verlassen wird — sonst bliebe die Browser-Mikrofonanzeige aktiv.
+  useEffect(() => {
+    return () => {
+      aufnahmeStreamRef.current?.getTracks().forEach((spur) => spur.stop())
+      if (aufnahmeIntervallRef.current !== null) window.clearInterval(aufnahmeIntervallRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     alsGelesenMarkierenAktion(konversationId)
@@ -99,10 +189,12 @@ export function ChatKonversationAnsicht({
   }, [nachrichten])
 
   async function neueLaden() {
-    const neue = await nachrichtenLadenAktion(konversationId, letzteZeitRef.current?.toISOString())
-    if (neue.length === 0) return
-    letzteZeitRef.current = neue.at(-1)!.erstelltAm
-    setNachrichten((bisher) => [...bisher, ...neue])
+    const ergebnis = await nachrichtenLadenAktion(konversationId, letzteZeitRef.current?.toISOString())
+    setTeilnehmerIds(ergebnis.teilnehmerIds)
+    setGelesenStand(ergebnis.gelesenStand)
+    if (ergebnis.nachrichten.length === 0) return
+    letzteZeitRef.current = ergebnis.nachrichten.at(-1)!.erstelltAm
+    setNachrichten((bisher) => [...bisher, ...ergebnis.nachrichten])
     alsGelesenMarkierenAktion(konversationId)
   }
 
@@ -112,25 +204,106 @@ export function ChatKonversationAnsicht({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- neueLaden liest konversationId/Aktionen aus Props, die sich hier nicht ändern
   }, [konversationId])
 
-  async function beiSenden(ereignis: React.FormEvent<HTMLFormElement>) {
-    ereignis.preventDefault()
-    const formData = new FormData(ereignis.currentTarget)
-    const hatText = String(formData.get("text") ?? "").trim().length > 0
+  /**
+   * Eigentliche Sendelogik, losgelöst vom Formular-Submit — wird sowohl
+   * vom "Senden"-Knopf (beiSenden, formData aus dem Formular) als auch
+   * direkt nach dem Stoppen einer Sprachaufnahme aufgerufen (Rückmeldung
+   * 2026-09-10: "automatisch abgeschickt werden", selbst zusammengebaute
+   * formData ohne Umweg über den Datei-Input).
+   */
+  async function nachrichtWirklichSenden(formData: FormData) {
+    const eingegebenerText = String(formData.get("text") ?? "").trim()
     const hatDateien = anhaengeAusFormData(formData).length > 0
-    if ((!hatText && !hatDateien) || sendet) return
+    if ((!eingegebenerText && !hatDateien) || sendet) return
+
+    const optimistischeId = `optimistisch-${crypto.randomUUID()}`
+    const optimistischeNachricht: NachrichtAnzeige = {
+      id: optimistischeId,
+      konversationId,
+      absenderId: eigenePersonId,
+      text: eingegebenerText || null,
+      erstelltAm: new Date(),
+      absender: { benutzername: eigenePersonId, vorname: "Du", nachname: "" },
+      anhaenge: [],
+      optimistisch: true,
+    }
+
+    setNachrichten((bisher) => [...bisher, optimistischeNachricht])
     setSendet(true)
     setFehler(null)
+    setText("")
+    setDateiNamen([])
+    if (dateiInputRef.current) dateiInputRef.current.value = ""
+
     try {
       await sendenAktion(konversationId, formData)
-      setText("")
-      setDateiNamen([])
-      if (dateiInputRef.current) dateiInputRef.current.value = ""
-      await neueLaden()
+      const ergebnis = await nachrichtenLadenAktion(konversationId, letzteZeitRef.current?.toISOString())
+      if (ergebnis.nachrichten.length > 0) letzteZeitRef.current = ergebnis.nachrichten.at(-1)!.erstelltAm
+      setTeilnehmerIds(ergebnis.teilnehmerIds)
+      setGelesenStand(ergebnis.gelesenStand)
+      setNachrichten((bisher) => [...bisher.filter((n) => n.id !== optimistischeId), ...ergebnis.nachrichten])
+      alsGelesenMarkierenAktion(konversationId)
     } catch (fehlerObjekt) {
+      setNachrichten((bisher) => bisher.filter((n) => n.id !== optimistischeId))
       setFehler(fehlerObjekt instanceof Error ? fehlerObjekt.message : "Senden fehlgeschlagen.")
     } finally {
       setSendet(false)
     }
+  }
+
+  function beiSenden(ereignis: React.FormEvent<HTMLFormElement>) {
+    ereignis.preventDefault()
+    nachrichtWirklichSenden(new FormData(ereignis.currentTarget))
+  }
+
+  /**
+   * Startet die Mikrofon-Aufnahme (Rückmeldung 2026-09-10: Sprachnachrichten
+   * wie im Altsystem "Überblick") — beim Stoppen wird SOFORT gesendet
+   * (Rückmeldung 2026-09-10: "automatisch abgeschickt", anders als bei
+   * einem Foto/Dokument gibt es hier kein Ansehen-vor-dem-Senden), direkt
+   * über `nachrichtWirklichSenden` mit einer selbst zusammengebauten
+   * `FormData` statt über den Datei-Input/"Senden"-Knopf.
+   */
+  async function sprachaufnahmeStarten() {
+    setFehler(null)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      aufnahmeStreamRef.current = stream
+      const unterstuetzterTyp = AUFNAHME_MIMETYP_KANDIDATEN.find(
+        (typ) => typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(typ),
+      )
+      const recorder = new MediaRecorder(stream, unterstuetzterTyp ? { mimeType: unterstuetzterTyp } : undefined)
+      aufnahmeChunksRef.current = []
+
+      recorder.ondataavailable = (ereignis) => {
+        if (ereignis.data.size > 0) aufnahmeChunksRef.current.push(ereignis.data)
+      }
+      recorder.onstop = () => {
+        stream.getTracks().forEach((spur) => spur.stop())
+        const basisMimetyp = (recorder.mimeType || "audio/mp4").split(";")[0]
+        const blob = new Blob(aufnahmeChunksRef.current, { type: basisMimetyp })
+        const endung = DATEIENDUNG_NACH_MIMETYP[basisMimetyp] ?? "mp4"
+        const datei = new File([blob], `Sprachnachricht.${endung}`, { type: basisMimetyp })
+
+        const formData = new FormData()
+        formData.append("anhaenge", datei)
+        nachrichtWirklichSenden(formData)
+      }
+
+      recorder.start()
+      mediaRecorderRef.current = recorder
+      setAufnahmeSekunden(0)
+      setAufnahmeLaeuft(true)
+      aufnahmeIntervallRef.current = window.setInterval(() => setAufnahmeSekunden((s) => s + 1), 1000)
+    } catch {
+      setFehler("Zugriff auf das Mikrofon nicht möglich — bitte Berechtigung im Browser prüfen.")
+    }
+  }
+
+  function sprachaufnahmeStoppen() {
+    mediaRecorderRef.current?.stop()
+    setAufnahmeLaeuft(false)
+    if (aufnahmeIntervallRef.current !== null) window.clearInterval(aufnahmeIntervallRef.current)
   }
 
   return (
@@ -142,6 +315,13 @@ export function ChatKonversationAnsicht({
           <ul className="flex flex-col gap-3">
             {nachrichten.map((nachricht) => {
               const eigene = nachricht.absender.benutzername === eigenePersonId
+              const andereTeilnehmer = teilnehmerIds.filter((id) => id !== nachricht.absenderId)
+              const gelesenVonAllen =
+                andereTeilnehmer.length > 0 &&
+                andereTeilnehmer.every((id) => {
+                  const zeit = gelesenStand[id]
+                  return zeit && zeit >= nachricht.erstelltAm
+                })
               return (
                 <li key={nachricht.id} className={"flex flex-col " + (eigene ? "items-end" : "items-start")}>
                   <p className="text-xs font-medium text-neutral-400">
@@ -158,6 +338,11 @@ export function ChatKonversationAnsicht({
                     </p>
                   )}
                   <NachrichtAnhaenge nachrichtId={nachricht.id} anhaenge={nachricht.anhaenge} />
+                  {eigene && (
+                    <span className="mt-0.5">
+                      <NachrichtHaken optimistisch={nachricht.optimistisch ?? false} gelesenVonAllen={gelesenVonAllen} />
+                    </span>
+                  )}
                 </li>
               )
             })}
@@ -186,11 +371,23 @@ export function ChatKonversationAnsicht({
               type="file"
               name="anhaenge"
               multiple
-              accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
+              accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,audio/webm,audio/mp4,audio/ogg,audio/mpeg"
               onChange={(ereignis) => setDateiNamen(Array.from(ereignis.target.files ?? []).map((d) => d.name))}
               className="hidden"
             />
           </label>
+          <button
+            type="button"
+            onClick={aufnahmeLaeuft ? sprachaufnahmeStoppen : sprachaufnahmeStarten}
+            aria-label={aufnahmeLaeuft ? "Aufnahme beenden" : "Sprachnachricht aufnehmen"}
+            title={aufnahmeLaeuft ? "Aufnahme beenden" : "Sprachnachricht aufnehmen"}
+            className={
+              "flex h-9 shrink-0 items-center justify-center rounded-lg border px-2 text-sm transition " +
+              (aufnahmeLaeuft ? "min-w-9 border-red-300 bg-red-50 text-red-600" : "w-9 border-neutral-300 text-neutral-500 hover:bg-neutral-100")
+            }
+          >
+            {aufnahmeLaeuft ? `● ${aufnahmeZeitAnzeige(aufnahmeSekunden)}` : "🎤"}
+          </button>
           <input
             type="text"
             name="text"

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db"
-import { chatSichtbarFuer, direktSchluesselBilden } from "@/lib/chat/sichtbarkeit"
+import { chatSichtbarFuer, direktSchluesselBilden, konversationTeilnehmerIds } from "@/lib/chat/sichtbarkeit"
 
 type ChatKontext = { personId: string }
 
@@ -92,6 +92,28 @@ export async function konversationNachrichten(konversationId: string, seit?: Dat
       anhaenge: { select: { id: true, dateiname: true, mimetyp: true, groesseBytes: true } },
     },
   })
+}
+
+/**
+ * Aktuelle Teilnehmer + ihr Gelesen-Stand — Grundlage für die WhatsApp-
+ * artigen Haken (Rückmeldung 2026-09-10) in ChatKonversationAnsicht: eine
+ * eigene Nachricht gilt als "von allen gelesen" (zweiter Haken farbig),
+ * sobald JEDER andere aktuelle Teilnehmer (Einzelperson oder — bei einer
+ * Gruppe — alle Mitglieder) ein `zuletztGelesenAm` ab dem Sendezeitpunkt
+ * der Nachricht hat. Braucht kein eigenes Datenmodell — nutzt dieselbe
+ * `ChatKonversationGelesen`-Tabelle, die ohnehin schon für den Ungelesen-
+ * Zähler gepflegt wird.
+ */
+export async function konversationTeilnehmerUndGelesenStand(konversation: { id: string; gruppeId: string | null }) {
+  const [teilnehmerIds, gelesenZeilen] = await Promise.all([
+    konversationTeilnehmerIds(konversation),
+    prisma.chatKonversationGelesen.findMany({
+      where: { konversationId: konversation.id },
+      select: { personId: true, zuletztGelesenAm: true },
+    }),
+  ])
+  const gelesenStand = Object.fromEntries(gelesenZeilen.map((g) => [g.personId, g.zuletztGelesenAm]))
+  return { teilnehmerIds, gelesenStand }
 }
 
 /** Existierende Direktnachricht zwischen zwei Personen, falls vorhanden. */

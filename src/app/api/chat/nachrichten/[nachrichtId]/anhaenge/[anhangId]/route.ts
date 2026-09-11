@@ -1,16 +1,18 @@
 import { prisma } from "@/lib/db"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { dateiLesen } from "@/lib/ablage"
-import { contentDispositionHeader } from "@/lib/http"
+import { dateiAntwort } from "@/lib/http"
 import { chatSichtbarFuer } from "@/lib/chat/sichtbarkeit"
 
 /**
  * Liefert einen Chat-Nachrichten-Anhang aus — sichtbar für jeden, der die
  * zugehörige Konversation sehen darf (`chatSichtbarFuer`, Muster
- * Formular-/Info-Anhang-Route: 404 statt 403 bei fehlender Sicht).
+ * Formular-/Info-Anhang-Route: 404 statt 403 bei fehlender Sicht). Über
+ * `dateiAntwort` mit HTTP-Range-Unterstützung, sonst verweigert Safari die
+ * Wiedergabe von Sprachnachrichten (siehe dort).
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ nachrichtId: string; anhangId: string }> },
 ) {
   const kontext = await berechtigung()
@@ -34,10 +36,5 @@ export async function GET(
 
   const datei = await dateiLesen(anhang.pfad)
 
-  return new Response(new Blob([new Uint8Array(datei)]), {
-    headers: {
-      "Content-Type": anhang.mimetyp,
-      "Content-Disposition": contentDispositionHeader(anhang.dateiname),
-    },
-  })
+  return dateiAntwort(request, datei, anhang.mimetyp, anhang.dateiname)
 }

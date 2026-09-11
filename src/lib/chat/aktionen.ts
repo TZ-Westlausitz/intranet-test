@@ -6,7 +6,10 @@ import { revalidatePath } from "next/cache"
 import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { chatSichtbarFuer, direktSchluesselBilden } from "@/lib/chat/sichtbarkeit"
-import { konversationNachrichten as konversationNachrichtenAbfrage } from "@/lib/chat/abfragen"
+import {
+  konversationNachrichten as konversationNachrichtenAbfrage,
+  konversationTeilnehmerUndGelesenStand,
+} from "@/lib/chat/abfragen"
 import { chatAnhaengePruefen, chatAnhaengeSpeichern } from "@/lib/chat/anhaenge"
 
 const NACHRICHT_MAX_LAENGE = 4000
@@ -172,14 +175,22 @@ export async function konversationAlsGelesenMarkieren(konversationId: string) {
  * ChatKonversationAnsicht) — als Server Action direkt aus der Client
  * Component aufrufbar, Muster `vorlageZumBearbeitenLaden`. `seitIso`
  * gesetzt: nur neuere Nachrichten (Polling), sonst die ganze Historie.
+ * Liefert IMMER auch den aktuellen Gelesen-Stand mit (nicht nur bei neuen
+ * Nachrichten) — sonst würde sich der zweite Haken einer eigenen, schon
+ * anzeigten Nachricht nie nachträglich einfärben, wenn die Gegenseite sie
+ * erst später liest.
  */
 export async function konversationNachrichtenLaden(konversationId: string, seitIso?: string) {
   const kontext = await berechtigung()
   const konversation = await prisma.chatKonversation.findFirst({
     where: { id: konversationId, ...chatSichtbarFuer(kontext.personId) },
-    select: { id: true },
+    select: { id: true, gruppeId: true },
   })
   if (!konversation) throw new NichtBerechtigt("Konversation nicht sichtbar")
 
-  return konversationNachrichtenAbfrage(konversationId, seitIso ? new Date(seitIso) : undefined)
+  const [nachrichten, gelesenStand] = await Promise.all([
+    konversationNachrichtenAbfrage(konversationId, seitIso ? new Date(seitIso) : undefined),
+    konversationTeilnehmerUndGelesenStand(konversation),
+  ])
+  return { nachrichten, ...gelesenStand }
 }
