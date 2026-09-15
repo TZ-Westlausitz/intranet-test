@@ -513,7 +513,7 @@ export default async function Startseite() {
                   <h2 className="text-lg font-semibold text-ueberschrift hover:underline">Geplante Aktionen</h2>
                   {geplanteEintraege.length > 0 && (
                     <span
-                      aria-label={`${geplanteEintraege.length} geplante Infos, Aufgaben und Aufträge`}
+                      aria-label={`${geplanteEintraege.length} geplante Infos, To-Dos und Aufgaben`}
                       className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
                     >
                       {geplanteEintraege.length}
@@ -522,7 +522,7 @@ export default async function Startseite() {
                 </Link>
 
                 {naechsteGeplant.length === 0 ? (
-                  <p className="mt-2 text-xs text-sekundaer">Keine geplanten Infos, Aufgaben oder Aufträge.</p>
+                  <p className="mt-2 text-xs text-sekundaer">Keine geplanten Infos, To-Dos oder Aufgaben.</p>
                 ) : (
                   <ul className="mt-2 flex flex-col gap-1.5">
                     {naechsteGeplant.map((eintrag) => (

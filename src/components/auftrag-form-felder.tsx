@@ -46,8 +46,10 @@ export function auftragZuStandardwerte(entwurf: {
  * aus der vormals inline auf `/aufgaben` liegenden Auftrag-Anlegen-Sektion
  * (Rückmeldung 2026-09-09: Umbau zu einem Dialog, damit "schließen ohne zu
  * speichern" eine Entwurf-Nachfrage auslösen kann), Muster InfoFormFelder
- * — dieselben Felder werden sowohl für "neuer Auftrag" als auch "Entwurf
- * weiter bearbeiten" gebraucht (siehe AuftragErstellenDialog).
+ * — dieselben Felder werden sowohl für "Neue Aufgabe" als auch "Entwurf
+ * weiter bearbeiten" gebraucht (siehe AuftragErstellenDialog; UI-Text
+ * "Aufgabe" statt "Auftrag" seit Rückmeldung 2026-09-15, Komponenten-/
+ * Modellname Auftrag intern unverändert).
  */
 export function AuftragFormFelder({ standardwerte, personen }: { standardwerte: AuftragStandardwerte; personen: Person[] }) {
   return (
@@ -136,7 +138,7 @@ export function AuftragFormFelder({ standardwerte, personen }: { standardwerte: 
           defaultValue={standardwerte.geplantAm ?? ""}
           className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
         />
-        <p className="mt-1.5 text-xs text-sekundaer">Die zugewiesene Person sieht den Auftrag erst ab diesem Datum.</p>
+        <p className="mt-1.5 text-xs text-sekundaer">Die zugewiesene Person sieht die Aufgabe erst ab diesem Datum.</p>
       </div>
 
       <div>

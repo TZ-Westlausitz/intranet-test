@@ -7,13 +7,15 @@ import { EntwurfBestaetigenDialog } from "@/components/entwurf-bestaetigen-dialo
 import type { Person } from "@/components/termin-form-felder"
 
 /**
- * "+ Auftrag"-Knopf + Anlegen-Pop-Up — ersetzt die vormals immer sichtbare
+ * "+ Aufgabe"-Knopf + Anlegen-Pop-Up (UI-Text "Aufgabe" statt "Auftrag"
+ * seit Rückmeldung 2026-09-15, Komponenten-/Modellname Auftrag intern
+ * unverändert) — ersetzt die vormals immer sichtbare
  * Inline-Formular-Sektion auf `/aufgaben` (Rückmeldung 2026-09-09: Umbau
  * zu einem Dialog wie bei Info, weil es sonst keine schließbare Oberfläche
  * gäbe, an der eine Entwurf-Nachfrage ansetzen könnte). Zwei Modi über
  * `entwurf` unterschieden: ohne = frisches Anlegen (kein eigener Knopf
  * nötig, `entwurf` bleibt weg); mit = "Weiter bearbeiten" für einen
- * bestehenden Entwurf, dann OHNE eigenen "+ Auftrag"-Auslöser (wird von
+ * bestehenden Entwurf, dann OHNE eigenen "+ Aufgabe"-Auslöser (wird von
  * außen über `offenErzwingen` geöffnet, siehe /aufgaben Entwürfe-Liste).
  *
  * Schließen ohne zu speichern (Abbrechen-Knopf ODER Escape) fragt bei
@@ -72,7 +74,7 @@ export function AuftragErstellenDialog({
           onClick={() => dialogRef.current?.showModal()}
           className="h-9 shrink-0 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
         >
-          + Auftrag
+          + Aufgabe
         </button>
       )}
       {entwurf && (
@@ -101,7 +103,7 @@ export function AuftragErstellenDialog({
           className="flex max-h-[85vh] flex-col"
         >
           <div className="border-b border-rand px-5 py-4">
-            <h2 className="text-lg font-semibold text-ueberschrift">{entwurf ? "Entwurf weiter bearbeiten" : "Neuer Auftrag"}</h2>
+            <h2 className="text-lg font-semibold text-ueberschrift">{entwurf ? "Entwurf weiter bearbeiten" : "Neue Aufgabe"}</h2>
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-5 py-4">

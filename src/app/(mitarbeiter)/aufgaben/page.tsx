@@ -492,10 +492,10 @@ export default async function AufgabenSeite({
         <>
           <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
             <h2 className="text-sm font-semibold text-ueberschrift">
-              Alle offenen Aufträge (Firma) ({firmenweiteAuftraege?.length ?? 0})
+              Alle offenen Aufgaben (Firma) ({firmenweiteAuftraege?.length ?? 0})
             </h2>
             {!firmenweiteAuftraege || firmenweiteAuftraege.length === 0 ? (
-              <p className="mt-3 text-sm text-sekundaer">Aktuell keine offenen Aufträge.</p>
+              <p className="mt-3 text-sm text-sekundaer">Aktuell keine offenen Aufgaben.</p>
             ) : (
               <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
                 {firmenweiteAuftraege.map((auftrag) => (

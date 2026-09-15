@@ -132,9 +132,9 @@ export default async function GeplanteAktionenSeite({
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Geplante Aktionen</h1>
       <p className="mt-1 text-center text-sm text-sekundaer md:text-left">
         Neue geplante Infos werden im <Link href="/newsfeed" className="text-marke-gruen-dunkel hover:underline">Newsfeed</Link> über
-        &bdquo;Geplant für&ldquo; angelegt, neue geplante Aufgaben in der{" "}
+        &bdquo;Geplant für&ldquo; angelegt, neue geplante To-Dos in der{" "}
         <Link href="/aufgaben/todos" className="text-marke-gruen-dunkel hover:underline">To-Do-Liste</Link>, neue geplante
-        Aufträge unter <Link href="/aufgaben" className="text-marke-gruen-dunkel hover:underline">Aufgaben</Link>.
+        Aufgaben unter <Link href="/aufgaben" className="text-marke-gruen-dunkel hover:underline">Aufgaben</Link>.
       </p>
 
       <div className="mt-6 grid grid-cols-1 items-center gap-4 md:grid-cols-3">
