@@ -143,7 +143,7 @@ export default async function ProjektDetailSeite({
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
 
       {fehler && (
         <div className="mb-4">

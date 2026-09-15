@@ -166,10 +166,10 @@ function AuftragInhalt({ auftrag, heute, name }: { auftrag: AuftragMitBeziehung;
 export default async function AufgabenSeite({
   searchParams,
 }: {
-  searchParams: Promise<{ fehler?: string }>
+  searchParams: Promise<{ fehler?: string; neu?: string }>
 }) {
   const kontext = await berechtigung()
-  const { fehler } = await searchParams
+  const { fehler, neu } = await searchParams
 
   const heute = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
 
@@ -206,7 +206,7 @@ export default async function AufgabenSeite({
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Aufgaben</h1>
 
       {zeigeProjekteKachel && (
@@ -381,7 +381,12 @@ export default async function AufgabenSeite({
       <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-ueberschrift">Von dir vergeben ({vergebenOffen.length})</h2>
-          <AuftragErstellenDialog personen={personenAnzeige} erstellenAktion={auftragErstellen} entwurfSpeichernAktion={auftragAlsEntwurfSpeichern} />
+          <AuftragErstellenDialog
+            personen={personenAnzeige}
+            erstellenAktion={auftragErstellen}
+            entwurfSpeichernAktion={auftragAlsEntwurfSpeichern}
+            autoOeffnen={neu === "1"}
+          />
         </div>
 
         {entwuerfe.length > 0 && (

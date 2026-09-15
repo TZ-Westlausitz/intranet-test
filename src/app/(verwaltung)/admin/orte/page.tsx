@@ -18,12 +18,12 @@ import { ortErstellen, ortUmbenennen, ortAktivSetzen } from "@/lib/admin/orte-ak
  * bleiben.
  */
 export default async function OrteSeite() {
-  const kontext = await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung([Rolle.ADMINISTRATION])
   const orte = await prisma.ort.findMany({ orderBy: { name: "asc" } })
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <div className="flex items-center justify-center gap-3 md:justify-start">
         <h1 className="text-2xl font-semibold text-ueberschrift">Orte</h1>
         <Link href="/admin/info-kategorien" className="text-sm font-medium text-marke-gruen-dunkel hover:underline">

@@ -18,7 +18,7 @@ import {
  * Rolle.ADMINISTRATION, nicht über einen Eintrag hier.
  */
 export default async function BerechtigungenSeite() {
-  const kontext = await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung([Rolle.ADMINISTRATION])
   const berechtigungen = await prisma.berechtigung.findMany({
     orderBy: { name: "asc" },
     include: { _count: { select: { mitglieder: true } } },
@@ -26,7 +26,7 @@ export default async function BerechtigungenSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Berechtigungen</h1>
 
       <form

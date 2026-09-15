@@ -128,7 +128,7 @@ export default async function GeplanteAktionenSeite({
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Geplante Aktionen</h1>
       <p className="mt-1 text-center text-sm text-sekundaer md:text-left">
         Neue geplante Infos werden im <Link href="/newsfeed" className="text-marke-gruen-dunkel hover:underline">Newsfeed</Link> über

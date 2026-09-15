@@ -149,10 +149,10 @@ const FEHLER_TEXTE: Record<string, string> = {
 export default async function KalenderSeite({
   searchParams,
 }: {
-  searchParams: Promise<{ jahr?: string; monat?: string; fehler?: string; suche?: string }>
+  searchParams: Promise<{ jahr?: string; monat?: string; fehler?: string; suche?: string; neu?: string }>
 }) {
   const kontext = await berechtigung()
-  const { jahr: jahrParam, monat: monatParam, fehler, suche } = await searchParams
+  const { jahr: jahrParam, monat: monatParam, fehler, suche, neu } = await searchParams
   const suchtext = (suche ?? "").trim()
 
   const heute = new Date()
@@ -268,7 +268,7 @@ export default async function KalenderSeite({
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Kalender</h1>
 
       {fehler && (
@@ -288,6 +288,7 @@ export default async function KalenderSeite({
             aktion={terminErstellen}
             rueckkehrJahr={jahr}
             rueckkehrMonat={monatIndex0 + 1}
+            autoOeffnen={neu === "1"}
           />
         </div>
 

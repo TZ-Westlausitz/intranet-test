@@ -60,7 +60,7 @@ export default async function WissenSeite() {
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ueberschrift">Wissen</h1>
         {darfVerwalten && (

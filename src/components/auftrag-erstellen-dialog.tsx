@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { AuftragFormFelder, LEERER_AUFTRAG_STANDARDWERTE, type AuftragStandardwerte } from "@/components/auftrag-form-felder"
 import { EntwurfBestaetigenDialog } from "@/components/entwurf-bestaetigen-dialog"
@@ -21,19 +21,31 @@ import type { Person } from "@/components/termin-form-felder"
  * Schließen ohne zu speichern (Abbrechen-Knopf ODER Escape) fragt bei
  * nicht-leeren Eingaben nach, ob als Entwurf gespeichert werden soll,
  * genau wie bei InfoErstellenDialog.
+ *
+ * `autoOeffnen` (Rückmeldung vom 2026-09-15, Handy-Schnellerstellen-Menü):
+ * öffnet das Pop-Up direkt beim Einhängen, für den Sprung von "+ Aufgabe"
+ * im schwebenden Handy-Menü hierher — nur im frischen-Anlegen-Modus
+ * gemeint, `entwurf` und `autoOeffnen` treffen praktisch nie zusammen auf.
  */
 export function AuftragErstellenDialog({
   personen,
   erstellenAktion,
   entwurfSpeichernAktion,
   entwurf,
+  autoOeffnen = false,
 }: {
   personen: Person[]
   erstellenAktion: (formData: FormData) => void
   entwurfSpeichernAktion: (formData: FormData) => void
   entwurf?: { id: string; standardwerte: AuftragStandardwerte }
+  autoOeffnen?: boolean
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    if (autoOeffnen) dialogRef.current?.showModal()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const formRef = useRef<HTMLFormElement>(null)
   const entwurfKnopfRef = useRef<HTMLButtonElement>(null)
   const [entwurfNachfrageOffen, setEntwurfNachfrageOffen] = useState(false)

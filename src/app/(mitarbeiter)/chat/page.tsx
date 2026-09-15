@@ -21,8 +21,13 @@ import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
  * echte Vorschauzeile hier möglich, anders als bei einer verschlüsselten
  * Variante.
  */
-export default async function ChatUebersichtSeite() {
+export default async function ChatUebersichtSeite({
+  searchParams,
+}: {
+  searchParams: Promise<{ neu?: string }>
+}) {
   const kontext = await berechtigung()
+  const { neu } = await searchParams
   const [konversationen, personen, gruppen] = await Promise.all([
     meineKonversationen(kontext),
     prisma.person.findMany({
@@ -37,12 +42,16 @@ export default async function ChatUebersichtSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ueberschrift">Chat</h1>
         <div className="flex gap-2">
           <ChatNeueGruppeDialog personen={personenOptionen} gruppen={gruppenOptionen} erstellenAktion={gruppenchatErstellen} />
-          <ChatNeueNachrichtDialog personen={personenOptionen} oeffnenAktion={direktkonversationOeffnen} />
+          <ChatNeueNachrichtDialog
+            personen={personenOptionen}
+            oeffnenAktion={direktkonversationOeffnen}
+            autoOeffnen={neu === "1"}
+          />
         </div>
       </div>
 

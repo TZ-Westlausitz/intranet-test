@@ -10,6 +10,8 @@ import { BenachrichtigungsGlocke } from "@/components/benachrichtigungs-glocke";
 import { ChatWidget } from "@/components/chat-widget";
 import { AdminModusSchalter } from "@/components/admin-modus-schalter";
 import { BausteineLeiste } from "@/components/bausteine-leiste";
+import { MobileTabBar } from "@/components/mobile-tab-bar";
+import { MobileSchnellmenu } from "@/components/mobile-schnellmenu";
 import { neuesteBenachrichtigungen, ungeleseneAnzahl } from "@/lib/benachrichtigungen/abfragen";
 import { meineKonversationen } from "@/lib/chat/abfragen";
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum";
@@ -171,10 +173,20 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             </div>
           )}
 
-          <div className="md:min-h-0 md:flex-1 md:overflow-y-auto">{children}</div>
+          <div className={"md:min-h-0 md:flex-1 md:overflow-y-auto" + (kontext ? " pb-20 md:pb-0" : "")}>{children}</div>
         </div>
 
         {kontext && <ChatWidget konversationen={chatKonversationen} ungeleseneAnzahl={chatUngeleseneAnzahl} />}
+
+        {kontext && (
+          <>
+            <MobileSchnellmenu darfInfo={kontext.berechtigungen.includes("Infos")} />
+            <MobileTabBar
+              chatUngeleseneAnzahl={chatUngeleseneAnzahl}
+              benachrichtigungenUngeleseneAnzahl={anzahlUngelesen}
+            />
+          </>
+        )}
       </body>
     </html>
   );

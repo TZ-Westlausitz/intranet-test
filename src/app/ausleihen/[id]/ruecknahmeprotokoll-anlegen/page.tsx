@@ -128,7 +128,7 @@ export default async function RuecknahmeprotokollAnlegenSeite({
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <p className="text-sm text-sekundaer">Ausleihe {ausleihe.vorgangsnummer}</p>
       <h1 className="text-2xl font-semibold text-ueberschrift">Rücknahmeprotokoll</h1>
 

@@ -14,7 +14,7 @@ import { ZurueckButton } from "@/components/zurueck-button"
  * /anfragen.
  */
 export default async function FahrzeugMietenSeite() {
-  const kontext = await berechtigung()
+  await berechtigung()
 
   const fahrzeuge = await prisma.fahrzeug.findMany({
     where: { aktiv: true, fuerPrivatausleiheFreigegeben: true },
@@ -23,7 +23,7 @@ export default async function FahrzeugMietenSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Fahrzeug mieten</h1>
       <p className="mt-1 text-sm text-primaer">
         Privat ein Firmenfahrzeug anfragen — die Werkstattleitung bestätigt

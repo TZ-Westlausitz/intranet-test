@@ -36,7 +36,7 @@ export default async function FormularAusfuellenSeite({
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
 
       {fehler && <div className="mt-4"><Hinweis>{FEHLER_TEXTE[fehler] ?? "Das hat nicht geklappt."}</Hinweis></div>}
 

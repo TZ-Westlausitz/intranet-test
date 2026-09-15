@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { PersonenAuswahl } from "@/components/personen-auswahl"
 import type { Person } from "@/components/termin-form-felder"
@@ -15,16 +15,27 @@ import type { Person } from "@/components/termin-form-felder"
  * PersonenAuswahl, `mehrfach={false}`) — `oeffnenAktion`
  * (direktkonversationOeffnen) legt die Konversation bei Bedarf an und
  * leitet dorthin weiter.
+ *
+ * `autoOeffnen` (Rückmeldung vom 2026-09-15, Handy-Schnellerstellen-Menü):
+ * öffnet das Pop-Up direkt beim Einhängen, für den Sprung von "+ Chat" im
+ * schwebenden Handy-Menü hierher.
  */
 export function ChatNeueNachrichtDialog({
   personen,
   oeffnenAktion,
+  autoOeffnen = false,
 }: {
   personen: Person[]
   oeffnenAktion: (formData: FormData) => void
+  autoOeffnen?: boolean
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
-  const [offen, setOffen] = useState(false)
+  const [offen, setOffen] = useState(autoOeffnen)
+
+  useEffect(() => {
+    if (autoOeffnen) dialogRef.current?.showModal()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>

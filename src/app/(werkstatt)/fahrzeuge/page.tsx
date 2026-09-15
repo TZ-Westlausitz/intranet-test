@@ -22,7 +22,7 @@ export default async function Fahrzeuguebersicht() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Fahrzeugausleihe</h1>
       <p className="mt-1 text-sm text-primaer">{kontext.rollen.join(", ")}</p>
 

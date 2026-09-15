@@ -83,7 +83,7 @@ export default async function FormulareVerwaltenSeite({
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ueberschrift">Formulare verwalten</h1>
         <FormularErstellenDialog

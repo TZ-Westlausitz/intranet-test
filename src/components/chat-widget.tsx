@@ -23,6 +23,11 @@ export type ChatWidgetKonversation = {
  * gehören in die volle Übersicht, hier soll es ein schneller Überblick
  * bleiben) — ein Klick öffnet die jeweilige Konversation direkt, "Alle
  * Chats ansehen" führt zu `/chat`.
+ *
+ * `hidden md:flex` (Rückmeldung 2026-09-15, mobile Fußleiste): auf dem
+ * Handy übernimmt der "Chats"-Punkt der MobileTabBar diese Rolle — zwei
+ * runde Knöpfe unten rechts übereinander (dieser und das schwebende "+",
+ * siehe MobileSchnellmenu) wären dort nur verwirrend.
  */
 export function ChatWidget({
   konversationen,
@@ -35,7 +40,7 @@ export function ChatWidget({
   const angezeigt = konversationen.filter((k) => k.konversationId !== null).slice(0, 5)
 
   return (
-    <div className="fixed right-4 bottom-4 z-40 flex flex-col items-end gap-3">
+    <div className="fixed right-4 bottom-4 z-40 hidden flex-col items-end gap-3 md:flex">
       {offen && (
         <div
           role="dialog"

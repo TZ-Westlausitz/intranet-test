@@ -24,7 +24,7 @@ export default async function ChatKonversationSeite({ params }: { params: Promis
 
   return (
     <main className="mx-auto flex h-[calc(100vh-2.5rem)] max-w-2xl flex-col px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="flex items-center gap-2 text-2xl font-semibold text-ueberschrift">
         {istGruppe && "👥 "}
         {titel}

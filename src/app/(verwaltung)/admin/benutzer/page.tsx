@@ -25,7 +25,7 @@ import {
  * nur deaktiviert.
  */
 export default async function BenutzerSeite() {
-  const kontext = await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung([Rolle.ADMINISTRATION])
   const jetzt = new Date()
 
   const [personen, standorte, abteilungen, gruppen, berechtigungenListe] = await Promise.all([
@@ -48,7 +48,7 @@ export default async function BenutzerSeite() {
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Benutzer</h1>
 
       <div className="mt-6">

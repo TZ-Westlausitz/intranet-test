@@ -54,7 +54,7 @@ async function anfrageAblehnen(formData: FormData) {
 }
 
 export default async function AnfragenSeite() {
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
 
   const anfragen = await prisma.ausleihe.findMany({
     where: { status: AusleiheStatus.ANGEFRAGT },
@@ -64,7 +64,7 @@ export default async function AnfragenSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Offene Anfragen</h1>
 
       {anfragen.length === 0 ? (

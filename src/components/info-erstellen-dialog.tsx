@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { InfoFormFelder, LEERE_INFO_STANDARDWERTE, type InfoFormularOptionen } from "@/components/info-form-felder"
 import { EntwurfBestaetigenDialog } from "@/components/entwurf-bestaetigen-dialog"
@@ -17,17 +17,31 @@ import { EntwurfBestaetigenDialog } from "@/components/entwurf-bestaetigen-dialo
  * eingetragen, geprüft über das aktuelle FormData statt über
  * kontrollierten State (die Felder in InfoFormFelder sind bewusst
  * unkontrolliert).
+ *
+ * `autoOeffnen` (Rückmeldung vom 2026-09-15, Handy-Schnellerstellen-Menü):
+ * öffnet das Pop-Up direkt beim Einhängen, für den Sprung von "+ Info" im
+ * schwebenden Handy-Menü hierher (siehe MobileSchnellmenu) — die Seite
+ * setzt dafür `?neu=info` in die URL, die Aktion selbst läuft weiter ganz
+ * normal über den Knopf-Klick, wenn ohne diesen Parameter aufgerufen.
  */
 export function InfoErstellenDialog({
   optionen,
   erstellenAktion,
   entwurfSpeichernAktion,
+  autoOeffnen = false,
 }: {
   optionen: InfoFormularOptionen
   erstellenAktion: (formData: FormData) => void
   entwurfSpeichernAktion: (formData: FormData) => void
+  autoOeffnen?: boolean
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    if (autoOeffnen) dialogRef.current?.showModal()
+    // Nur beim Einhängen prüfen, nicht bei jeder Änderung von autoOeffnen.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const formRef = useRef<HTMLFormElement>(null)
   const entwurfKnopfRef = useRef<HTMLButtonElement>(null)
   const [entwurfNachfrageOffen, setEntwurfNachfrageOffen] = useState(false)

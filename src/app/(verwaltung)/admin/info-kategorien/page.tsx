@@ -23,7 +23,7 @@ import {
  * oben, damit beide Seiten von der einen Kachel aus auffindbar bleiben.
  */
 export default async function InfoKategorienSeite() {
-  const kontext = await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung([Rolle.ADMINISTRATION])
   const kategorien = await prisma.infoKategorie.findMany({
     orderBy: { name: "asc" },
     include: { _count: { select: { infos: true } } },
@@ -31,7 +31,7 @@ export default async function InfoKategorienSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <div className="flex items-center justify-center gap-3 md:justify-start">
         <h1 className="text-2xl font-semibold text-ueberschrift">Info-Kategorien</h1>
         <Link href="/admin/orte" className="text-sm font-medium text-marke-gruen-dunkel hover:underline">

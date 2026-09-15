@@ -40,7 +40,7 @@ const UNTERMODULE = [
 ]
 
 export default async function FahrzeugReservierungenMenueSeite() {
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
 
   const offeneAnfragen = await prisma.ausleihe.count({
     where: { status: AusleiheStatus.ANGEFRAGT },
@@ -48,7 +48,7 @@ export default async function FahrzeugReservierungenMenueSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Fahrzeug Reservierungen</h1>
       <p className="mt-1 text-sm text-primaer">Komplettes Menü</p>
 

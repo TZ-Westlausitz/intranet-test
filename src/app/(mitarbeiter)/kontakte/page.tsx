@@ -14,7 +14,7 @@ import { aktivePersonenUebersicht } from "@/lib/kontakte/abfragen"
  * (siehe Person.letzteAktivitaet, throttled aktualisiert in berechtigung()).
  */
 export default async function KontakteSeite() {
-  const kontext = await berechtigung()
+  await berechtigung()
 
   const [personen, abteilungen, gruppen] = await Promise.all([
     aktivePersonenUebersicht(),
@@ -24,7 +24,7 @@ export default async function KontakteSeite() {
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Kontakte</h1>
 
       <KontakteListe personen={personen} abteilungen={abteilungen} gruppen={gruppen} />

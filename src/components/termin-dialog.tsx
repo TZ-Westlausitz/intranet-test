@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { TerminFormFelder, LEERE_TERMIN_STANDARDWERTE, type Person } from "@/components/termin-form-felder"
 import { datumIsoAusDate, zeitAusDate } from "@/lib/datum"
@@ -58,21 +58,36 @@ function voreingestellteZeiten() {
  * TerminFormFelder erzwungen neu gemountet — sonst bliebe "jetzt" auf dem
  * Stand des Seitenaufrufs eingefroren, wenn die Seite länger offen ist,
  * bevor das Pop-Up tatsächlich geöffnet wird.
+ *
+ * `autoOeffnen` (Rückmeldung vom 2026-09-15, Handy-Schnellerstellen-Menü):
+ * öffnet das Pop-Up direkt beim Einhängen, für den Sprung von "+ Termin"
+ * im schwebenden Handy-Menü hierher — läuft durch denselben
+ * Voreinstellungs-Weg wie ein echter Knopf-Klick.
  */
 export function TerminDialog({
   personen,
   aktion,
   rueckkehrJahr,
   rueckkehrMonat,
+  autoOeffnen = false,
 }: {
   personen: Person[]
   aktion: (formData: FormData) => void
   rueckkehrJahr: number
   rueckkehrMonat: number
+  autoOeffnen?: boolean
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [formKey, setFormKey] = useState(0)
   const [zeiten, setZeiten] = useState(voreingestellteZeiten)
+
+  // `zeiten`/`formKey` sind beim ersten Rendern schon frisch (useState-
+  // Initialwert) — bei autoOeffnen fehlt nur noch das tatsächliche Öffnen,
+  // kein zusätzliches setState nötig.
+  useEffect(() => {
+    if (autoOeffnen) dialogRef.current?.showModal()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <>

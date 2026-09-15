@@ -50,7 +50,7 @@ export default async function WissensUnterordnerSeite({
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <p className="text-sm text-sekundaer">
         <Link href={`/wissen/${ordnerId}`} className="hover:underline">
           {unterordner.ordner.name}

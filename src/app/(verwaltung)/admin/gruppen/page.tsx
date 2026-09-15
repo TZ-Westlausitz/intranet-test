@@ -27,7 +27,7 @@ import { abteilungErstellen, abteilungUmbenennen, abteilungAktivSetzen } from "@
  * Kachel mit zwei Inhalten ihre Unterseite aufbauen soll.
  */
 export default async function GruppenUndAbteilungenSeite() {
-  const kontext = await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung([Rolle.ADMINISTRATION])
   const [gruppen, abteilungen] = await Promise.all([
     prisma.gruppe.findMany({ orderBy: { name: "asc" } }),
     prisma.abteilung.findMany({ orderBy: { name: "asc" } }),
@@ -35,7 +35,7 @@ export default async function GruppenUndAbteilungenSeite() {
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Gruppen &amp; Abteilungen</h1>
 
       <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2">

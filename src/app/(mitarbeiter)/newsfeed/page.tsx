@@ -42,10 +42,10 @@ const RELEVANTE_BERECHTIGUNGEN = ["Infos", "Bearbeiten", "Löschen & Bearbeiten"
 export default async function NewsfeedSeite({
   searchParams,
 }: {
-  searchParams: Promise<{ fehler?: string; info?: string }>
+  searchParams: Promise<{ fehler?: string; info?: string; neu?: string }>
 }) {
   const kontext = await berechtigung()
-  const { fehler, info: initialInfoId } = await searchParams
+  const { fehler, info: initialInfoId, neu } = await searchParams
   const darfErstellen = kontext.berechtigungen.includes("Infos")
   const brauchtOptionen = kontext.berechtigungen.some((b) => RELEVANTE_BERECHTIGUNGEN.includes(b))
 
@@ -87,7 +87,7 @@ export default async function NewsfeedSeite({
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ueberschrift">Newsfeed</h1>
         <div className="flex shrink-0 items-center gap-2">
@@ -101,7 +101,12 @@ export default async function NewsfeedSeite({
             />
           )}
           {darfErstellen && (
-            <InfoErstellenDialog optionen={optionen} erstellenAktion={infoErstellen} entwurfSpeichernAktion={infoAlsEntwurfSpeichern} />
+            <InfoErstellenDialog
+              optionen={optionen}
+              erstellenAktion={infoErstellen}
+              entwurfSpeichernAktion={infoAlsEntwurfSpeichern}
+              autoOeffnen={neu === "1"}
+            />
           )}
         </div>
       </div>

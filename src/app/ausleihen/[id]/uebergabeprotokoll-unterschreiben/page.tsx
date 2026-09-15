@@ -148,7 +148,7 @@ export default async function UebergabeprotokollUnterschreibenSeite({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
   const { id } = await params
 
   const ausleihe = await prisma.ausleihe.findUnique({
@@ -164,7 +164,7 @@ export default async function UebergabeprotokollUnterschreibenSeite({
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste name={kontext.name} />
+      <Kopfleiste />
       <p className="text-sm text-sekundaer">Ausleihe {ausleihe.vorgangsnummer}</p>
       <h1 className="text-2xl font-semibold text-ueberschrift">Übergabeprotokoll unterschreiben</h1>
 

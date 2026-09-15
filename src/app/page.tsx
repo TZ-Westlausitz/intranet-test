@@ -202,7 +202,7 @@ export default async function Startseite() {
           ganze Seite, eine Vorschau lohnt sich dort nicht für jeden
           Baustein gleichermaßen. */}
       <main className="mx-auto max-w-2xl px-5 py-6 md:hidden">
-        <Kopfleiste name={kontext.name} />
+        <Kopfleiste />
 
         <div className="flex flex-col gap-4">
           {/* Eigene Überschrift+Link-Kopfzeile hier bewusst NICHT nötig —
@@ -275,13 +275,17 @@ export default async function Startseite() {
 
           {/* Alle übrigen Bausteine als einfache Kacheln ohne Vorschau —
               scrollt ohnehin mit der Seite, ein 2-spaltiges Raster hält
-              es kompakt statt einer langen Einzelliste. */}
+              es kompakt statt einer langen Einzelliste. Wissensbereich,
+              Kontakte und Chat sind hier bewusst NICHT mehr dabei
+              (Rückmeldung 2026-09-15): Chat steht schon in der
+              MobileTabBar, Wissensbereich und Kontakte auf der neuen
+              "Menü"-Seite (siehe src/app/(mitarbeiter)/menu/page.tsx) —
+              eine dritte Fundstelle für dieselben drei Ziele wäre nur
+              Redundanz. Die übrigen fünf haben (noch) keinen anderen Platz
+              in der neuen mobilen Navigation und bleiben deshalb hier. */}
           <ul className="grid grid-cols-2 gap-3">
             {[
               { href: "/formulare", name: "Formulare", icon: "📋" },
-              { href: "/wissen", name: "Wissensbereich", icon: "📚" },
-              { href: "/kontakte", name: "Kontakte", icon: "👥" },
-              { href: "/chat", name: "Chat", icon: "💬" },
               istWerkstatt
                 ? { href: "/fahrzeug-reservierungen", name: "Fahrzeuge", icon: "🚐" }
                 : { href: "/fahrzeug-mieten", name: "Fahrzeug mieten", icon: "🚐" },

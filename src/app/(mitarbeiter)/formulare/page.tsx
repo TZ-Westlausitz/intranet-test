@@ -65,7 +65,7 @@ export default async function FormulareSeite() {
     <>
       {/* Handy: einfache, seitenweit scrollende Liste. */}
       <main className="mx-auto max-w-2xl px-5 py-10 md:hidden">
-        <Kopfleiste name={kontext.name} />
+        <Kopfleiste />
         {kopfzeile}
 
         <div className="mt-6 flex flex-col gap-6">
