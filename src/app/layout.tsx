@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Lato } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,6 +24,29 @@ const lato = Lato({
 export const metadata: Metadata = {
   title: "TPZ Intranet",
   description: "Internes Portal des Therapie- und Pflegezentrums Westlausitz",
+  // Ohne diese drei Zeilen (Rückmeldung vom 2026-09-15) startet die App
+  // auf dem Homescreen von iPadOS/iOS zwar als eigenes Fenster ohne
+  // Safari-Chrome, aber OHNE dass iOS weiß, dass sie dafür gebaut ist —
+  // das Ergebnis ist ein falsch skalierter Inhalt, bei dem man erst
+  // rein-/rauszoomen bzw. an den Rand scrollen muss, um die Seite
+  // vollständig zu sehen.
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "TPZ Intranet",
+  },
+  manifest: "/manifest.webmanifest",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // viewportFit "cover" lässt den Inhalt bis unter die Notch/abgerundeten
+  // Ecken reichen (sonst bleibt dort ein grauer Rand) — zusammen mit den
+  // "safe-area-inset"-Werten unten in globals.css, die verhindern, dass
+  // wichtige Inhalte tatsächlich HINTER der Notch/dem Homescreen-Balken
+  // landen.
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
