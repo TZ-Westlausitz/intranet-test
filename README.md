@@ -32,6 +32,43 @@ npm run dev                # http://localhost:3000
 
 Datenbank ansehen: `npx prisma studio` oder Adminer auf http://localhost:8080.
 
+## Testbetrieb auf Vercel + Supabase (nicht die Produktivumgebung!)
+
+Nur zum Ausprobieren auf mehreren Geräten (Handy, Tablet) über eine echte
+Internet-Adresse, solange kein eigener Server läuft. Ersetzt NICHT den
+On-Premise-Betrieb unter "Betrieb (ab Phase P1)" unten — dort bleibt es
+beim eigenen Server, hier geht es nur um einen schnellen, kostenlosen
+Testaufbau.
+
+1. Bei [supabase.com](https://supabase.com) ein neues Projekt anlegen.
+   - **Verbindungs-URL:** Projekteinstellungen → Database → Connection
+     string → "Connection pooling" (Modus "Transaction", Port 6543) als
+     `DATABASE_URL` verwenden — für Serverless-Umgebungen wie Vercel
+     gedacht, viele kurze Verbindungen gleichzeitig.
+   - **Storage:** Unter Storage einen neuen Bucket anlegen (Name muss zu
+     `SUPABASE_STORAGE_BUCKET` passen, Standard `ablage`), "Public" davon
+     ausschalten lassen — die App liefert Dateien über ihre eigenen,
+     berechtigungsgeprüften Routen aus, nicht direkt aus dem Bucket.
+   - **API-Zugangsdaten:** Projekteinstellungen → API → `Project URL` als
+     `SUPABASE_URL`, `service_role`-Schlüssel (geheim, nicht `anon`!) als
+     `SUPABASE_SERVICE_ROLE_KEY`.
+2. Auf [vercel.com](https://vercel.com) mit dem GitHub-Repo verbinden,
+   neues Projekt daraus anlegen (Next.js wird automatisch erkannt).
+3. In den Vercel-Projekteinstellungen → Environment Variables alle
+   Variablen aus `.env.example` eintragen (DATABASE_URL, AUTH_SECRET,
+   SEED_PASSWORT, STANDARD_STARTPASSWORT, SUPABASE_URL,
+   SUPABASE_SERVICE_ROLE_KEY, SUPABASE_STORAGE_BUCKET) sowie zusätzlich
+   `AUTH_TRUST_HOST=true` (Auth.js muss der von Vercel vorgegebenen
+   Adresse vertrauen, sonst schlägt die Anmeldung fehl).
+4. Einmalig lokal gegen die Supabase-Datenbank ausrollen (eigene `.env`
+   dafür kurz auf die Supabase-`DATABASE_URL` umstellen, danach wieder
+   zurück auf die lokale):
+   ```bash
+   npx prisma migrate deploy
+   npm run seed
+   ```
+5. Vercel deployt ab jetzt automatisch bei jedem Push auf `main`.
+
 ## Vor der Inbetriebnahme klären — wichtiger als der Code
 
 1. **Versicherung:** Deckt die Flottenpolice private Fahrten von

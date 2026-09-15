@@ -16,6 +16,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "@supabase/supabase-js": "^2.116.0",
     "@tiptap/extension-image": "^3.31.0",
     "@tiptap/extension-mention": "^3.31.0",
     "@tiptap/extension-table": "^3.31.0",
