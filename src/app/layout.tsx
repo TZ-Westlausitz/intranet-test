@@ -8,8 +8,8 @@ import { Rolle } from "@/generated/prisma/enums";
 import { BenutzerMenu } from "@/components/benutzer-menu";
 import { BenachrichtigungsGlocke } from "@/components/benachrichtigungs-glocke";
 import { ChatWidget } from "@/components/chat-widget";
-import { BausteinMehrMenu } from "@/components/baustein-mehr-menu";
-import { BAUSTEINE } from "@/lib/bausteine";
+import { AdminModusSchalter } from "@/components/admin-modus-schalter";
+import { BausteineLeiste } from "@/components/bausteine-leiste";
 import { neuesteBenachrichtigungen, ungeleseneAnzahl } from "@/lib/benachrichtigungen/abfragen";
 import { meineKonversationen } from "@/lib/chat/abfragen";
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum";
@@ -50,7 +50,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   }));
 
   return (
-    <html lang="de" className={`${lato.variable} h-full antialiased`}>
+    <html
+      lang="de"
+      data-theme={kontext?.farbschema === "DUNKEL" ? "dunkel" : undefined}
+      className={`${lato.variable} h-full antialiased`}
+    >
       {/*
         Bewusst KEIN "flex flex-col" auf body: body als Flex-Container hätte
         zur Folge, dass die "mx-auto max-w-2xl"-Container in den Seiten
@@ -77,23 +81,45 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               Breite geht und nicht durch das "px-5" der Seiten eingerückt
               wird. Kopfleiste (Logo, Drei-Striche-Menü, BenutzerMenu) bleibt
               weiterhin dort, wo sie schon steht. */}
+          {/* dark:bg-none dark:bg-background (Rückmeldung 2026-09-11): im
+              Dunkel-Modus kein bunter Verlauf mehr, sondern derselbe dunkle
+              Ton wie die Kopfzeile direkt darunter — bg-none entfernt den
+              Verlauf als background-image, sonst würde die Hintergrundfarbe
+              nicht durchscheinen. */}
           {kontext && (
-            <div className="h-1.5 shrink-0 bg-gradient-to-r from-marke-gruen via-marke-gruen-dunkel to-marke-orange md:hidden" />
+            <div className="h-1.5 shrink-0 bg-gradient-to-r from-marke-gruen via-marke-gruen-dunkel to-marke-orange dark:bg-none dark:bg-background md:hidden" />
           )}
 
           {kontext && (
             <div className="hidden shrink-0 md:block">
-              <div className="h-1.5 bg-gradient-to-r from-marke-gruen via-marke-gruen-dunkel to-marke-orange" />
+              <div className="h-1.5 bg-gradient-to-r from-marke-gruen via-marke-gruen-dunkel to-marke-orange dark:bg-none dark:bg-background" />
 
-              <div className="flex items-center justify-between border-b border-neutral-200 px-8 py-4">
+              <div className="flex items-center justify-between border-b border-rand px-8 py-4">
                 <Link href="/" aria-label="Zur Startseite">
+                  {/* Zwei Bilder statt eines umgefärbten: das weiße Logo ist eine
+                      eigene Datei (von Jonas bereitgestellt), keine reine
+                      Farbvariante des normalen Logos. dark:hidden/dark:block
+                      statt Server-seitiger Fallunterscheidung, weil hier kein
+                      zusätzliches Prop nötig ist — dieselbe an data-theme
+                      gekoppelte Variante wie in globals.css definiert.
+                      Beide Dateien sind gleich groß angelegt (2278×439,
+                      Stand 2026-09-11) — dieselben width/height für beide,
+                      daraus abgeleitet. */}
                   <Image
                     src="/logo.png"
                     alt="Therapie- und Pflegezentrum Westlausitz"
-                    width={200}
+                    width={208}
                     height={40}
                     priority
-                    className="h-10 w-auto"
+                    className="h-10 w-auto dark:hidden"
+                  />
+                  <Image
+                    src="/logo-weiss.png"
+                    alt="Therapie- und Pflegezentrum Westlausitz"
+                    width={208}
+                    height={40}
+                    priority
+                    className="hidden h-10 w-auto dark:block"
                   />
                 </Link>
                 <div className="flex items-center gap-1">
@@ -104,34 +130,19 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   <BenutzerMenu
                     name={kontext.name}
                     istAdmin={kontext.rollen.includes(Rolle.ADMINISTRATION)}
+                    adminModusAktiv={kontext.adminModusAktiv}
                   />
                 </div>
               </div>
 
               <nav
                 aria-label="Bausteine"
-                className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-neutral-200 bg-neutral-50 px-8 py-3"
+                className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-rand bg-flaeche-schwach px-8 py-3"
               >
-                {BAUSTEINE.map((baustein) =>
-                  baustein.unterpunkte ? (
-                    <BausteinMehrMenu key={baustein.name} name={baustein.name} unterpunkte={baustein.unterpunkte} />
-                  ) : baustein.href ? (
-                    <Link
-                      key={baustein.name}
-                      href={baustein.href}
-                      className="rounded-full bg-marke-gruen/15 px-3 py-1 text-sm font-semibold text-marke-gruen-dunkel transition hover:bg-marke-gruen/25"
-                    >
-                      {baustein.name}
-                    </Link>
-                  ) : (
-                    <span
-                      key={baustein.name}
-                      title="Noch nicht verfügbar"
-                      className="cursor-default rounded-full px-3 py-1 text-sm font-medium text-neutral-400"
-                    >
-                      {baustein.name}
-                    </span>
-                  ),
+                <BausteineLeiste adminModusAktiv={kontext.adminModusAktiv} />
+
+                {kontext.rollen.includes(Rolle.ADMINISTRATION) && (
+                  <AdminModusSchalter aktiv={kontext.adminModusAktiv} />
                 )}
               </nav>
             </div>

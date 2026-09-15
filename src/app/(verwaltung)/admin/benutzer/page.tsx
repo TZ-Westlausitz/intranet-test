@@ -49,13 +49,13 @@ export default async function BenutzerSeite() {
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-center text-2xl font-semibold text-marke-grau md:text-left">Benutzer</h1>
+      <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Benutzer</h1>
 
       <div className="mt-6">
         <PersonErstellenFormular abteilungen={abteilungen} aktion={personErstellen} />
       </div>
 
-      <ul className="mt-6 flex flex-col divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
+      <ul className="mt-6 flex flex-col divide-y divide-flaeche-100 rounded-xl border border-rand bg-flaeche">
         {personen.map((person) => {
           const zugehoerigkeitenAnzeige = person.zugehoerigkeiten.map((z) => ({
             id: z.id,
@@ -70,12 +70,12 @@ export default async function BenutzerSeite() {
             <li key={person.benutzername} className="flex flex-col gap-2 px-4 py-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <span className={"font-medium " + (person.aktiv ? "text-marke-grau" : "text-neutral-400")}>
+                  <span className={"font-medium " + (person.aktiv ? "text-ueberschrift" : "text-tertiaer")}>
                     {person.vorname} {person.nachname}
                   </span>
-                  <span className="ml-2 text-xs text-neutral-400">{person.benutzername}</span>
+                  <span className="ml-2 text-xs text-tertiaer">{person.benutzername}</span>
                   {!person.aktiv && (
-                    <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-500">
+                    <span className="ml-2 rounded-full bg-flaeche-100 px-2 py-0.5 text-xs text-sekundaer">
                       deaktiviert
                     </span>
                   )}
@@ -106,7 +106,7 @@ export default async function BenutzerSeite() {
                       className={
                         "h-9 shrink-0 rounded-lg px-2.5 text-xs font-medium transition " +
                         (person.aktiv
-                          ? "text-neutral-500 hover:bg-red-50 hover:text-red-600"
+                          ? "text-sekundaer hover:bg-red-50 hover:text-red-600"
                           : "bg-marke-gruen/15 text-marke-gruen-dunkel hover:bg-marke-gruen/25")
                       }
                     >
@@ -116,24 +116,24 @@ export default async function BenutzerSeite() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-1.5 text-xs text-neutral-500">
+              <div className="flex flex-wrap gap-1.5 text-xs text-sekundaer">
                 {zugehoerigkeitenAnzeige.length === 0 ? (
-                  <span className="text-neutral-400">Keine Zugehörigkeit</span>
+                  <span className="text-tertiaer">Keine Zugehörigkeit</span>
                 ) : (
                   zugehoerigkeitenAnzeige.map((z) => (
-                    <span key={z.id} className="rounded-full bg-neutral-100 px-2 py-0.5">
+                    <span key={z.id} className="rounded-full bg-flaeche-100 px-2 py-0.5">
                       {z.standort ? `${z.standort.name} · ` : ""}
                       {z.abteilung.name} · {ROLLE_NAMEN[z.rolle]}
                     </span>
                   ))
                 )}
                 {gruppenIds.length > 0 && (
-                  <span className="rounded-full bg-neutral-100 px-2 py-0.5">
+                  <span className="rounded-full bg-flaeche-100 px-2 py-0.5">
                     {gruppenIds.length} Gruppe{gruppenIds.length === 1 ? "" : "n"}
                   </span>
                 )}
                 {berechtigungIds.length > 0 && (
-                  <span className="rounded-full bg-neutral-100 px-2 py-0.5">
+                  <span className="rounded-full bg-flaeche-100 px-2 py-0.5">
                     {berechtigungIds.length} Berechtigung{berechtigungIds.length === 1 ? "" : "en"}
                   </span>
                 )}

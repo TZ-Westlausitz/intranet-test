@@ -115,7 +115,7 @@ export function RuecknahmeBewertung({
       />
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="text-sm font-medium text-neutral-500">Abrechnung</legend>
+        <legend className="text-sm font-medium text-sekundaer">Abrechnung</legend>
 
         <label className="flex items-start gap-2 text-sm">
           <input

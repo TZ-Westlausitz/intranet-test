@@ -83,20 +83,23 @@ export function Unterschriftfeld({
       <span className="text-sm font-medium">{label}</span>
       <canvas
         ref={canvasRef}
-        className="h-40 w-full touch-none rounded-lg border border-neutral-300 bg-white"
+        // bg-white bewusst literal: die Unterschriftfläche wird 1:1 aufs
+        // PDF-Dokument übernommen (weißes Papier), unabhängig vom
+        // Farbschema der App.
+        className="h-40 w-full touch-none rounded-lg border border-flaeche-300 bg-white"
         onPointerDown={zeichnenStart}
         onPointerMove={zeichnenWeiter}
         onPointerUp={zeichnenEnde}
         onPointerLeave={zeichnenEnde}
       />
       <div className="flex items-center justify-between">
-        <span className="text-xs text-neutral-400">
+        <span className="text-xs text-tertiaer">
           {leer ? "Noch keine Unterschrift" : "Unterschrift erfasst"}
         </span>
         <button
           type="button"
           onClick={loeschen}
-          className="text-xs font-medium text-neutral-500 underline hover:text-neutral-700"
+          className="text-xs font-medium text-sekundaer underline hover:text-primaer"
         >
           Löschen
         </button>

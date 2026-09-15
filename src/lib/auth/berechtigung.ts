@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 
-import { Rolle } from "@/generated/prisma/enums"
+import { Rolle, Farbschema } from "@/generated/prisma/enums"
 
 import { auth } from "./auth"
 import { prisma } from "@/lib/db"
@@ -68,6 +68,18 @@ export type Kontext = {
   rollen: Rolle[]
   standortIds: string[]
   berechtigungen: string[]
+  /**
+   * Firmenweiter, rein lesender Überblicksmodus (Admin-Modus), umschaltbar
+   * über den Schalter in der Desktop-Menüleiste (adminModusUmschalten).
+   * Bewusst HIER berechnet, nicht einfach `person.adminModusAktiv`
+   * durchgereicht: die Kombination aus DB-Feld UND aktueller Rolle
+   * ADMINISTRATION läuft an derselben einen Stelle zusammen wie jede
+   * andere Rechteprüfung (Regel 5) — wird die Rolle entzogen, ist der
+   * Modus sofort wirkungslos, selbst wenn das Feld noch `true` ist.
+   */
+  adminModusAktiv: boolean
+  /** Persönliches Farbschema (siehe Person.farbschema) — reine Anzeige-Einstellung, keine Rechtefrage. */
+  farbschema: Farbschema
 }
 
 export async function berechtigung(
@@ -146,6 +158,8 @@ export async function berechtigung(
     rollen,
     standortIds,
     berechtigungen,
+    adminModusAktiv: person.adminModusAktiv && rollen.includes(Rolle.ADMINISTRATION),
+    farbschema: person.farbschema,
   }
 }
 

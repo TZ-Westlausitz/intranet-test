@@ -136,26 +136,26 @@ export default async function UebergabeprotokollAnlegenSeite({
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <p className="text-sm text-neutral-500">Ausleihe {ausleihe.vorgangsnummer}</p>
-      <h1 className="text-2xl font-semibold text-marke-grau">Übergabeprotokoll</h1>
+      <p className="text-sm text-sekundaer">Ausleihe {ausleihe.vorgangsnummer}</p>
+      <h1 className="text-2xl font-semibold text-ueberschrift">Übergabeprotokoll</h1>
 
-      <dl className="mt-4 flex flex-col gap-2 text-sm text-neutral-600">
+      <dl className="mt-4 flex flex-col gap-2 text-sm text-primaer">
         <div className="flex justify-between">
           <dt>Fahrzeug</dt>
-          <dd className="font-medium text-neutral-800">
+          <dd className="font-medium text-primaer">
             {ausleihe.fahrzeug.bezeichnung} ({ausleihe.fahrzeug.kennzeichen})
           </dd>
         </div>
         <div className="flex justify-between">
           <dt>Mieter/in</dt>
-          <dd className="font-medium text-neutral-800">
+          <dd className="font-medium text-primaer">
             {ausleihe.entleiher.vorname} {ausleihe.entleiher.nachname}
           </dd>
         </div>
         {ausleihe.fahrerName && (
           <div className="flex justify-between">
             <dt>Fahrer</dt>
-            <dd className="font-medium text-neutral-800">{ausleihe.fahrerName}</dd>
+            <dd className="font-medium text-primaer">{ausleihe.fahrerName}</dd>
           </div>
         )}
       </dl>
@@ -170,7 +170,7 @@ export default async function UebergabeprotokollAnlegenSeite({
         <input type="hidden" name="ausleiheId" value={ausleihe.id} />
 
         <div className="flex flex-col gap-4">
-          <h2 className="text-sm font-medium text-neutral-500">Angaben zur Übergabe</h2>
+          <h2 className="text-sm font-medium text-sekundaer">Angaben zur Übergabe</h2>
 
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -196,9 +196,9 @@ export default async function UebergabeprotokollAnlegenSeite({
                 required
                 min={0}
                 defaultValue={gespeichert?.kilometerstand}
-                className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+                className="min-w-0 flex-1 rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
               />
-              <span className="shrink-0 text-sm text-neutral-400">km</span>
+              <span className="shrink-0 text-sm text-tertiaer">km</span>
             </div>
           </label>
 
@@ -227,7 +227,7 @@ export default async function UebergabeprotokollAnlegenSeite({
               name="ort"
               required
               defaultValue={gespeichert?.ort}
-              className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+              className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
             />
           </label>
 
@@ -238,7 +238,7 @@ export default async function UebergabeprotokollAnlegenSeite({
               name="uebergebenDurch"
               required
               defaultValue={gespeichert?.uebergebenDurch || kontext.name}
-              className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+              className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
             />
           </label>
         </div>

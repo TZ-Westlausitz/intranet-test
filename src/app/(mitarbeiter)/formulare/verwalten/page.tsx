@@ -85,7 +85,7 @@ export default async function FormulareVerwaltenSeite({
     <main className="mx-auto max-w-5xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-marke-grau">Formulare verwalten</h1>
+        <h1 className="text-2xl font-semibold text-ueberschrift">Formulare verwalten</h1>
         <FormularErstellenDialog
           personen={personenOptionen}
           gruppen={gruppenOptionen}
@@ -98,9 +98,9 @@ export default async function FormulareVerwaltenSeite({
 
       {fehler && <div className="mt-4"><Hinweis>{FEHLER_TEXTE[fehler] ?? "Das hat nicht geklappt."}</Hinweis></div>}
 
-      <div className="mt-6 overflow-x-auto rounded-xl border border-neutral-200 bg-white">
+      <div className="mt-6 overflow-x-auto rounded-xl border border-rand bg-flaeche">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-neutral-200 text-xs text-neutral-500 uppercase">
+          <thead className="border-b border-rand text-xs text-sekundaer uppercase">
             <tr>
               <th className="px-4 py-3 font-medium">Titel</th>
               <th className="px-4 py-3 font-medium">Benutzer</th>
@@ -127,7 +127,7 @@ export default async function FormulareVerwaltenSeite({
             ))}
             {vorlagen.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-neutral-500">
+                <td colSpan={4} className="px-4 py-6 text-center text-sekundaer">
                   Noch keine Formulare angelegt.
                 </td>
               </tr>

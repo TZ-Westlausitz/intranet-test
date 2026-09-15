@@ -110,12 +110,12 @@ export function ProjektThread({
   return (
     <div className="flex flex-col gap-3">
       {nachrichten.length === 0 ? (
-        <p className="text-sm text-neutral-500">Noch keine Nachrichten.</p>
+        <p className="text-sm text-sekundaer">Noch keine Nachrichten.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {nachrichten.map((nachricht) => (
-            <li key={nachricht.id} className="rounded-lg bg-neutral-50 px-2.5 py-1.5">
-              <p className="text-xs font-medium text-neutral-500">
+            <li key={nachricht.id} className="rounded-lg bg-flaeche-schwach px-2.5 py-1.5">
+              <p className="text-xs font-medium text-sekundaer">
                 {nachricht.person.vorname} {nachricht.person.nachname} ·{" "}
                 {nachricht.erstelltAm.toLocaleString("de-DE", {
                   day: "2-digit",
@@ -124,7 +124,7 @@ export function ProjektThread({
                   minute: "2-digit",
                 })}
               </p>
-              <p className="text-sm text-neutral-700">
+              <p className="text-sm text-primaer">
                 <NachrichtText projektId={projektId} text={nachricht.text} />
               </p>
             </li>
@@ -142,7 +142,7 @@ export function ProjektThread({
               setText("")
             }, 0)
           }
-          className="relative flex gap-2 border-t border-neutral-100 pt-3"
+          className="relative flex gap-2 border-t border-flaeche-100 pt-3"
         >
           <input
             ref={eingabeRef}
@@ -153,19 +153,19 @@ export function ProjektThread({
             onChange={beiTextAendern}
             onBlur={() => window.setTimeout(() => setErwaehnungOffen(false), 150)}
             placeholder="Nachricht …"
-            className="h-9 flex-1 rounded-lg border border-neutral-300 px-2 text-sm"
+            className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
           />
           <button
             type="submit"
-            className="h-9 shrink-0 rounded-lg bg-neutral-100 px-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-200"
+            className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200"
           >
             Senden
           </button>
 
           {erwaehnungOffen && (
-            <div className="absolute bottom-full left-0 z-10 mb-1 max-h-40 w-full max-w-xs overflow-y-auto rounded-lg border border-neutral-200 bg-white shadow-lg">
+            <div className="absolute bottom-full left-0 z-10 mb-1 max-h-40 w-full max-w-xs overflow-y-auto rounded-lg border border-rand bg-flaeche shadow-lg">
               {gefilterteDokumente.length === 0 ? (
-                <p className="px-3 py-2 text-sm text-neutral-400">Keine Dokumente</p>
+                <p className="px-3 py-2 text-sm text-tertiaer">Keine Dokumente</p>
               ) : (
                 gefilterteDokumente.map((dokument) => (
                   <button
@@ -173,7 +173,7 @@ export function ProjektThread({
                     type="button"
                     onMouseDown={(ereignis) => ereignis.preventDefault()}
                     onClick={() => dokumentEinfuegen(dokument)}
-                    className="block w-full truncate px-3 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50"
+                    className="block w-full truncate px-3 py-2 text-left text-sm text-primaer hover:bg-flaeche-schwach"
                   >
                     📎 {dokument.dateiname}
                   </button>

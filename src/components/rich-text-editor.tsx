@@ -89,7 +89,7 @@ export function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "min-h-24 px-3 py-2 text-sm focus:outline-none [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-marke-gruen-dunkel [&_a]:underline [&_img]:max-w-full [&_table]:w-full [&_table]:table-fixed [&_table]:border-collapse [&_td]:border [&_td]:border-neutral-300 [&_td]:p-2 [&_td]:align-top [&_th]:border [&_th]:border-neutral-300 [&_th]:p-2 [&_th]:align-top",
+          "min-h-24 px-3 py-2 text-sm focus:outline-none [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_a]:text-marke-gruen-dunkel [&_a]:underline [&_img]:max-w-full [&_table]:w-full [&_table]:table-fixed [&_table]:border-collapse [&_td]:border [&_td]:border-flaeche-300 [&_td]:p-2 [&_td]:align-top [&_th]:border [&_th]:border-flaeche-300 [&_th]:p-2 [&_th]:align-top",
       },
     },
   })
@@ -196,8 +196,8 @@ export function RichTextEditor({
   }
 
   return (
-    <div className="rounded-lg border border-neutral-300">
-      <div className="flex flex-wrap gap-0.5 border-b border-neutral-200 px-1.5 py-1">
+    <div className="rounded-lg border border-flaeche-300">
+      <div className="flex flex-wrap gap-0.5 border-b border-rand px-1.5 py-1">
         <WerkzeugKnopf label="Fett" aktiv={editor?.isActive("bold")} onClick={() => editor?.chain().focus().toggleBold().run()}>
           <span className="font-bold">F</span>
         </WerkzeugKnopf>
@@ -207,14 +207,14 @@ export function RichTextEditor({
         <WerkzeugKnopf label="Unterstrichen" aktiv={editor?.isActive("underline")} onClick={() => editor?.chain().focus().toggleUnderline().run()}>
           <span className="underline">U</span>
         </WerkzeugKnopf>
-        <span className="mx-1 my-1 w-px bg-neutral-200" />
+        <span className="mx-1 my-1 w-px bg-flaeche-200" />
         <WerkzeugKnopf label="Aufzählung" aktiv={editor?.isActive("bulletList")} onClick={() => editor?.chain().focus().toggleBulletList().run()}>
           •&nbsp;–
         </WerkzeugKnopf>
         <WerkzeugKnopf label="Nummerierte Liste" aktiv={editor?.isActive("orderedList")} onClick={() => editor?.chain().focus().toggleOrderedList().run()}>
           1.
         </WerkzeugKnopf>
-        <span className="mx-1 my-1 w-px bg-neutral-200" />
+        <span className="mx-1 my-1 w-px bg-flaeche-200" />
         <WerkzeugKnopf label="Linksbündig" aktiv={ausrichtungAktiv("left")} onClick={() => ausrichtungSetzen("left")}>
           L
         </WerkzeugKnopf>
@@ -224,7 +224,7 @@ export function RichTextEditor({
         <WerkzeugKnopf label="Rechtsbündig" aktiv={ausrichtungAktiv("right")} onClick={() => ausrichtungSetzen("right")}>
           R
         </WerkzeugKnopf>
-        <span className="mx-1 my-1 w-px bg-neutral-200" />
+        <span className="mx-1 my-1 w-px bg-flaeche-200" />
         <WerkzeugKnopf
           label="Link"
           aktiv={editor?.isActive("link")}
@@ -242,7 +242,7 @@ export function RichTextEditor({
         </WerkzeugKnopf>
         {bilderErlaubt && (
           <>
-            <span className="mx-1 my-1 w-px bg-neutral-200" />
+            <span className="mx-1 my-1 w-px bg-flaeche-200" />
             <WerkzeugKnopf label="Bild einfügen" onClick={() => bildAuswahlRef.current?.click()}>
               🖼️
             </WerkzeugKnopf>
@@ -257,14 +257,14 @@ export function RichTextEditor({
         )}
         {tabelleErlaubt && (
           <>
-            <span className="mx-1 my-1 w-px bg-neutral-200" />
+            <span className="mx-1 my-1 w-px bg-flaeche-200" />
             <WerkzeugKnopf
               label="Zeile in zwei Spalten teilen"
               onClick={() => editor?.chain().focus().insertTable({ rows: 1, cols: 2, withHeaderRow: false }).run()}
             >
               ⫲
             </WerkzeugKnopf>
-            <span className="mx-1 my-1 w-px bg-neutral-200" />
+            <span className="mx-1 my-1 w-px bg-flaeche-200" />
             <WerkzeugKnopf label="Zellinhalt oben ausrichten" aktiv={zellAusrichtungAktiv("top")} onClick={() => zellAusrichtungSetzen("top")}>
               ⬒
             </WerkzeugKnopf>
@@ -315,7 +315,7 @@ function WerkzeugKnopf({
       onClick={onClick}
       className={
         "flex h-7 w-7 items-center justify-center rounded text-sm transition " +
-        (aktiv ? "bg-marke-gruen/25 text-marke-grau" : "text-neutral-500 hover:bg-neutral-100")
+        (aktiv ? "bg-marke-gruen/25 text-ueberschrift" : "text-sekundaer hover:bg-flaeche-100")
       }
     >
       {children}

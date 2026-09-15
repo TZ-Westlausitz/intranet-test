@@ -12,6 +12,7 @@ import { auftraegeStatusAnzahl, naechsteGeplantAuftraege } from "@/lib/auftraege
 import { projektAufgabenFuerPerson } from "@/lib/projekte/abfragen"
 import {
   infosFuerPerson,
+  alleInfos,
   offeneBestaetigungenAnzahl,
   naechsteGeplantInfos,
   UNTERNEHMENSNAME,
@@ -33,7 +34,7 @@ import { BAUSTEINE } from "@/lib/bausteine"
  * Zeile 2, Spalte 4 ist die "modular einstellbare" Kachel: genau EIN Modul
  * aus dem Kopfzeilenpunkt "Weiteres" (siehe src/lib/bausteine.ts, aktuell
  * Fahrzeuge oder To-Do-Liste) — welches, stellt jede Person selbst unter
- * /einstellungen/nutzeroberflaeche ein (Person.startseiteWeiteresModul).
+ * /einstellungen ein (Person.startseiteWeiteresModul).
  * Die übrigen Module dieser Liste zeigen sich hier NICHT zusätzlich,
  * bleiben aber über "Weiteres" in der Kopfzeile erreichbar — es ist also
  * immer nur eins der beiden sichtbar, nie beide gleichzeitig. Bewusst
@@ -92,7 +93,7 @@ export default async function Startseite() {
     kontext.rollen.includes(Rolle.ADMINISTRATION)
 
   // Welches "Weiteres"-Modul für Zeile 2, Spalte 4 eingestellt ist (siehe
-  // /einstellungen/nutzeroberflaeche) — ohne eigene Einstellung greift der
+  // /einstellungen) — ohne eigene Einstellung greift der
   // erste Eintrag der Liste als Default (aktuell Fahrzeuge, das bisherige
   // Verhalten für alle, die die Einstellung noch nicht angefasst haben).
   const [person, weiteresEintrag] = [
@@ -138,7 +139,11 @@ export default async function Startseite() {
       aufgabenFuerPerson(kontext.personId),
       auftraegeStatusAnzahl(kontext.personId),
       projektAufgabenFuerPerson(kontext.personId),
-      infosFuerPerson(kontext),
+      // Admin-Modus (siehe Kontext.adminModusAktiv): dieselbe firmenweite
+      // Sicht wie im vollen /newsfeed-Feed (Rückmeldung vom 2026-09-14) —
+      // vorher zeigte die Startseiten-Kachel immer nur die eigenen Infos,
+      // Admin-Modus blieb hier wirkungslos.
+      kontext.adminModusAktiv ? alleInfos(kontext) : infosFuerPerson(kontext),
       offeneBestaetigungenAnzahl(kontext.personId),
     ])
   // Alle sichtbaren Infos statt einer festen Obergrenze — die Kachel
@@ -200,16 +205,16 @@ export default async function Startseite() {
             <li key={modul.pfad}>
               <Link
                 href={modul.pfad}
-                className="block rounded-lg border border-neutral-200 p-4 transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2"
+                className="block rounded-lg border border-rand p-4 transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2"
               >
                 <span className="block font-medium">{modul.name}</span>
-                <span className="mt-1 block text-sm text-neutral-600">{modul.beschreibung}</span>
+                <span className="mt-1 block text-sm text-primaer">{modul.beschreibung}</span>
               </Link>
             </li>
           ))}
 
           {istWerkstatt && (
-            <li className="rounded-lg border border-neutral-200 p-4">
+            <li className="rounded-lg border border-rand p-4">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium">Fahrzeug Reservierungen</span>
                 {offeneAnfragen > 0 && (
@@ -223,12 +228,12 @@ export default async function Startseite() {
               </div>
 
               {naechsteReservierungen.length === 0 ? (
-                <p className="mt-2 text-sm text-neutral-600">Keine anstehenden Reservierungen.</p>
+                <p className="mt-2 text-sm text-primaer">Keine anstehenden Reservierungen.</p>
               ) : (
                 <ul className="mt-2 flex flex-col gap-1.5">
                   {naechsteReservierungen.map((r) => (
-                    <li key={r.id} className="text-sm text-neutral-600">
-                      <span className="font-medium text-neutral-800">
+                    <li key={r.id} className="text-sm text-primaer">
+                      <span className="font-medium text-primaer">
                         {r.geplantVon.toLocaleDateString("de-DE")}–
                         {r.geplantBis.toLocaleDateString("de-DE")}
                       </span>{" "}
@@ -255,7 +260,7 @@ export default async function Startseite() {
           würde die Seite unter der Kopfzeile wieder über eine Bildschirm-
           höhe hinauswachsen. */}
       <main className="hidden h-full flex-col md:flex">
-        <div className="flex flex-1 flex-col items-center justify-center overflow-auto bg-gradient-to-br from-marke-gruen/5 via-white to-marke-orange/5 p-6">
+        <div className="flex flex-1 flex-col items-center justify-center overflow-auto bg-gradient-to-br from-marke-gruen/5 via-background to-marke-orange/5 p-6">
           {/* 4 Spalten statt 4 einzelne Kacheln: Newsfeed nimmt per
               col-span-2 zwei davon ein und bleibt durch row-span-2 genauso
               hoch wie breit — ein großer quadratischer Block statt eines
@@ -269,10 +274,10 @@ export default async function Startseite() {
 
             <Link
               href="/kalender"
-              className="col-start-3 row-start-1 flex flex-col rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-orange bg-white p-4 text-center shadow-sm transition hover:border-marke-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+              className="col-start-3 row-start-1 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4 text-center shadow-sm transition hover:border-marke-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
             >
               <div className="flex items-center justify-center gap-1.5">
-                <h2 className="text-lg font-semibold text-marke-grau">Kalender</h2>
+                <h2 className="text-lg font-semibold text-ueberschrift">Kalender</h2>
                 {faelligeErinnerungen > 0 && (
                   <span
                     aria-label={`${faelligeErinnerungen} fällige Erinnerungen`}
@@ -283,12 +288,12 @@ export default async function Startseite() {
                 )}
               </div>
               <div className="flex flex-1 flex-col items-center justify-center">
-                <span className="text-5xl font-bold leading-none text-marke-grau">{heute.getDate()}</span>
-                <span className="mt-1.5 text-sm font-medium text-neutral-500">
+                <span className="text-5xl font-bold leading-none text-ueberschrift">{heute.getDate()}</span>
+                <span className="mt-1.5 text-sm font-medium text-sekundaer">
                   {MONATSNAMEN[heute.getMonth()]}
                 </span>
               </div>
-              <p className="truncate text-xs font-medium text-neutral-500">
+              <p className="truncate text-xs font-medium text-sekundaer">
                 {terminVorschau ?? "Keine anstehenden Termine"}
               </p>
             </Link>
@@ -301,10 +306,10 @@ export default async function Startseite() {
                 nebeneinander statt in getrennten Abschnitten. */}
             <Link
               href="/aufgaben"
-              className="col-start-4 row-start-1 flex flex-col rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen-dunkel bg-white p-4 shadow-sm transition hover:border-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+              className="col-start-4 row-start-1 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen-dunkel bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
             >
               <div className="flex items-center justify-between gap-1.5">
-                <h2 className="text-lg font-semibold text-marke-grau hover:underline">Aufgaben</h2>
+                <h2 className="text-lg font-semibold text-ueberschrift hover:underline">Aufgaben</h2>
                 {aufgabenGesamtOffen > 0 && (
                   <span
                     aria-label={`${aufgabenGesamtOffen} offene Aufgabe${aufgabenGesamtOffen === 1 ? "" : "n"}`}
@@ -316,7 +321,7 @@ export default async function Startseite() {
               </div>
 
               {aufgabenGesamtOffen === 0 ? (
-                <p className="mt-2 text-xs text-neutral-500">Alles erledigt</p>
+                <p className="mt-2 text-xs text-sekundaer">Alles erledigt</p>
               ) : (
                 <div className="mt-2 flex flex-1 flex-col gap-1.5">
                   {/* Aufträge (Offen/Angenommen) und Projekt-Aufgaben als
@@ -324,19 +329,19 @@ export default async function Startseite() {
                       Abschnitt optisch bevorzugt. Erledigtes taucht hier
                       bewusst nicht auf, genau wie bei den anderen Kacheln. */}
                   {auftraegeStatus.offen > 0 && (
-                    <div className="flex items-center justify-between text-xs text-neutral-600">
+                    <div className="flex items-center justify-between text-xs text-primaer">
                       <span>Offen</span>
                       <span className="font-medium">{auftraegeStatus.offen}</span>
                     </div>
                   )}
                   {auftraegeStatus.angenommen > 0 && (
-                    <div className="flex items-center justify-between text-xs text-neutral-600">
+                    <div className="flex items-center justify-between text-xs text-primaer">
                       <span>Angenommen</span>
                       <span className="font-medium">{auftraegeStatus.angenommen}</span>
                     </div>
                   )}
                   {offeneProjektAufgaben.length > 0 && (
-                    <div className="flex items-center justify-between text-xs text-neutral-600">
+                    <div className="flex items-center justify-between text-xs text-primaer">
                       <span>Projekt-Aufgaben</span>
                       <span className="font-medium">{offeneProjektAufgaben.length}</span>
                     </div>
@@ -345,17 +350,20 @@ export default async function Startseite() {
               )}
             </Link>
 
-            <div className="col-start-3 row-start-2 flex flex-col justify-between rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-orange bg-white p-4 shadow-sm">
+            <Link
+              href="/wissen"
+              className="col-start-3 row-start-2 flex flex-col justify-between rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4 shadow-sm transition hover:border-marke-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+            >
               <div>
-                <h2 className="text-lg font-semibold text-marke-grau">Wissensbereich</h2>
-                <p className="mt-2 text-sm text-neutral-500">
+                <h2 className="text-lg font-semibold text-ueberschrift">Wissensbereich</h2>
+                <p className="mt-2 text-sm text-sekundaer">
                   Wichtige Dokumente, abgestimmt auf die jeweilige Abteilung.
                 </p>
               </div>
-              <p className="text-xs text-neutral-400">Noch nicht verfügbar</p>
-            </div>
+              <span className="text-sm font-semibold text-marke-gruen-dunkel">Zum Wissensbereich →</span>
+            </Link>
 
-            {/* Zeile 2, Spalte 4: das in /einstellungen/nutzeroberflaeche
+            {/* Zeile 2, Spalte 4: das in /einstellungen
                 ausgewählte "Weiteres"-Modul — genau eins von beiden, nie
                 beide gleichzeitig (siehe Kommentar oben am Modul). Gleiches
                 Kachel-Design wie die übrigen (weiß, neutraler Rahmen, Hover
@@ -365,13 +373,13 @@ export default async function Startseite() {
             {zeigeFahrzeuge && (
               <Link
                 href={istWerkstatt ? "/fahrzeug-reservierungen" : "/fahrzeug-mieten"}
-                className="col-start-4 row-start-2 flex flex-col justify-between rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen bg-white p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+                className="col-start-4 row-start-2 flex flex-col justify-between rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
               >
                 {istWerkstatt ? (
                   <>
                     <div>
                       <div className="flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-marke-grau">Fahrzeuge</h2>
+                        <h2 className="text-lg font-semibold text-ueberschrift">Fahrzeuge</h2>
                         {offeneAnfragen > 0 && (
                           <span
                             aria-label={`${offeneAnfragen} offene Anfragen`}
@@ -382,9 +390,9 @@ export default async function Startseite() {
                         )}
                       </div>
                       {naechsteReservierungen.length === 0 ? (
-                        <p className="mt-2 text-xs text-neutral-500">Keine anstehenden Reservierungen.</p>
+                        <p className="mt-2 text-xs text-sekundaer">Keine anstehenden Reservierungen.</p>
                       ) : (
-                        <ul className="mt-2 flex flex-col gap-1 text-xs text-neutral-500">
+                        <ul className="mt-2 flex flex-col gap-1 text-xs text-sekundaer">
                           {naechsteReservierungen.map((r) => (
                             <li key={r.id}>
                               {r.geplantVon.toLocaleDateString("de-DE")} · {r.fahrzeug.bezeichnung}
@@ -398,8 +406,8 @@ export default async function Startseite() {
                 ) : (
                   <>
                     <div>
-                      <h2 className="text-lg font-semibold text-marke-grau">Fahrzeug mieten</h2>
-                      <p className="mt-2 text-sm text-neutral-500">Privat ein Firmenfahrzeug anfragen.</p>
+                      <h2 className="text-lg font-semibold text-ueberschrift">Fahrzeug mieten</h2>
+                      <p className="mt-2 text-sm text-sekundaer">Privat ein Firmenfahrzeug anfragen.</p>
                     </div>
                     <span className="text-sm font-semibold text-marke-gruen-dunkel">Jetzt anfragen →</span>
                   </>
@@ -408,12 +416,12 @@ export default async function Startseite() {
             )}
 
             {zeigeTodoListe && (
-              <div className="col-start-4 row-start-2 flex flex-col rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen bg-white p-4 shadow-sm transition hover:border-marke-gruen">
+              <div className="col-start-4 row-start-2 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen">
                 <Link
                   href="/aufgaben/todos"
                   className="flex items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
                 >
-                  <h2 className="text-lg font-semibold text-marke-grau hover:underline">To-Do-Liste</h2>
+                  <h2 className="text-lg font-semibold text-ueberschrift hover:underline">To-Do-Liste</h2>
                   {offeneAufgaben.length > 0 && (
                     <span
                       aria-label={`${offeneAufgaben.length} offene Einträge in der To-Do-Liste`}
@@ -425,7 +433,7 @@ export default async function Startseite() {
                 </Link>
 
                 {naechsteTodos.length === 0 ? (
-                  <p className="mt-2 text-xs text-neutral-500">Alles erledigt</p>
+                  <p className="mt-2 text-xs text-sekundaer">Alles erledigt</p>
                 ) : (
                   <ul className="mt-2 flex flex-col gap-1.5">
                     {naechsteTodos.map((aufgabe) => (
@@ -434,10 +442,10 @@ export default async function Startseite() {
                           <button
                             type="submit"
                             aria-label={`"${aufgabe.titel}" als erledigt markieren`}
-                            className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-neutral-300 transition hover:border-marke-gruen-dunkel"
+                            className="h-3.5 w-3.5 shrink-0 rounded-full border-2 border-flaeche-300 transition hover:border-marke-gruen-dunkel"
                           />
                         </form>
-                        <span className="truncate text-xs text-neutral-600">{aufgabe.titel}</span>
+                        <span className="truncate text-xs text-primaer">{aufgabe.titel}</span>
                       </li>
                     ))}
                   </ul>
@@ -446,12 +454,12 @@ export default async function Startseite() {
             )}
 
             {zeigeGeplanteAktionen && (
-              <div className="col-start-4 row-start-2 flex flex-col rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen bg-white p-4 shadow-sm transition hover:border-marke-gruen">
+              <div className="col-start-4 row-start-2 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen">
                 <Link
                   href="/geplante-aktionen"
                   className="flex items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
                 >
-                  <h2 className="text-lg font-semibold text-marke-grau hover:underline">Geplante Aktionen</h2>
+                  <h2 className="text-lg font-semibold text-ueberschrift hover:underline">Geplante Aktionen</h2>
                   {geplanteEintraege.length > 0 && (
                     <span
                       aria-label={`${geplanteEintraege.length} geplante Infos, Aufgaben und Aufträge`}
@@ -463,7 +471,7 @@ export default async function Startseite() {
                 </Link>
 
                 {naechsteGeplant.length === 0 ? (
-                  <p className="mt-2 text-xs text-neutral-500">Keine geplanten Infos, Aufgaben oder Aufträge.</p>
+                  <p className="mt-2 text-xs text-sekundaer">Keine geplanten Infos, Aufgaben oder Aufträge.</p>
                 ) : (
                   <ul className="mt-2 flex flex-col gap-1.5">
                     {naechsteGeplant.map((eintrag) => (
@@ -471,8 +479,8 @@ export default async function Startseite() {
                         <span aria-hidden className="shrink-0">
                           {eintrag.typ === "info" ? "📰" : eintrag.typ === "aufgabe" ? "☑" : "📌"}
                         </span>
-                        <span className="truncate text-neutral-600">{eintrag.titel}</span>
-                        <span className="ml-auto shrink-0 text-neutral-400">
+                        <span className="truncate text-primaer">{eintrag.titel}</span>
+                        <span className="ml-auto shrink-0 text-tertiaer">
                           {eintrag.datum.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
                         </span>
                       </li>

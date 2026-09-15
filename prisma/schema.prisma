@@ -33,6 +33,14 @@ datasource db {
 //  ENUMS
 // =============================================================================
 
+/// Persönliches Farbschema (siehe Person.farbschema) — bewusst nur zwei
+/// feste Optionen, keine "System"-Automatik anhand der Geräteeinstellung,
+/// wie gewünscht.
+enum Farbschema {
+  HELL
+  DUNKEL
+}
+
 enum Rolle {
   MITARBEITENDE
   FUEHRUNGSKRAFT
@@ -198,6 +206,20 @@ model Person {
   /// bewusst den Namen des Moduls, nicht dessen Pfad — der ist stabiler,
   /// falls sich mal nur die Ziel-URL ändert.
   startseiteWeiteresModul String?
+
+  /// Firmenweiter, rein lesender Überblicksmodus (Admin-Modus, Schalter in
+  /// der Desktop-Menüleiste) — nur wirksam in Kombination mit Rolle
+  /// ADMINISTRATION, siehe berechtigung(): ein entzogenes Recht schaltet
+  /// die Wirkung sofort ab, auch wenn dieses Feld noch true ist. Bewusst
+  /// ein persistentes DB-Feld statt eines Cookies (kein Cookie-Präzedenzfall
+  /// im Projekt) — analog zu startseiteWeiteresModul oben.
+  adminModusAktiv Boolean @default(false)
+
+  /// Persönliches Farbschema, geräteübergreifend gültig (Muster:
+  /// startseiteWeiteresModul) — anders als beim Admin-Modus keine
+  /// Berechtigungsfrage, nur Anzeige, daher ohne Zusatzprüfung direkt aus
+  /// der DB übernommen (siehe berechtigung()).
+  farbschema Farbschema @default(HELL)
 
   erstelltAm     DateTime @default(now())
   aktualisiertAm DateTime @updatedAt

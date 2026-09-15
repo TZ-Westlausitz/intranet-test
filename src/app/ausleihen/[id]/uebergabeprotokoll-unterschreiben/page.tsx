@@ -165,29 +165,29 @@ export default async function UebergabeprotokollUnterschreibenSeite({
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <p className="text-sm text-neutral-500">Ausleihe {ausleihe.vorgangsnummer}</p>
-      <h1 className="text-2xl font-semibold text-marke-grau">Übergabeprotokoll unterschreiben</h1>
+      <p className="text-sm text-sekundaer">Ausleihe {ausleihe.vorgangsnummer}</p>
+      <h1 className="text-2xl font-semibold text-ueberschrift">Übergabeprotokoll unterschreiben</h1>
 
-      <dl className="mt-4 flex flex-col gap-2 text-sm text-neutral-600">
+      <dl className="mt-4 flex flex-col gap-2 text-sm text-primaer">
         <div className="flex justify-between">
           <dt>Fahrzeug</dt>
-          <dd className="font-medium text-neutral-800">
+          <dd className="font-medium text-primaer">
             {ausleihe.fahrzeug.bezeichnung} ({ausleihe.fahrzeug.kennzeichen})
           </dd>
         </div>
         <div className="flex justify-between">
           <dt>Mieter/in</dt>
-          <dd className="font-medium text-neutral-800">
+          <dd className="font-medium text-primaer">
             {ausleihe.entleiher.vorname} {ausleihe.entleiher.nachname}
           </dd>
         </div>
         <div className="flex justify-between">
           <dt>Kilometerstand</dt>
-          <dd className="font-medium text-neutral-800">{ausgabeDaten.kilometerstand} km</dd>
+          <dd className="font-medium text-primaer">{ausgabeDaten.kilometerstand} km</dd>
         </div>
         <div className="flex justify-between">
           <dt>Ort, Datum</dt>
-          <dd className="font-medium text-neutral-800">
+          <dd className="font-medium text-primaer">
             {ausgabeDaten.ort}, {formatiereDatumAusDate(new Date(ausgabeDaten.datumUhrzeit))}
           </dd>
         </div>

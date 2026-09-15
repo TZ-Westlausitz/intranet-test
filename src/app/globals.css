@@ -4,11 +4,64 @@
   --background: #ffffff;
   --foreground: #333333;
 
-  /* Marke: aus dem Logo von therapiezentrum-westlausitz.de entnommen. */
+  /* Marke: aus dem Logo von therapiezentrum-westlausitz.de entnommen. Bleiben
+     in beiden Farbschemata unverändert — auf der Webseite selbst schon als
+     Akzentfarbe auf dunklem Grund im Einsatz. */
   --marke-gruen: #aec90b;
   --marke-gruen-dunkel: #93ab00;
   --marke-orange: #f6a841;
   --marke-grau: #575756;
+
+  /* Farbschema-Tokens (Person.farbschema, siehe /einstellungen).
+     Helle Werte hier entsprechen bewusst exakt den bisherigen
+     Tailwind-Neutralwerten (neutral-200 = #e5e5e5 usw.) — Hell-Modus bleibt
+     dadurch pixelgleich zum bisherigen Stand. Ersetzen schrittweise die
+     bisherigen Klassen bg-white, border-neutral-200, text-neutral-600 (600
+     bis 400) und text-marke-grau im Code (siehe Plan "Dark Mode"), fangen
+     mit global sichtbaren Bereichen an. Dunkle Werte unten unter
+     [data-theme="dunkel"] von therapiezentrum-westlausitz.de abgelesen
+     (getComputedStyle). */
+  --flaeche: #ffffff;
+  --flaeche-schwach: #fafafa;
+  --rand: #e5e5e5;
+  --primaer: #525252;
+  --sekundaer: #737373;
+  --tertiaer: #a3a3a3;
+  --ueberschrift: #575756;
+
+  /* Nachgezogen (Rückmeldung 2026-09-12): die Klassen bg-neutral-100/200/300
+     blieben beim ersten Umstellungsdurchgang unangetastet (nur bg-neutral-50
+     war im Plan) — zusammen mit dem inzwischen theme-reaktiven Text
+     (text-primaer usw.) ergab das im Dunkel-Modus helle Badges mit hellem,
+     kaum lesbarem Text (z. B. Status-Chips wie "Planung"). Helle Werte hier
+     = exakt die bisherigen Tailwind-Neutralwerte (kein Unterschied im
+     Hell-Modus). */
+  --flaeche-100: #f5f5f5;
+  --flaeche-200: #e5e5e5;
+  --flaeche-300: #d4d4d4;
+}
+
+[data-theme="dunkel"] {
+  --background: #1c1c1c;
+  --foreground: #f1f1f1;
+
+  --flaeche: #2a2a2a;
+  --flaeche-schwach: #262626;
+  --rand: #3f3f3f;
+  --primaer: #d4d4d4;
+  --sekundaer: #a3a3a3;
+  --tertiaer: #737373;
+  --ueberschrift: #f1f1f1;
+
+  --flaeche-100: #333333;
+  --flaeche-200: #3d3d3d;
+  --flaeche-300: #484848;
+
+  /* Lässt den Browser eigene Bedienelemente (Datum-/Uhrzeit-Picker,
+     Scrollbalken) passend zum Dunkelmodus zeichnen, unabhängig von den
+     Klassen unten — sonst bleibt z. B. das Kalender-Icon in
+     DatumUhrzeitFeld dunkel auf dunklem Grund unsichtbar. */
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -18,12 +71,46 @@
   --color-marke-gruen-dunkel: var(--marke-gruen-dunkel);
   --color-marke-orange: var(--marke-orange);
   --color-marke-grau: var(--marke-grau);
+  --color-flaeche: var(--flaeche);
+  --color-flaeche-schwach: var(--flaeche-schwach);
+  --color-flaeche-100: var(--flaeche-100);
+  --color-flaeche-200: var(--flaeche-200);
+  --color-flaeche-300: var(--flaeche-300);
+  --color-rand: var(--rand);
+  --color-primaer: var(--primaer);
+  --color-sekundaer: var(--sekundaer);
+  --color-tertiaer: var(--tertiaer);
+  --color-ueberschrift: var(--ueberschrift);
   --font-sans: var(--font-lato);
 }
+
+/* An unser eigenes data-theme-Attribut gekoppelt statt an die
+   Systemeinstellung des Geräts (Tailwinds Standard-`dark`-Variante würde
+   sonst auf prefers-color-scheme reagieren) — für die seltenen Stellen, wo
+   ein Farbschema-Token allein nicht reicht (siehe Plan "Dark Mode"). */
+@custom-variant dark (&:where([data-theme="dunkel"], [data-theme="dunkel"] *));
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Basis-Hintergrund/Textfarbe für Formularfelder. Über 190 input/textarea/
+   select im Projekt setzen das nicht selbst und blieben deshalb bisher
+   beim UA-Standard (weiß/schwarz) — im Dunkelmodus eine helle Box mitten
+   im sonst dunklen Pop-up. Ein globaler Basiswert ist wartbarer, als das
+   an jeder der vielen Stellen einzeln nachzuziehen; eigene bg-/text-
+   Klassen an einer Stelle überschreiben das wie gewohnt (Kaskade). Kein
+   Checkbox/Radio/File — die sollen wie gehabt aussehen. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+textarea,
+select {
+  background-color: var(--flaeche);
+  color: var(--primaer);
+}
+
+::placeholder {
+  color: var(--tertiaer);
 }
 
 /* `showModal()` verschiebt den Fokus auf das <dialog>-Element selbst,

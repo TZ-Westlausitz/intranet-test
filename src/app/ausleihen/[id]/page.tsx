@@ -99,56 +99,56 @@ export default async function AusleiheSeite({
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <p className="text-sm text-neutral-500">Ausleihe {ausleihe.vorgangsnummer}</p>
-      <h1 className="text-2xl font-semibold text-marke-grau">
+      <p className="text-sm text-sekundaer">Ausleihe {ausleihe.vorgangsnummer}</p>
+      <h1 className="text-2xl font-semibold text-ueberschrift">
         {ausleihe.fahrzeug.bezeichnung}
       </h1>
 
       <dl className="mt-6 flex flex-col gap-3 text-sm">
-        <div className="flex justify-between border-b border-neutral-100 pb-2">
-          <dt className="text-neutral-500">Entleiher/in</dt>
+        <div className="flex justify-between border-b border-flaeche-100 pb-2">
+          <dt className="text-sekundaer">Entleiher/in</dt>
           <dd className="font-medium">
             {ausleihe.entleiher.vorname} {ausleihe.entleiher.nachname}
           </dd>
         </div>
         {ausleihe.fahrerName && (
-          <div className="flex justify-between border-b border-neutral-100 pb-2">
-            <dt className="text-neutral-500">Fahrer</dt>
+          <div className="flex justify-between border-b border-flaeche-100 pb-2">
+            <dt className="text-sekundaer">Fahrer</dt>
             <dd className="font-medium">{ausleihe.fahrerName}</dd>
           </div>
         )}
-        <div className="flex justify-between border-b border-neutral-100 pb-2">
-          <dt className="text-neutral-500">Zeitraum</dt>
+        <div className="flex justify-between border-b border-flaeche-100 pb-2">
+          <dt className="text-sekundaer">Zeitraum</dt>
           <dd className="font-medium">
             {ausleihe.geplantVon.toLocaleDateString("de-DE")}–
             {ausleihe.geplantBis.toLocaleDateString("de-DE")}
           </dd>
         </div>
-        <div className="flex justify-between border-b border-neutral-100 pb-2">
-          <dt className="text-neutral-500">Zweck</dt>
+        <div className="flex justify-between border-b border-flaeche-100 pb-2">
+          <dt className="text-sekundaer">Zweck</dt>
           <dd className="font-medium">{ausleihe.zweck}</dd>
         </div>
-        <div className="flex justify-between border-b border-neutral-100 pb-2">
-          <dt className="text-neutral-500">Status</dt>
+        <div className="flex justify-between border-b border-flaeche-100 pb-2">
+          <dt className="text-sekundaer">Status</dt>
           <dd className="font-medium">{STATUS_TEXT[ausleihe.status] ?? ausleihe.status}</dd>
         </div>
         {ausleihe.status === "ABGELEHNT" && ausleihe.ablehnungsgrund && (
-          <div className="flex justify-between border-b border-neutral-100 pb-2">
-            <dt className="text-neutral-500">Grund</dt>
+          <div className="flex justify-between border-b border-flaeche-100 pb-2">
+            <dt className="text-sekundaer">Grund</dt>
             <dd className="font-medium">{ausleihe.ablehnungsgrund}</dd>
           </div>
         )}
       </dl>
 
       {NAECHSTER_SCHRITT[ausleihe.status] && (
-        <p className="mt-8 rounded-lg border border-dashed border-neutral-300 p-4 text-sm text-neutral-500">
+        <p className="mt-8 rounded-lg border border-dashed border-flaeche-300 p-4 text-sm text-sekundaer">
           {NAECHSTER_SCHRITT[ausleihe.status]}
         </p>
       )}
 
       {ausleihe.vereinbarungsentwurfPfad && (
-        <div className="mt-4 rounded-lg border border-neutral-200 p-4">
-          <p className="text-sm text-neutral-600">
+        <div className="mt-4 rounded-lg border border-rand p-4">
+          <p className="text-sm text-primaer">
             Der vorbereitete Entwurf der Nutzungsvereinbarung liegt bereit für
             die Übergabe. Über den Link kannst du ihn ansehen oder
             herunterladen.
@@ -156,7 +156,7 @@ export default async function AusleiheSeite({
           <Link
             href={`/api/ausleihen/${ausleihe.id}/vereinbarungsentwurf`}
             target="_blank"
-            className="mt-2 inline-block text-sm font-semibold text-marke-gruen-dunkel underline hover:text-marke-grau"
+            className="mt-2 inline-block text-sm font-semibold text-marke-gruen-dunkel underline hover:text-ueberschrift"
           >
             Nutzungsvereinbarung (PDF) ansehen
           </Link>
@@ -164,14 +164,14 @@ export default async function AusleiheSeite({
       )}
 
       {ausleihe.vereinbarung && (
-        <div className="mt-4 rounded-lg border border-neutral-200 p-4">
-          <p className="text-sm text-neutral-600">
+        <div className="mt-4 rounded-lg border border-rand p-4">
+          <p className="text-sm text-primaer">
             Die Nutzungsvereinbarung ist unterschrieben.
           </p>
           <Link
             href={`/api/ausleihen/${ausleihe.id}/vereinbarung`}
             target="_blank"
-            className="mt-2 inline-block text-sm font-semibold text-marke-gruen-dunkel underline hover:text-marke-grau"
+            className="mt-2 inline-block text-sm font-semibold text-marke-gruen-dunkel underline hover:text-ueberschrift"
           >
             Nutzungsvereinbarung (PDF) ansehen
           </Link>
@@ -192,15 +192,15 @@ export default async function AusleiheSeite({
         )}
 
       {ausleihe.ausgabeprotokollEntwurfPfad && (
-        <div className="mt-4 rounded-lg border border-neutral-200 p-4">
-          <p className="text-sm text-neutral-600">
+        <div className="mt-4 rounded-lg border border-rand p-4">
+          <p className="text-sm text-primaer">
             Der vorbereitete Entwurf des Übergabeprotokolls liegt bereit.
             Über den Link kannst du ihn ansehen oder herunterladen.
           </p>
           <Link
             href={`/api/ausleihen/${ausleihe.id}/ausgabeprotokollentwurf`}
             target="_blank"
-            className="mt-2 inline-block text-sm font-semibold text-marke-gruen-dunkel underline hover:text-marke-grau"
+            className="mt-2 inline-block text-sm font-semibold text-marke-gruen-dunkel underline hover:text-ueberschrift"
           >
             Übergabeprotokoll (PDF) ansehen
           </Link>
@@ -208,8 +208,8 @@ export default async function AusleiheSeite({
       )}
 
       {(ruecknahmeProtokoll || ausgabeProtokoll) && (
-        <div className="mt-4 rounded-lg border border-neutral-200 p-4">
-          <p className="text-sm text-neutral-600">
+        <div className="mt-4 rounded-lg border border-rand p-4">
+          <p className="text-sm text-primaer">
             {ruecknahmeProtokoll
               ? "Das Übergabeprotokoll ist vollständig unterschrieben (Ausgabe und Rücknahme)."
               : "Das Übergabeprotokoll (Ausgabe) ist unterschrieben."}
@@ -217,7 +217,7 @@ export default async function AusleiheSeite({
           <Link
             href={`/api/ausleihen/${ausleihe.id}/uebergabeprotokoll`}
             target="_blank"
-            className="mt-2 inline-block text-sm font-semibold text-marke-gruen-dunkel underline hover:text-marke-grau"
+            className="mt-2 inline-block text-sm font-semibold text-marke-gruen-dunkel underline hover:text-ueberschrift"
           >
             Übergabeprotokoll (PDF) ansehen
           </Link>
@@ -287,7 +287,7 @@ export default async function AusleiheSeite({
               </form>
               <Link
                 href={`/ausleihen/${ausleihe.id}`}
-                className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-400"
+                className="rounded-lg border border-flaeche-300 px-3 py-1.5 text-sm font-medium text-primaer transition hover:border-tertiaer"
               >
                 Abbrechen
               </Link>

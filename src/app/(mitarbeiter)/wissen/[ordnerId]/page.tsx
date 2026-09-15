@@ -59,7 +59,7 @@ export default async function WissensOrdnerSeite({ params }: { params: Promise<{
     <main className="mx-auto max-w-4xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-marke-grau">{ordner.name}</h1>
+        <h1 className="text-2xl font-semibold text-ueberschrift">{ordner.name}</h1>
         {darfVerwalten && (
           <div className="flex shrink-0 gap-2">
             <OrdnerErstellenDialog
@@ -74,7 +74,7 @@ export default async function WissensOrdnerSeite({ params }: { params: Promise<{
 
       {unterordnerEintraege.length > 0 && (
         <div className="mt-6">
-          <h2 className="text-sm font-semibold text-neutral-600">Unterordner</h2>
+          <h2 className="text-sm font-semibold text-primaer">Unterordner</h2>
           <div className="mt-2">
             <WissensOrdnerGrid
               ordner={unterordnerEintraege}
@@ -87,8 +87,8 @@ export default async function WissensOrdnerSeite({ params }: { params: Promise<{
         </div>
       )}
 
-      <div className="mt-8 rounded-xl border border-neutral-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-marke-grau">Artikel</h2>
+      <div className="mt-8 rounded-xl border border-rand bg-flaeche p-4">
+        <h2 className="text-sm font-semibold text-ueberschrift">Artikel</h2>
         <ArtikelListe
           artikel={artikel}
           darfVerwalten={darfVerwalten}

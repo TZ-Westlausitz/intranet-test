@@ -42,7 +42,7 @@ export const KontaktAnzeigenDialog = forwardRef<
   return (
     <dialog
       ref={dialogRef}
-      className="fixed top-1/2 left-1/2 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-0 shadow-xl backdrop:bg-neutral-900/40"
+      className="fixed top-1/2 left-1/2 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
     >
       <div className="flex max-h-[85vh] flex-col">
         <div className="flex justify-end px-5 pt-4">
@@ -50,15 +50,15 @@ export const KontaktAnzeigenDialog = forwardRef<
             type="button"
             aria-label="Schließen"
             onClick={() => dialogRef.current?.close()}
-            className="shrink-0 rounded-full p-1.5 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-600"
+            className="shrink-0 rounded-full p-1.5 text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
           >
             ✕
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 pb-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
           {laedt || !detail ? (
-            <p className="py-8 text-center text-sm text-neutral-400">Lädt …</p>
+            <p className="py-8 text-center text-sm text-tertiaer">Lädt …</p>
           ) : (
             <KontaktProfil person={detail} />
           )}

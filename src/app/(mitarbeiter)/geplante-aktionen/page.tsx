@@ -129,8 +129,8 @@ export default async function GeplanteAktionenSeite({
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-center text-2xl font-semibold text-marke-grau md:text-left">Geplante Aktionen</h1>
-      <p className="mt-1 text-center text-sm text-neutral-500 md:text-left">
+      <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Geplante Aktionen</h1>
+      <p className="mt-1 text-center text-sm text-sekundaer md:text-left">
         Neue geplante Infos werden im <Link href="/newsfeed" className="text-marke-gruen-dunkel hover:underline">Newsfeed</Link> über
         &bdquo;Geplant für&ldquo; angelegt, neue geplante Aufgaben in der{" "}
         <Link href="/aufgaben/todos" className="text-marke-gruen-dunkel hover:underline">To-Do-Liste</Link>, neue geplante
@@ -144,21 +144,21 @@ export default async function GeplanteAktionenSeite({
           <Link
             href={linkFuer(zurueck)}
             aria-label="Vorherige Monate"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-600 transition hover:border-marke-gruen hover:text-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-rand text-primaer transition hover:border-marke-gruen hover:text-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
           >
             ‹
           </Link>
-          <span className="text-lg font-medium text-marke-grau md:hidden">
+          <span className="text-lg font-medium text-ueberschrift md:hidden">
             {MONATSNAMEN[angezeigteMonate[0].monatIndex0]} {angezeigteMonate[0].jahr}
           </span>
-          <span className="hidden text-lg font-medium text-marke-grau md:inline">
+          <span className="hidden text-lg font-medium text-ueberschrift md:inline">
             {MONATSNAMEN[angezeigteMonate[0].monatIndex0]} – {MONATSNAMEN[angezeigteMonate[2].monatIndex0]}{" "}
             {angezeigteMonate[2].jahr}
           </span>
           <Link
             href={linkFuer(vor)}
             aria-label="Nächste Monate"
-            className="flex h-9 w-9 items-center justify-center rounded-lg border border-neutral-200 text-neutral-600 transition hover:border-marke-gruen hover:text-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-rand text-primaer transition hover:border-marke-gruen hover:text-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
           >
             ›
           </Link>
@@ -166,14 +166,14 @@ export default async function GeplanteAktionenSeite({
 
         <form action="/geplante-aktionen" className="flex items-end justify-center gap-2 md:justify-end">
           <div>
-            <label htmlFor="monat" className="block text-xs font-medium text-neutral-600">
+            <label htmlFor="monat" className="block text-xs font-medium text-primaer">
               Monat
             </label>
             <select
               id="monat"
               name="monat"
               defaultValue={monatIndex0 + 1}
-              className="h-9 w-32 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="h-9 w-32 rounded-lg border border-flaeche-300 px-2 text-sm"
             >
               {MONATSNAMEN.map((name, i) => (
                 <option key={name} value={i + 1}>
@@ -183,7 +183,7 @@ export default async function GeplanteAktionenSeite({
             </select>
           </div>
           <div>
-            <label htmlFor="jahr" className="block text-xs font-medium text-neutral-600">
+            <label htmlFor="jahr" className="block text-xs font-medium text-primaer">
               Jahr
             </label>
             <input
@@ -191,7 +191,7 @@ export default async function GeplanteAktionenSeite({
               name="jahr"
               type="number"
               defaultValue={jahr}
-              className="h-9 w-24 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="h-9 w-24 rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
           <button

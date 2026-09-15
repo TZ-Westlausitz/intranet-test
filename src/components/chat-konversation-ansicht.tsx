@@ -61,7 +61,7 @@ function NachrichtAnhaenge({ nachrichtId, anhaenge }: { nachrichtId: string; anh
           return (
             <a key={anhang.id} href={url} target="_blank" rel="noopener noreferrer">
               {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
-              <img src={url} alt={anhang.dateiname} className="max-h-56 max-w-full rounded-lg border border-neutral-200" />
+              <img src={url} alt={anhang.dateiname} className="max-h-56 max-w-full rounded-lg border border-rand" />
             </a>
           )
         }
@@ -74,10 +74,10 @@ function NachrichtAnhaenge({ nachrichtId, anhaenge }: { nachrichtId: string; anh
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-lg border border-neutral-200 bg-white px-2.5 py-1.5 text-sm text-marke-gruen-dunkel hover:underline"
+            className="flex items-center gap-1.5 rounded-lg border border-rand bg-flaeche px-2.5 py-1.5 text-sm text-marke-gruen-dunkel hover:underline"
           >
             📎 {anhang.dateiname}
-            <span className="text-xs text-neutral-400">({dateigroesseAnzeige(anhang.groesseBytes)})</span>
+            <span className="text-xs text-tertiaer">({dateigroesseAnzeige(anhang.groesseBytes)})</span>
           </a>
         )
       })}
@@ -105,7 +105,7 @@ function NachrichtHaken({ optimistisch, gelesenVonAllen }: { optimistisch: boole
   return (
     <svg
       viewBox="0 0 20 12"
-      className={"h-3 w-4 " + (gelesenVonAllen ? "text-marke-gruen-dunkel" : "text-neutral-400")}
+      className={"h-3 w-4 " + (gelesenVonAllen ? "text-marke-gruen-dunkel" : "text-tertiaer")}
       aria-label={gelesenVonAllen ? "Von allen gelesen" : "Zugestellt"}
     >
       <path d="M1 6.5 L5.5 11 L15 1" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" />
@@ -307,10 +307,10 @@ export function ChatKonversationAnsicht({
   }
 
   return (
-    <div className="mt-4 flex min-h-0 flex-1 flex-col rounded-xl border border-neutral-200 bg-white">
+    <div className="mt-4 flex min-h-0 flex-1 flex-col rounded-xl border border-rand bg-flaeche">
       <div className="flex-1 overflow-y-auto p-4">
         {nachrichten.length === 0 ? (
-          <p className="text-sm text-neutral-500">Noch keine Nachrichten.</p>
+          <p className="text-sm text-sekundaer">Noch keine Nachrichten.</p>
         ) : (
           <ul className="flex flex-col gap-3">
             {nachrichten.map((nachricht) => {
@@ -324,14 +324,14 @@ export function ChatKonversationAnsicht({
                 })
               return (
                 <li key={nachricht.id} className={"flex flex-col " + (eigene ? "items-end" : "items-start")}>
-                  <p className="text-xs font-medium text-neutral-400">
+                  <p className="text-xs font-medium text-tertiaer">
                     {eigene ? "Du" : `${nachricht.absender.vorname} ${nachricht.absender.nachname}`} · {zeitAnzeige(nachricht.erstelltAm)}
                   </p>
                   {nachricht.text && (
                     <p
                       className={
                         "mt-0.5 max-w-[80%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap " +
-                        (eigene ? "bg-marke-gruen text-neutral-900" : "bg-neutral-100 text-neutral-700")
+                        (eigene ? "bg-marke-gruen text-neutral-900" : "bg-flaeche-100 text-primaer")
                       }
                     >
                       {nachricht.text}
@@ -351,10 +351,10 @@ export function ChatKonversationAnsicht({
         <div ref={listeEndeRef} />
       </div>
 
-      <form onSubmit={beiSenden} className="flex flex-col gap-2 border-t border-neutral-100 p-3">
+      <form onSubmit={beiSenden} className="flex flex-col gap-2 border-t border-flaeche-100 p-3">
         {fehler && <p className="text-xs text-red-600">{fehler}</p>}
         {dateiNamen.length > 0 && (
-          <p className="truncate text-xs text-neutral-500">
+          <p className="truncate text-xs text-sekundaer">
             {dateiNamen.length === 1 ? "Anhang: " : "Anhänge: "}
             {dateiNamen.join(", ")}
           </p>
@@ -363,7 +363,7 @@ export function ChatKonversationAnsicht({
           <label
             aria-label="Anhang hinzufügen"
             title="Anhang hinzufügen"
-            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-neutral-300 text-neutral-500 transition hover:bg-neutral-100"
+            className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-flaeche-300 text-sekundaer transition hover:bg-flaeche-100"
           >
             📎
             <input
@@ -383,7 +383,7 @@ export function ChatKonversationAnsicht({
             title={aufnahmeLaeuft ? "Aufnahme beenden" : "Sprachnachricht aufnehmen"}
             className={
               "flex h-9 shrink-0 items-center justify-center rounded-lg border px-2 text-sm transition " +
-              (aufnahmeLaeuft ? "min-w-9 border-red-300 bg-red-50 text-red-600" : "w-9 border-neutral-300 text-neutral-500 hover:bg-neutral-100")
+              (aufnahmeLaeuft ? "min-w-9 border-red-300 bg-red-50 text-red-600" : "w-9 border-flaeche-300 text-sekundaer hover:bg-flaeche-100")
             }
           >
             {aufnahmeLaeuft ? `● ${aufnahmeZeitAnzeige(aufnahmeSekunden)}` : "🎤"}
@@ -394,7 +394,7 @@ export function ChatKonversationAnsicht({
             value={text}
             onChange={(ereignis) => setText(ereignis.target.value)}
             placeholder="Nachricht …"
-            className="h-9 flex-1 rounded-lg border border-neutral-300 px-2 text-sm"
+            className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
           />
           <button
             type="submit"

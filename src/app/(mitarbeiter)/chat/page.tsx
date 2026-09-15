@@ -39,7 +39,7 @@ export default async function ChatUebersichtSeite() {
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-marke-grau">Chat</h1>
+        <h1 className="text-2xl font-semibold text-ueberschrift">Chat</h1>
         <div className="flex gap-2">
           <ChatNeueGruppeDialog personen={personenOptionen} gruppen={gruppenOptionen} erstellenAktion={gruppenchatErstellen} />
           <ChatNeueNachrichtDialog personen={personenOptionen} oeffnenAktion={direktkonversationOeffnen} />
@@ -47,35 +47,35 @@ export default async function ChatUebersichtSeite() {
       </div>
 
       <div className="mt-6 flex flex-col gap-2">
-        {konversationen.length === 0 && <p className="text-sm text-neutral-500">Noch keine Konversationen.</p>}
+        {konversationen.length === 0 && <p className="text-sm text-sekundaer">Noch keine Konversationen.</p>}
 
         {konversationen.map((k) => {
           const inhalt = (
             <>
               <div className="flex items-center justify-between gap-2">
-                <p className="truncate text-sm font-medium text-marke-grau">
+                <p className="truncate text-sm font-medium text-ueberschrift">
                   {k.istGruppe && "👥 "}
                   {k.titel}
                 </p>
                 {k.letzteNachricht && (
-                  <p className="shrink-0 text-xs text-neutral-400">
+                  <p className="shrink-0 text-xs text-tertiaer">
                     {formatiereDatumAusDate(k.letzteNachricht.erstelltAm)}, {zeitAusDate(k.letzteNachricht.erstelltAm)}
                   </p>
                 )}
               </div>
               {k.letzteNachricht ? (
-                <p className="truncate text-sm text-neutral-500">
+                <p className="truncate text-sm text-sekundaer">
                   {k.letzteNachricht.von}: {k.letzteNachricht.text}
                 </p>
               ) : (
-                <p className="text-sm text-neutral-400">Noch keine Nachrichten.</p>
+                <p className="text-sm text-tertiaer">Noch keine Nachrichten.</p>
               )}
             </>
           )
 
           const klasse =
-            "flex flex-col gap-0.5 rounded-xl border bg-white p-4 text-left transition hover:border-marke-gruen " +
-            (k.ungelesen ? "border-marke-gruen bg-marke-gruen/5" : "border-neutral-200")
+            "flex flex-col gap-0.5 rounded-xl border bg-flaeche p-4 text-left transition hover:border-marke-gruen " +
+            (k.ungelesen ? "border-marke-gruen bg-marke-gruen/5" : "border-rand")
 
           return k.konversationId ? (
             <Link key={k.konversationId} href={`/chat/${k.konversationId}`} className={klasse}>

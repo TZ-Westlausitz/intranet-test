@@ -45,7 +45,7 @@ function AnhaengeAnzeige({ aufgabeId, anhaenge }: { aufgabeId: string; anhaenge:
           href={`/api/aufgaben/${aufgabeId}/anhaenge/${anhang.id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex max-w-[10rem] items-center gap-1 truncate rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 hover:underline"
+          className="flex max-w-[10rem] items-center gap-1 truncate rounded-full bg-flaeche-100 px-2 py-0.5 text-xs text-primaer hover:underline"
         >
           📎 {anhang.dateiname}
         </a>
@@ -89,7 +89,7 @@ export default async function ToDosSeite({
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-center text-2xl font-semibold text-marke-grau md:text-left">To-Do-Liste</h1>
+      <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">To-Do-Liste</h1>
 
       {fehler && (
         <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700 md:text-left">
@@ -97,7 +97,7 @@ export default async function ToDosSeite({
         </p>
       )}
 
-      <form action={aufgabeErstellen} className="mt-6 flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
+      <form action={aufgabeErstellen} className="mt-6 flex flex-col gap-3 rounded-xl border border-rand bg-flaeche p-4">
         <AufgabeFormFelder standardwerte={LEERE_AUFGABE_STANDARDWERTE} />
         <button
           type="submit"
@@ -107,13 +107,13 @@ export default async function ToDosSeite({
         </button>
       </form>
 
-      <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-marke-grau">Offen ({offen.length})</h2>
+      <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
+        <h2 className="text-sm font-semibold text-ueberschrift">Offen ({offen.length})</h2>
 
         {offen.length === 0 ? (
-          <p className="mt-3 text-sm text-neutral-500">Keine offenen Aufgaben.</p>
+          <p className="mt-3 text-sm text-sekundaer">Keine offenen Aufgaben.</p>
         ) : (
-          <ul className="mt-3 flex flex-col divide-y divide-neutral-100">
+          <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
             {offen.map((aufgabe) => {
               const faellig = faelligAnzeige(aufgabe, heute)
               const standardwerte = aufgabeZuStandardwerte(aufgabe)
@@ -123,7 +123,7 @@ export default async function ToDosSeite({
                     <button
                       type="submit"
                       aria-label="Als erledigt markieren"
-                      className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-neutral-300 transition hover:border-marke-gruen"
+                      className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-flaeche-300 transition hover:border-marke-gruen"
                     />
                   </form>
 
@@ -134,10 +134,10 @@ export default async function ToDosSeite({
                         title={AUFGABE_PRIORITAET_NAMEN[aufgabe.prioritaet]}
                         className={"h-2 w-2 shrink-0 rounded-full " + AUFGABE_PRIORITAET_KLASSEN[aufgabe.prioritaet]}
                       />
-                      <span className="text-sm text-neutral-800">{aufgabe.titel}</span>
+                      <span className="text-sm text-primaer">{aufgabe.titel}</span>
                     </div>
                     {aufgabe.beschreibung && (
-                      <p className="mt-0.5 truncate text-xs text-neutral-400">
+                      <p className="mt-0.5 truncate text-xs text-tertiaer">
                         {richTextZuText(aufgabe.beschreibung)}
                       </p>
                     )}
@@ -148,7 +148,7 @@ export default async function ToDosSeite({
                     <span
                       className={
                         "mt-0.5 flex shrink-0 items-center gap-1 text-xs font-medium " +
-                        (faellig.ueberfaellig ? "text-red-600" : "text-neutral-400")
+                        (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
                       }
                     >
                       {faellig.ueberfaellig && <span aria-hidden>⚠</span>}
@@ -169,7 +169,7 @@ export default async function ToDosSeite({
                     <button
                       type="submit"
                       aria-label="Aufgabe löschen"
-                      className="mt-0.5 shrink-0 rounded p-1 text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
+                      className="mt-0.5 shrink-0 rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
                     >
                       ×
                     </button>
@@ -182,12 +182,12 @@ export default async function ToDosSeite({
       </div>
 
       {erledigt.length > 0 && (
-        <details className="mt-4 rounded-xl border border-neutral-200 bg-white p-4">
-          <summary className="cursor-pointer text-sm font-semibold text-marke-grau">
+        <details className="mt-4 rounded-xl border border-rand bg-flaeche p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-ueberschrift">
             Erledigt ({erledigt.length})
           </summary>
 
-          <ul className="mt-3 flex flex-col divide-y divide-neutral-100">
+          <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
             {erledigt.map((aufgabe) => (
               <li key={aufgabe.id} className="flex items-start gap-3 py-2.5">
                 <form action={aufgabeErledigtSetzen.bind(null, aufgabe.id, false)}>
@@ -201,7 +201,7 @@ export default async function ToDosSeite({
                 </form>
 
                 <div className="min-w-0 flex-1">
-                  <span className="text-sm text-neutral-400 line-through">{aufgabe.titel}</span>
+                  <span className="text-sm text-tertiaer line-through">{aufgabe.titel}</span>
                   {aufgabe.beschreibung && (
                     <p className="mt-0.5 truncate text-xs text-neutral-300 line-through">
                       {richTextZuText(aufgabe.beschreibung)}
@@ -210,7 +210,7 @@ export default async function ToDosSeite({
                   <AnhaengeAnzeige aufgabeId={aufgabe.id} anhaenge={aufgabe.anhaenge} />
                 </div>
 
-                <span className="mt-0.5 shrink-0 text-xs text-neutral-400">
+                <span className="mt-0.5 shrink-0 text-xs text-tertiaer">
                   {aufgabe.erledigtAm && datumIsoAusDate(aufgabe.erledigtAm)}
                 </span>
 
@@ -218,7 +218,7 @@ export default async function ToDosSeite({
                   <button
                     type="submit"
                     aria-label="Aufgabe löschen"
-                    className="mt-0.5 shrink-0 rounded p-1 text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
+                    className="mt-0.5 shrink-0 rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
                   >
                     ×
                   </button>

@@ -18,10 +18,24 @@ import { abmelden } from "@/lib/auth/aktionen"
  * `berechtigung([Rolle.ADMINISTRATION])` selbst noch einmal auf. Optional
  * mit Default `false`, damit bestehende Aufrufe (z. B. die mobile
  * Kopfleiste) unverändert weiterlaufen.
+ *
+ * `adminModusAktiv` färbt die Hover-Akzente orange statt grün, solange der
+ * Admin-Modus an ist (siehe AdminModusSchalter) — dieselbe Erinnerung wie
+ * die orange Baustein-Leiste im Root-Layout. Ebenfalls optional mit
+ * Default `false`, nur die Desktop-Kopfzeile setzt ihn.
  */
-export function BenutzerMenu({ name, istAdmin = false }: { name: string; istAdmin?: boolean }) {
+export function BenutzerMenu({
+  name,
+  istAdmin = false,
+  adminModusAktiv = false,
+}: {
+  name: string
+  istAdmin?: boolean
+  adminModusAktiv?: boolean
+}) {
   const [offen, setOffen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const hoverAkzent = adminModusAktiv ? "hover:bg-marke-orange/10" : "hover:bg-marke-gruen/10"
 
   useEffect(() => {
     if (!offen) return
@@ -43,7 +57,10 @@ export function BenutzerMenu({ name, istAdmin = false }: { name: string; istAdmi
         onClick={() => setOffen((v) => !v)}
         aria-expanded={offen}
         aria-haspopup="menu"
-        className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:bg-marke-gruen/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+        className={
+          "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primaer transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen " +
+          hoverAkzent
+        }
       >
         {name}
         <span
@@ -57,13 +74,13 @@ export function BenutzerMenu({ name, istAdmin = false }: { name: string; istAdmi
       {offen && (
         <div
           role="menu"
-          className="absolute right-0 z-10 mt-2 w-44 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+          className="absolute right-0 z-10 mt-2 w-44 overflow-hidden rounded-lg border border-rand bg-flaeche py-1 shadow-lg"
         >
           <Link
             href="/profil"
             role="menuitem"
             onClick={() => setOffen(false)}
-            className="block px-4 py-2.5 text-sm text-neutral-600 transition hover:bg-marke-gruen/10"
+            className={"block px-4 py-2.5 text-sm text-primaer transition " + hoverAkzent}
           >
             Profil
           </Link>
@@ -73,7 +90,7 @@ export function BenutzerMenu({ name, istAdmin = false }: { name: string; istAdmi
               href="/admin"
               role="menuitem"
               onClick={() => setOffen(false)}
-              className="block px-4 py-2.5 text-sm text-neutral-600 transition hover:bg-marke-gruen/10"
+              className={"block px-4 py-2.5 text-sm text-primaer transition " + hoverAkzent}
             >
               Admin
             </Link>
@@ -86,7 +103,7 @@ export function BenutzerMenu({ name, istAdmin = false }: { name: string; istAdmi
             href="/einstellungen"
             role="menuitem"
             onClick={() => setOffen(false)}
-            className="block px-4 py-2.5 text-sm text-neutral-600 transition hover:bg-marke-gruen/10"
+            className={"block px-4 py-2.5 text-sm text-primaer transition " + hoverAkzent}
           >
             Einstellungen
           </Link>
@@ -95,7 +112,7 @@ export function BenutzerMenu({ name, istAdmin = false }: { name: string; istAdmi
             role="menuitem"
             aria-disabled="true"
             title="Noch nicht verfügbar"
-            className="block cursor-default px-4 py-2.5 text-sm text-neutral-400"
+            className="block cursor-default px-4 py-2.5 text-sm text-tertiaer"
           >
             Kontaktstelle
           </span>
@@ -104,7 +121,7 @@ export function BenutzerMenu({ name, istAdmin = false }: { name: string; istAdmi
             <button
               type="submit"
               role="menuitem"
-              className="block w-full px-4 py-2.5 text-left text-sm text-neutral-600 transition hover:bg-marke-gruen/10"
+              className={"block w-full px-4 py-2.5 text-left text-sm text-primaer transition " + hoverAkzent}
             >
               Ausloggen
             </button>

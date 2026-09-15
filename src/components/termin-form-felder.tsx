@@ -143,7 +143,7 @@ export function TerminFormFelder({
   return (
     <>
       <div>
-        <label htmlFor={`${id}-titel`} className="block text-xs font-medium text-neutral-600">
+        <label htmlFor={`${id}-titel`} className="block text-xs font-medium text-primaer">
           Titel
         </label>
         <input
@@ -152,7 +152,7 @@ export function TerminFormFelder({
           type="text"
           required
           defaultValue={standardwerte.titel}
-          className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+          className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
         />
       </div>
 
@@ -166,7 +166,7 @@ export function TerminFormFelder({
       {ganztaegig ? (
         <div key="ganztaegig" className="flex flex-wrap gap-3">
           <div>
-            <label htmlFor={`${id}-vonDatum`} className="block text-xs font-medium text-neutral-600">
+            <label htmlFor={`${id}-vonDatum`} className="block text-xs font-medium text-primaer">
               Von
             </label>
             <input
@@ -176,11 +176,11 @@ export function TerminFormFelder({
               required
               defaultValue={standardwerte.vonDatum || standardwerte.datum}
               onChange={beiVonDatumAendern}
-              className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
           <div>
-            <label htmlFor={`${id}-bisDatum`} className="block text-xs font-medium text-neutral-600">
+            <label htmlFor={`${id}-bisDatum`} className="block text-xs font-medium text-primaer">
               Bis
             </label>
             <input
@@ -191,14 +191,14 @@ export function TerminFormFelder({
               min={aktuellesDatum}
               defaultValue={standardwerte.bisDatum || standardwerte.datum}
               ref={bisDatumRef}
-              className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
         </div>
       ) : (
         <div key="zeitraum" className="flex flex-wrap gap-3">
           <div>
-            <label htmlFor={`${id}-datum`} className="block text-xs font-medium text-neutral-600">
+            <label htmlFor={`${id}-datum`} className="block text-xs font-medium text-primaer">
               Datum
             </label>
             <input
@@ -208,11 +208,11 @@ export function TerminFormFelder({
               required
               defaultValue={standardwerte.datum}
               onChange={(ereignis) => setAktuellesDatum(ereignis.target.value)}
-              className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
           <div>
-            <label htmlFor={`${id}-von`} className="block text-xs font-medium text-neutral-600">
+            <label htmlFor={`${id}-von`} className="block text-xs font-medium text-primaer">
               Von
             </label>
             <input
@@ -222,11 +222,11 @@ export function TerminFormFelder({
               required
               defaultValue={standardwerte.von}
               onChange={beiVonAendern}
-              className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
           <div>
-            <label htmlFor={`${id}-bis`} className="block text-xs font-medium text-neutral-600">
+            <label htmlFor={`${id}-bis`} className="block text-xs font-medium text-primaer">
               Bis
             </label>
             <input
@@ -236,25 +236,25 @@ export function TerminFormFelder({
               required
               defaultValue={standardwerte.bis}
               ref={bisRef}
-              className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
         </div>
       )}
 
-      <label className="flex items-center gap-2 text-sm text-neutral-700">
+      <label className="flex items-center gap-2 text-sm text-primaer">
         <input
           type="checkbox"
           name="ganztaegig"
           checked={ganztaegig}
           onChange={(ereignis) => setGanztaegig(ereignis.target.checked)}
-          className="h-4 w-4 rounded border-neutral-300 text-marke-gruen focus:ring-marke-gruen"
+          className="h-4 w-4 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
         />
         Ganztägig (auch mehrtägig, z. B. Urlaub oder Dienstreise)
       </label>
 
       <div>
-        <label htmlFor={`${id}-ort`} className="block text-xs font-medium text-neutral-600">
+        <label htmlFor={`${id}-ort`} className="block text-xs font-medium text-primaer">
           Ort
         </label>
         <input
@@ -262,19 +262,19 @@ export function TerminFormFelder({
           name="ort"
           type="text"
           defaultValue={standardwerte.ort}
-          className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+          className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
         />
       </div>
 
       {wiederholenAnzeigen && (
         <fieldset>
-          <legend className="text-xs font-medium text-neutral-600">Wiederholen</legend>
+          <legend className="text-xs font-medium text-primaer">Wiederholen</legend>
           <div className="mt-1.5 flex flex-wrap items-end gap-3">
             <select
               name="wiederholen"
               value={wiederholen}
               onChange={(ereignis) => setWiederholen(ereignis.target.value)}
-              className="h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
             >
               {wiederholenOptionen(aktuellesDatum).map((option) => (
                 <option key={option.wert} value={option.wert}>
@@ -286,7 +286,7 @@ export function TerminFormFelder({
             {wiederholen === "benutzerdefiniert" && (
               <div className="flex items-end gap-2">
                 <div>
-                  <label htmlFor={`${id}-wiederholenIntervall`} className="block text-xs font-medium text-neutral-600">
+                  <label htmlFor={`${id}-wiederholenIntervall`} className="block text-xs font-medium text-primaer">
                     Alle
                   </label>
                   <input
@@ -296,13 +296,13 @@ export function TerminFormFelder({
                     min={1}
                     max={365}
                     defaultValue={1}
-                    className="mt-1 h-9 w-16 rounded-lg border border-neutral-300 px-2 text-sm"
+                    className="mt-1 h-9 w-16 rounded-lg border border-flaeche-300 px-2 text-sm"
                   />
                 </div>
                 <select
                   name="wiederholenEinheit"
                   defaultValue="woche"
-                  className="h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+                  className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
                 >
                   <option value="tag">Tag(e)</option>
                   <option value="woche">Woche(n)</option>
@@ -317,7 +317,7 @@ export function TerminFormFelder({
             <div className="mt-3 flex flex-wrap items-end gap-3">
               {!wiederholenUnbefristet && (
                 <div>
-                  <label htmlFor={`${id}-wiederholenBis`} className="block text-xs font-medium text-neutral-600">
+                  <label htmlFor={`${id}-wiederholenBis`} className="block text-xs font-medium text-primaer">
                     Bis wann
                   </label>
                   <input
@@ -326,18 +326,18 @@ export function TerminFormFelder({
                     type="date"
                     required={!wiederholenUnbefristet}
                     defaultValue={standardwerte.datum}
-                    className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+                    className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
                   />
                 </div>
               )}
 
-              <label className="flex items-center gap-2 pb-2 text-sm text-neutral-700">
+              <label className="flex items-center gap-2 pb-2 text-sm text-primaer">
                 <input
                   type="checkbox"
                   name="wiederholenUnbefristet"
                   checked={wiederholenUnbefristet}
                   onChange={(ereignis) => setWiederholenUnbefristet(ereignis.target.checked)}
-                  className="h-4 w-4 rounded border-neutral-300 text-marke-gruen focus:ring-marke-gruen"
+                  className="h-4 w-4 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
                 />
                 Unbefristet (bis zu 200 Termine)
               </label>
@@ -347,7 +347,7 @@ export function TerminFormFelder({
       )}
 
       <fieldset>
-        <legend className="text-xs font-medium text-neutral-600">Farbe</legend>
+        <legend className="text-xs font-medium text-primaer">Farbe</legend>
         <div className="mt-1.5 flex gap-2">
           {TERMIN_FARBEN.map((farbe) => (
             <label key={farbe.wert} className="cursor-pointer" title={farbe.name}>
@@ -371,7 +371,7 @@ export function TerminFormFelder({
 
       {personen.length > 0 && (
         <div>
-          <label htmlFor={`${id}-teilnehmer-suche`} className="block text-xs font-medium text-neutral-600">
+          <label htmlFor={`${id}-teilnehmer-suche`} className="block text-xs font-medium text-primaer">
             Mitarbeiter einladen
           </label>
           <div className="mt-1.5">
@@ -381,19 +381,19 @@ export function TerminFormFelder({
       )}
 
       <div>
-        <label className="block text-xs font-medium text-neutral-600">Notizen</label>
+        <label className="block text-xs font-medium text-primaer">Notizen</label>
         <div className="mt-1">
           <RichTextEditor name="beschreibung" defaultValue={standardwerte.beschreibung} />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-neutral-600">Anhänge (Dokumente/Fotos)</label>
+        <label className="block text-xs font-medium text-primaer">Anhänge (Dokumente/Fotos)</label>
 
         {bestehendeAnhaenge.length > 0 && (
           <ul className="mt-1.5 flex flex-col gap-1">
             {bestehendeAnhaenge.map((anhang) => (
-              <li key={anhang.id} className="flex items-center gap-2 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm">
+              <li key={anhang.id} className="flex items-center gap-2 rounded-lg border border-rand px-2.5 py-1.5 text-sm">
                 <a
                   href={`/api/termine/${terminId}/anhaenge/${anhang.id}`}
                   target="_blank"
@@ -408,22 +408,22 @@ export function TerminFormFelder({
                       className="h-8 w-8 shrink-0 rounded object-cover"
                     />
                   ) : (
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-neutral-100 text-neutral-400">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-flaeche-100 text-tertiaer">
                       📄
                     </span>
                   )}
                   <span className="truncate text-marke-gruen-dunkel hover:underline">{anhang.dateiname}</span>
                 </a>
-                <label className="flex shrink-0 items-center gap-1.5 text-xs text-neutral-500">
+                <label className="flex shrink-0 items-center gap-1.5 text-xs text-sekundaer">
                   <input
                     type="checkbox"
                     name="anhaengeLoeschen"
                     value={anhang.id}
-                    className="h-4 w-4 rounded border-neutral-300 text-red-600 focus:ring-red-600"
+                    className="h-4 w-4 rounded border-flaeche-300 text-red-600 focus:ring-red-600"
                   />
                   entfernen
                 </label>
-                <span className="shrink-0 text-xs text-neutral-400">{dateigroesseAnzeige(anhang.groesseBytes)}</span>
+                <span className="shrink-0 text-xs text-tertiaer">{dateigroesseAnzeige(anhang.groesseBytes)}</span>
               </li>
             ))}
           </ul>
@@ -434,21 +434,21 @@ export function TerminFormFelder({
           name="anhaenge"
           multiple
           accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
-          className="mt-1.5 w-full text-sm text-neutral-600 file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+          className="mt-1.5 w-full text-sm text-primaer file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-flaeche-100 file:px-3 file:text-sm file:font-medium file:text-primaer hover:file:bg-flaeche-200"
         />
       </div>
 
       <fieldset>
-        <legend className="text-xs font-medium text-neutral-600">Erinnerung</legend>
+        <legend className="text-xs font-medium text-primaer">Erinnerung</legend>
         <div className="mt-1.5 flex flex-col gap-1">
           {TERMIN_ERINNERUNGEN.map((erinnerung) => (
-            <label key={erinnerung.minuten} className="flex items-center gap-2 text-sm text-neutral-700">
+            <label key={erinnerung.minuten} className="flex items-center gap-2 text-sm text-primaer">
               <input
                 type="checkbox"
                 name="erinnerung"
                 value={erinnerung.minuten}
                 defaultChecked={standardwerte.erinnerungenMinuten.includes(erinnerung.minuten)}
-                className="h-4 w-4 rounded border-neutral-300 text-marke-gruen focus:ring-marke-gruen"
+                className="h-4 w-4 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
               />
               {erinnerung.label}
             </label>
@@ -456,12 +456,12 @@ export function TerminFormFelder({
         </div>
       </fieldset>
 
-      <label className="flex items-center gap-2 text-sm text-neutral-700">
+      <label className="flex items-center gap-2 text-sm text-primaer">
         <input
           type="checkbox"
           name="kommentareErlaubt"
           defaultChecked={standardwerte.kommentareErlaubt}
-          className="h-4 w-4 rounded border-neutral-300 text-marke-gruen focus:ring-marke-gruen"
+          className="h-4 w-4 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
         />
         Rückfragen (Kommentare) der Teilnehmenden erlauben
       </label>

@@ -46,20 +46,20 @@ export function ProjektMitglieder({
 
   return (
     <div className="flex flex-col gap-3">
-      <ul className="flex flex-col divide-y divide-neutral-100">
+      <ul className="flex flex-col divide-y divide-flaeche-100">
         {mitglieder.map((mitglied) => {
           const istLetzteLeitung = mitglied.rolle === "LEITUNG" && anzahlLeitung <= 1
 
           return (
             <li key={mitglied.id} className="flex items-center justify-between gap-2 py-2">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-neutral-800">{mitglied.name}</span>
+                <span className="text-sm text-primaer">{mitglied.name}</span>
                 <span
                   className={
                     "rounded-full px-2 py-0.5 text-xs font-medium " +
                     (mitglied.rolle === "LEITUNG"
                       ? "bg-marke-gruen/15 text-marke-gruen-dunkel"
-                      : "bg-neutral-100 text-neutral-500")
+                      : "bg-flaeche-100 text-sekundaer")
                   }
                 >
                   {PROJEKTMITGLIED_ROLLE_NAMEN[mitglied.rolle]}
@@ -69,7 +69,7 @@ export function ProjektMitglieder({
               {istLeitung && (
                 <div className="flex shrink-0 items-center gap-1">
                   {istLetzteLeitung ? (
-                    <span className="text-xs text-neutral-400" title="Ein Projekt braucht mindestens eine Leitung">
+                    <span className="text-xs text-tertiaer" title="Ein Projekt braucht mindestens eine Leitung">
                       einzige Leitung
                     </span>
                   ) : (
@@ -77,7 +77,7 @@ export function ProjektMitglieder({
                       <form action={rolleSetzenAktion.bind(null, projektId, mitglied.id, mitglied.rolle === "LEITUNG" ? "MITGLIED" : "LEITUNG")}>
                         <button
                           type="submit"
-                          className="rounded-lg px-2 py-1 text-xs font-medium text-neutral-500 transition hover:bg-neutral-100"
+                          className="rounded-lg px-2 py-1 text-xs font-medium text-sekundaer transition hover:bg-flaeche-100"
                         >
                           {mitglied.rolle === "LEITUNG" ? "Zu Mitglied machen" : "Zur Leitung machen"}
                         </button>
@@ -86,7 +86,7 @@ export function ProjektMitglieder({
                         <button
                           type="submit"
                           aria-label={`${mitglied.name} entfernen`}
-                          className="rounded p-1 text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
+                          className="rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
                         >
                           ×
                         </button>
@@ -101,9 +101,9 @@ export function ProjektMitglieder({
       </ul>
 
       {istLeitung && kandidaten.length > 0 && (
-        <form action={hinzufuegenAktion.bind(null, projektId)} className="flex items-end gap-2 border-t border-neutral-100 pt-3">
+        <form action={hinzufuegenAktion.bind(null, projektId)} className="flex items-end gap-2 border-t border-flaeche-100 pt-3">
           <div className="flex-1">
-            <label htmlFor="projektmitglied-hinzufuegen-suche" className="block text-xs font-medium text-neutral-600">
+            <label htmlFor="projektmitglied-hinzufuegen-suche" className="block text-xs font-medium text-primaer">
               Mitglied hinzufügen
             </label>
             <div className="mt-1">
@@ -112,7 +112,7 @@ export function ProjektMitglieder({
           </div>
           <button
             type="submit"
-            className="h-9 shrink-0 rounded-lg bg-neutral-100 px-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-200"
+            className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200"
           >
             Hinzufügen
           </button>

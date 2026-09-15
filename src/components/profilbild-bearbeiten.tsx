@@ -30,7 +30,7 @@ export function ProfilbildBearbeiten({ aktion }: { aktion: (formData: FormData) 
         type="button"
         onClick={() => eingabeRef.current?.click()}
         disabled={wirdHochgeladen}
-        className="h-9 rounded-lg bg-neutral-100 px-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-200 disabled:opacity-50"
+        className="h-9 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200 disabled:opacity-50"
       >
         {wirdHochgeladen ? "Wird hochgeladen …" : "Profilbild bearbeiten"}
       </button>

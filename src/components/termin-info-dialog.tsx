@@ -23,19 +23,19 @@ function AnhangZeile({ terminId, anhang }: { terminId: string; anhang: TerminAnh
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-neutral-50"
+      className="flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-flaeche-schwach"
     >
       {istBild ? (
         // eslint-disable-next-line @next/next/no-img-element -- interne Datei aus der Ablage, kein optimierbares Next-Image-Ziel
         <img src={url} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
       ) : (
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-neutral-100 text-neutral-400">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-flaeche-100 text-tertiaer">
           📄
         </span>
       )}
       <span className="min-w-0 flex-1">
         <span className="block truncate text-marke-gruen-dunkel hover:underline">{anhang.dateiname}</span>
-        <span className="block text-xs text-neutral-400">{dateigroesseAnzeige(anhang.groesseBytes)}</span>
+        <span className="block text-xs text-tertiaer">{dateigroesseAnzeige(anhang.groesseBytes)}</span>
       </span>
     </a>
   )
@@ -116,16 +116,16 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
   return (
     <dialog
       ref={infoRef}
-      className="fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-0 shadow-xl backdrop:bg-neutral-900/40"
+      className="fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
     >
-      <div className="flex items-start justify-between gap-3 border-b border-neutral-200 px-5 py-4">
+      <div className="flex items-start justify-between gap-3 border-b border-rand px-5 py-4">
         <div className="flex items-start gap-2">
           <span
             className={
               "mt-1.5 h-3 w-3 shrink-0 rounded-full " + (TERMIN_FARBE_KLASSEN[termin.farbe] ?? "bg-neutral-400")
             }
           />
-          <h2 className="text-lg font-semibold text-marke-grau">{termin.titel}</h2>
+          <h2 className="text-lg font-semibold text-ueberschrift">{termin.titel}</h2>
         </div>
 
         {termin.istErsteller && (
@@ -146,30 +146,30 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
         )}
       </div>
 
-      <div className="flex max-h-[70vh] flex-col gap-3 overflow-y-auto px-5 py-4 text-sm text-neutral-700">
+      <div className="flex max-h-[70vh] flex-col gap-3 overflow-y-auto px-5 py-4 text-sm text-primaer">
         <p>
           {termin.datumAnzeige}
           {!termin.ganztaegig && <> · {termin.zeitraumAnzeige} Uhr</>}
-          {termin.serieId && <span className="ml-1 text-xs text-neutral-400">(Serie)</span>}
+          {termin.serieId && <span className="ml-1 text-xs text-tertiaer">(Serie)</span>}
         </p>
 
         {termin.ort && (
-          <p className="text-neutral-600">
-            <span className="font-medium text-neutral-600">Ort: </span>
+          <p className="text-primaer">
+            <span className="font-medium text-primaer">Ort: </span>
             {termin.ort}
           </p>
         )}
 
         {termin.beschreibung && (
           <div
-            className="text-neutral-600 [&_a]:text-marke-gruen-dunkel [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5"
+            className="text-primaer [&_a]:text-marke-gruen-dunkel [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:my-1 [&_ul]:list-disc [&_ul]:pl-5"
             dangerouslySetInnerHTML={{ __html: termin.beschreibung }}
           />
         )}
 
         {termin.anhaenge.length > 0 && (
           <div>
-            <span className="font-medium text-neutral-600">Anhänge:</span>
+            <span className="font-medium text-primaer">Anhänge:</span>
             <div className="mt-1 flex flex-col">
               {termin.anhaenge.map((anhang) => (
                 <AnhangZeile key={anhang.id} terminId={termin.id} anhang={anhang} />
@@ -180,12 +180,12 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
 
         {termin.teilnehmer.length > 0 && (
           <div>
-            <span className="font-medium text-neutral-600">Teilnehmer:</span>
+            <span className="font-medium text-primaer">Teilnehmer:</span>
             <ul className="mt-1 flex flex-col gap-0.5">
               {termin.teilnehmer.map((t) => (
                 <li key={t.personId} className="flex items-center gap-1.5">
                   {t.name}
-                  {t.status === "ERSTELLER" && <span className="text-xs text-neutral-400">(Ersteller)</span>}
+                  {t.status === "ERSTELLER" && <span className="text-xs text-tertiaer">(Ersteller)</span>}
                   {t.status === TerminTeilnahmeStatus.ZUGESAGT && (
                     <span className="text-green-600" aria-label="hat zugesagt" title="Zugesagt">
                       ✓
@@ -204,14 +204,14 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
 
         {termin.erinnerungenMinuten.length > 0 && (
           <p>
-            <span className="font-medium text-neutral-600">Erinnerung: </span>
+            <span className="font-medium text-primaer">Erinnerung: </span>
             {termin.erinnerungenMinuten.map(erinnerungLabel).join(", ")}
           </p>
         )}
 
         {termin.eigenerTeilnahmeStatus !== null && (
-          <div className="flex items-center gap-2 border-t border-neutral-100 pt-3">
-            <span className="text-xs font-medium text-neutral-600">Deine Teilnahme:</span>
+          <div className="flex items-center gap-2 border-t border-flaeche-100 pt-3">
+            <span className="text-xs font-medium text-primaer">Deine Teilnahme:</span>
             <form action={teilnahmeAktion.bind(null, termin.id, TerminTeilnahmeStatus.ZUGESAGT)}>
               <button
                 type="submit"
@@ -219,7 +219,7 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
                   "rounded-lg px-2.5 py-1 text-xs font-semibold transition " +
                   (termin.eigenerTeilnahmeStatus === TerminTeilnahmeStatus.ZUGESAGT
                     ? "bg-green-100 text-green-700"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-green-50 hover:text-green-700")
+                    : "bg-flaeche-100 text-primaer hover:bg-green-50 hover:text-green-700")
                 }
               >
                 ✓ Zusagen
@@ -232,7 +232,7 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
                   "rounded-lg px-2.5 py-1 text-xs font-semibold transition " +
                   (termin.eigenerTeilnahmeStatus === TerminTeilnahmeStatus.ABGESAGT
                     ? "bg-red-100 text-red-700"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-red-50 hover:text-red-700")
+                    : "bg-flaeche-100 text-primaer hover:bg-red-50 hover:text-red-700")
                 }
               >
                 ✗ Absagen
@@ -242,17 +242,17 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
         )}
 
         {termin.kommentareErlaubt && (
-          <div className="border-t border-neutral-100 pt-3">
-            <span className="text-xs font-medium text-neutral-600">Rückfragen:</span>
+          <div className="border-t border-flaeche-100 pt-3">
+            <span className="text-xs font-medium text-primaer">Rückfragen:</span>
 
             {termin.kommentare.length > 0 && (
               <ul className="mt-1.5 flex flex-col gap-2">
                 {termin.kommentare.map((kommentar) => (
-                  <li key={kommentar.id} className="rounded-lg bg-neutral-50 px-2.5 py-1.5">
-                    <p className="text-xs font-medium text-neutral-500">
+                  <li key={kommentar.id} className="rounded-lg bg-flaeche-schwach px-2.5 py-1.5">
+                    <p className="text-xs font-medium text-sekundaer">
                       {kommentar.autorName} · {kommentar.erstelltAmAnzeige}
                     </p>
-                    <p className="text-sm text-neutral-700">{kommentar.text}</p>
+                    <p className="text-sm text-primaer">{kommentar.text}</p>
                     {kommentar.anhaenge.length > 0 && (
                       <div className="mt-1 flex flex-col">
                         {kommentar.anhaenge.map((anhang) => (
@@ -279,11 +279,11 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
                   name="text"
                   required
                   placeholder="Frage oder Hinweis …"
-                  className="h-9 flex-1 rounded-lg border border-neutral-300 px-2 text-sm"
+                  className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
                 />
                 <label
                   title="Anhang hinzufügen"
-                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 text-lg leading-none text-neutral-600 transition hover:bg-neutral-200"
+                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-flaeche-100 text-lg leading-none text-primaer transition hover:bg-flaeche-200"
                 >
                   +
                   <input
@@ -299,13 +299,13 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
                 </label>
                 <button
                   type="submit"
-                  className="h-9 shrink-0 rounded-lg bg-neutral-100 px-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-200"
+                  className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200"
                 >
                   Senden
                 </button>
               </div>
               {kommentarAnhaenge.length > 0 && (
-                <p className="text-xs text-neutral-500">Anhang: {kommentarAnhaenge.join(", ")}</p>
+                <p className="text-xs text-sekundaer">Anhang: {kommentarAnhaenge.join(", ")}</p>
               )}
               <input type="hidden" name="rueckkehrJahr" value={rueckkehrJahr} />
               <input type="hidden" name="rueckkehrMonat" value={rueckkehrMonat} />
@@ -314,11 +314,11 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
         )}
       </div>
 
-      <div className="flex justify-end border-t border-neutral-200 px-5 py-4">
+      <div className="flex justify-end border-t border-rand px-5 py-4">
         <button
           type="button"
           onClick={() => infoRef.current?.close()}
-          className="h-9 rounded-lg px-3 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100"
+          className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
         >
           Schließen
         </button>

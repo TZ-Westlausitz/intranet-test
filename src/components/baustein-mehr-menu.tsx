@@ -7,13 +7,30 @@ import type { BausteinUnterpunkt } from "@/lib/bausteine"
 
 /**
  * Dropdown für einen Sammelpunkt wie "Weiteres" in der Desktop-Kopfzeile
- * (src/app/layout.tsx) — dasselbe Klick-außerhalb-schließt-Muster wie
- * MobilesMenu, hier aber als schmales Dropdown unter einem einzelnen
- * Menüpunkt statt als große Liste.
+ * (src/components/bausteine-leiste.tsx) — dasselbe
+ * Klick-außerhalb-schließt-Muster wie MobilesMenu, hier aber als schmales
+ * Dropdown unter einem einzelnen Menüpunkt statt als große Liste.
+ *
+ * `aktiv`/`adminModusAktiv` steuern dieselbe Bubble-nur-wenn-aktiv-Regel
+ * wie die übrigen Bausteine-Punkte (siehe BausteineLeiste) — `aktiv` ist
+ * hier true, sobald einer der Unterpunkte der aktuellen Seite entspricht.
  */
-export function BausteinMehrMenu({ name, unterpunkte }: { name: string; unterpunkte: BausteinUnterpunkt[] }) {
+export function BausteinMehrMenu({
+  name,
+  unterpunkte,
+  aktiv,
+  adminModusAktiv,
+}: {
+  name: string
+  unterpunkte: BausteinUnterpunkt[]
+  aktiv: boolean
+  adminModusAktiv: boolean
+}) {
   const [offen, setOffen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const textFarbe = adminModusAktiv ? "text-marke-orange" : "text-marke-gruen-dunkel"
+  const bubbleAktiv = adminModusAktiv ? "bg-marke-orange/20" : "bg-marke-gruen/15"
+  const bubbleHover = adminModusAktiv ? "hover:bg-marke-orange/10" : "hover:bg-marke-gruen/10"
 
   useEffect(() => {
     if (!offen) return
@@ -35,7 +52,12 @@ export function BausteinMehrMenu({ name, unterpunkte }: { name: string; unterpun
         onClick={() => setOffen((v) => !v)}
         aria-expanded={offen}
         aria-haspopup="menu"
-        className="flex items-center gap-1 rounded-full bg-marke-gruen/15 px-3 py-1 text-sm font-semibold text-marke-gruen-dunkel transition hover:bg-marke-gruen/25"
+        className={
+          "flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold transition " +
+          textFarbe +
+          " " +
+          (aktiv ? bubbleAktiv : bubbleHover)
+        }
       >
         {name}
         <svg
@@ -55,7 +77,7 @@ export function BausteinMehrMenu({ name, unterpunkte }: { name: string; unterpun
       {offen && (
         <div
           role="menu"
-          className="absolute left-0 z-10 mt-1.5 w-48 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+          className="absolute left-0 z-10 mt-1.5 w-48 overflow-hidden rounded-lg border border-rand bg-flaeche py-1 shadow-lg"
         >
           {unterpunkte.map((punkt) => (
             <Link
@@ -63,7 +85,7 @@ export function BausteinMehrMenu({ name, unterpunkte }: { name: string; unterpun
               href={punkt.href}
               role="menuitem"
               onClick={() => setOffen(false)}
-              className="block px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-marke-gruen/10"
+              className="block px-4 py-2 text-sm font-medium text-primaer transition hover:bg-marke-gruen/10"
             >
               {punkt.name}
             </Link>

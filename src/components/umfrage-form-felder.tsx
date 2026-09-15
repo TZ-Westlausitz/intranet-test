@@ -29,22 +29,22 @@ export function UmfrageFormFelder() {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-neutral-200 p-3">
-      <label className="flex items-center gap-2 text-sm text-neutral-700">
+    <div className="flex flex-col gap-2 rounded-lg border border-rand p-3">
+      <label className="flex items-center gap-2 text-sm text-primaer">
         <input
           type="checkbox"
           name="umfrageAktiv"
           checked={aktiv}
           onChange={(ereignis) => setAktiv(ereignis.target.checked)}
-          className="h-4 w-4 rounded border-neutral-300"
+          className="h-4 w-4 rounded border-flaeche-300"
         />
         Umfrage hinzufügen
       </label>
 
       {aktiv && (
         <div className="flex flex-col gap-2 pl-6">
-          <label className="flex items-center gap-2 text-sm text-neutral-700">
-            <input type="checkbox" name="umfrageMehrfachauswahl" className="h-4 w-4 rounded border-neutral-300" />
+          <label className="flex items-center gap-2 text-sm text-primaer">
+            <input type="checkbox" name="umfrageMehrfachauswahl" className="h-4 w-4 rounded border-flaeche-300" />
             Mehrfachauswahl erlauben
           </label>
 
@@ -52,7 +52,7 @@ export function UmfrageFormFelder() {
             type="text"
             name="umfrageFrage"
             placeholder="Fragestellung (optional)"
-            className="h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+            className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
           />
 
           {optionen.map((wert, index) => (
@@ -63,14 +63,14 @@ export function UmfrageFormFelder() {
                 value={wert}
                 onChange={(ereignis) => optionAendern(index, ereignis.target.value)}
                 placeholder={`Option ${index + 1}`}
-                className="h-9 flex-1 rounded-lg border border-neutral-300 px-2 text-sm"
+                className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
               />
               {optionen.length > 2 && (
                 <button
                   type="button"
                   onClick={() => optionEntfernen(index)}
                   aria-label={`Option ${index + 1} entfernen`}
-                  className="shrink-0 rounded p-1.5 text-neutral-400 hover:bg-red-50 hover:text-red-600"
+                  className="shrink-0 rounded p-1.5 text-tertiaer hover:bg-red-50 hover:text-red-600"
                 >
                   ×
                 </button>

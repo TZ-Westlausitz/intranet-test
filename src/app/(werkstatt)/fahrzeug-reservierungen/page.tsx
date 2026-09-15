@@ -49,19 +49,19 @@ export default async function FahrzeugReservierungenMenueSeite() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-2xl font-semibold text-marke-grau">Fahrzeug Reservierungen</h1>
-      <p className="mt-1 text-sm text-neutral-600">Komplettes Menü</p>
+      <h1 className="text-2xl font-semibold text-ueberschrift">Fahrzeug Reservierungen</h1>
+      <p className="mt-1 text-sm text-primaer">Komplettes Menü</p>
 
       <ul className="mt-6 flex flex-col gap-3">
         {UNTERMODULE.map((modul) => (
           <li key={modul.pfad}>
             <Link
               href={modul.pfad}
-              className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 p-4 transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2"
+              className="flex items-center justify-between gap-3 rounded-lg border border-rand p-4 transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2"
             >
               <span>
                 <span className="block font-medium">{modul.name}</span>
-                <span className="mt-1 block text-sm text-neutral-600">
+                <span className="mt-1 block text-sm text-primaer">
                   {modul.beschreibung}
                 </span>
               </span>

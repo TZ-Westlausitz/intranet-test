@@ -26,7 +26,7 @@ export function TestphaseLoeschenButton({ action }: { action: (formData: FormDat
         type="submit"
         aria-label="Reservierung endgültig löschen (nur Testphase)"
         title="Nur Testphase: endgültig löschen"
-        className="rounded-md p-1.5 text-neutral-400 hover:bg-red-50 hover:text-red-700"
+        className="rounded-md p-1.5 text-tertiaer hover:bg-red-50 hover:text-red-700"
       >
         🗑️
       </button>

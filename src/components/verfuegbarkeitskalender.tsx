@@ -77,7 +77,7 @@ export function Verfuegbarkeitskalender({
         {zurueckMoeglich ? (
           <Link
             href={`${basePfad}?monat=${monatsversatz - 1}`}
-            className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+            className="rounded-lg p-2 text-sekundaer hover:bg-flaeche-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
             aria-label="Vorheriger Monat"
           >
             ‹
@@ -88,14 +88,14 @@ export function Verfuegbarkeitskalender({
           </span>
         )}
 
-        <p className="text-sm font-medium text-marke-grau">
+        <p className="text-sm font-medium text-ueberschrift">
           {MONATSNAMEN[monat]} {jahr}
         </p>
 
         {weiterMoeglich ? (
           <Link
             href={`${basePfad}?monat=${monatsversatz + 1}`}
-            className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+            className="rounded-lg p-2 text-sekundaer hover:bg-flaeche-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
             aria-label="Nächster Monat"
           >
             ›
@@ -109,7 +109,7 @@ export function Verfuegbarkeitskalender({
 
       <div className="grid grid-cols-7 gap-1 text-center text-xs">
         {WOCHENTAGE.map((w) => (
-          <div key={w} className="text-neutral-400">
+          <div key={w} className="text-tertiaer">
             {w}
           </div>
         ))}
@@ -125,10 +125,10 @@ export function Verfuegbarkeitskalender({
               className={
                 "rounded py-1.5 " +
                 (belegt
-                  ? "bg-neutral-200 text-neutral-400"
+                  ? "bg-flaeche-200 text-tertiaer"
                   : vergangen
                     ? "text-neutral-300"
-                    : "bg-marke-gruen/15 text-marke-grau")
+                    : "bg-marke-gruen/15 text-ueberschrift")
               }
             >
               {tag.getDate()}
@@ -137,12 +137,12 @@ export function Verfuegbarkeitskalender({
         })}
       </div>
 
-      <div className="flex gap-4 text-xs text-neutral-500">
+      <div className="flex gap-4 text-xs text-sekundaer">
         <span className="flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded bg-marke-gruen/15" /> frei
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded bg-neutral-200" /> belegt
+          <span className="inline-block h-3 w-3 rounded bg-flaeche-200" /> belegt
         </span>
       </div>
     </div>

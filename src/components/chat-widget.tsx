@@ -40,15 +40,15 @@ export function ChatWidget({
         <div
           role="dialog"
           aria-label="Chats"
-          className="flex h-[50vh] max-h-[28rem] min-h-[16rem] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl"
+          className="flex h-[50vh] max-h-[28rem] min-h-[16rem] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-xl border border-rand bg-flaeche shadow-xl"
         >
-          <div className="flex items-center justify-between border-b border-neutral-200 bg-marke-gruen/10 px-4 py-3">
-            <span className="text-sm font-semibold text-marke-grau">Chats</span>
+          <div className="flex items-center justify-between border-b border-rand bg-marke-gruen/10 px-4 py-3">
+            <span className="text-sm font-semibold text-ueberschrift">Chats</span>
             <button
               type="button"
               onClick={() => setOffen(false)}
               aria-label="Chats schließen"
-              className="rounded-lg p-1 text-neutral-500 transition hover:bg-marke-gruen/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+              className="rounded-lg p-1 text-sekundaer transition hover:bg-marke-gruen/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
             >
               ✕
             </button>
@@ -57,8 +57,8 @@ export function ChatWidget({
           <div className="flex-1 overflow-y-auto">
             {angezeigt.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-1 px-6 text-center">
-                <p className="text-sm font-medium text-neutral-600">Noch keine Konversationen</p>
-                <p className="text-xs text-neutral-400">Schreib über den Menüpunkt Chat jemandem eine Nachricht.</p>
+                <p className="text-sm font-medium text-primaer">Noch keine Konversationen</p>
+                <p className="text-xs text-tertiaer">Schreib über den Menüpunkt Chat jemandem eine Nachricht.</p>
               </div>
             ) : (
               angezeigt.map((k) => (
@@ -67,19 +67,19 @@ export function ChatWidget({
                   href={`/chat/${k.konversationId}`}
                   onClick={() => setOffen(false)}
                   className={
-                    "block border-b border-neutral-50 px-4 py-2.5 transition hover:bg-marke-gruen/5 " +
+                    "block border-b border-rand px-4 py-2.5 transition hover:bg-marke-gruen/5 " +
                     (k.ungelesen ? "bg-marke-gruen/5" : "")
                   }
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className={"truncate text-sm " + (k.ungelesen ? "font-semibold text-marke-grau" : "text-neutral-700")}>
+                    <p className={"truncate text-sm " + (k.ungelesen ? "font-semibold text-ueberschrift" : "text-primaer")}>
                       {k.istGruppe && "👥 "}
                       {k.titel}
                     </p>
                     {k.ungelesen && <span className="h-2 w-2 shrink-0 rounded-full bg-marke-orange" />}
                   </div>
                   {k.letzteNachricht && (
-                    <p className="truncate text-xs text-neutral-400">
+                    <p className="truncate text-xs text-tertiaer">
                       {k.letzteNachricht.von}: {k.letzteNachricht.text}
                     </p>
                   )}
@@ -91,7 +91,7 @@ export function ChatWidget({
           <Link
             href="/chat"
             onClick={() => setOffen(false)}
-            className="border-t border-neutral-100 px-4 py-2.5 text-center text-sm font-medium text-marke-gruen-dunkel hover:underline"
+            className="border-t border-rand px-4 py-2.5 text-center text-sm font-medium text-marke-gruen-dunkel hover:underline"
           >
             Alle Chats ansehen
           </Link>

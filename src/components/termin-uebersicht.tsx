@@ -57,9 +57,9 @@ export function TerminUebersicht({
   const gefiltert = grenze ? eintraege.filter((e) => e.beginnIso <= grenze) : eintraege
 
   return (
-    <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
+    <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-semibold text-marke-grau">
+        <h2 className="text-sm font-semibold text-ueberschrift">
           {sucheAktiv ? (
             <>
               Suchergebnisse für „{suchtext}“ ({sucheErgebnis.length}
@@ -72,11 +72,11 @@ export function TerminUebersicht({
 
         <div className="flex flex-wrap items-center gap-3">
           {sucheAktiv ? (
-            <a href="/kalender" className="text-xs font-medium text-neutral-500 hover:text-neutral-700">
+            <a href="/kalender" className="text-xs font-medium text-sekundaer hover:text-primaer">
               Suche zurücksetzen
             </a>
           ) : (
-            <div className="flex gap-1 rounded-lg bg-neutral-100 p-1">
+            <div className="flex gap-1 rounded-lg bg-flaeche-100 p-1">
               {FILTER.map((f) => (
                 <button
                   key={f.wert}
@@ -85,8 +85,8 @@ export function TerminUebersicht({
                   className={
                     "rounded-md px-2.5 py-1 text-xs font-medium transition " +
                     (filter === f.wert
-                      ? "bg-white text-marke-grau shadow-sm"
-                      : "text-neutral-500 hover:text-neutral-700")
+                      ? "bg-flaeche text-ueberschrift shadow-sm"
+                      : "text-sekundaer hover:text-primaer")
                   }
                 >
                   {f.label}
@@ -100,7 +100,7 @@ export function TerminUebersicht({
       </div>
 
       {sucheAktiv && sucheErgebnis.length === MAX_SUCHTREFFER && (
-        <p className="mt-1 text-xs text-neutral-400">
+        <p className="mt-1 text-xs text-tertiaer">
           Zeigt die {MAX_SUCHTREFFER} neuesten Treffer — es gibt möglicherweise weitere. Suchbegriff genauer fassen,
           um einzugrenzen.
         </p>

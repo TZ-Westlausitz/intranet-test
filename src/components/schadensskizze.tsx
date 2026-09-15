@@ -313,11 +313,16 @@ export function Schadensskizze({
 
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Schadensskizze</span>
-        <span className="text-xs text-neutral-500">
+        <span className="text-xs text-sekundaer">
           {punkte.length} {punkte.length === 1 ? "Stelle" : "Stellen"}
         </span>
       </div>
 
+      {/* bg-neutral-50/border-neutral-200 bewusst literal, nicht die
+          Farbschema-Tokens: die Skizze landet 1:1 im gedruckten Protokoll
+          (weißes Papier) und die Fahrzeug-Umrisslinien im SVG unten haben
+          selbst feste, helle Füllfarben — auf dunklem Grund kaum noch zu
+          erkennen. */}
       <div className="mx-auto w-full max-w-[480px] rounded-lg border border-neutral-200 bg-neutral-50 p-2">
         <svg
           ref={svgRef}
@@ -406,7 +411,7 @@ export function Schadensskizze({
         </svg>
       </div>
 
-      <p className="text-center text-xs text-neutral-400">
+      <p className="text-center text-xs text-tertiaer">
         Auf die Skizze tippen setzt eine Schadensstelle. Marker antippen und ziehen, um ihn zu verschieben.
       </p>
 
@@ -416,7 +421,7 @@ export function Schadensskizze({
             punkt.istVorschaden ? null : (
             <div
               key={punkt.id}
-              className="flex flex-col gap-2 rounded-lg border border-neutral-200 p-3 text-sm"
+              className="flex flex-col gap-2 rounded-lg border border-rand p-3 text-sm"
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2 font-medium">
@@ -429,7 +434,7 @@ export function Schadensskizze({
                   type="button"
                   onClick={() => entfernen(punkt.id)}
                   aria-label={`Schadensstelle ${i + 1} löschen`}
-                  className="rounded-md px-1.5 py-0.5 text-neutral-400 hover:bg-red-50 hover:text-red-700"
+                  className="rounded-md px-1.5 py-0.5 text-tertiaer hover:bg-red-50 hover:text-red-700"
                 >
                   ✕
                 </button>
@@ -438,7 +443,7 @@ export function Schadensskizze({
                 value={punkt.art}
                 onChange={(ev) => feldAendern(punkt.id, "art", ev.target.value)}
                 required
-                className="rounded-lg border border-neutral-300 px-2.5 py-2 text-sm focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+                className="rounded-lg border border-flaeche-300 px-2.5 py-2 text-sm focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
               >
                 <option value="" disabled>
                   - bitte auswählen -
@@ -455,7 +460,7 @@ export function Schadensskizze({
                 onChange={(ev) => feldAendern(punkt.id, "beschreibung", ev.target.value)}
                 required
                 placeholder="z.B. Lage und Größe angeben"
-                className="rounded-lg border border-neutral-300 px-2.5 py-2 text-sm focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+                className="rounded-lg border border-flaeche-300 px-2.5 py-2 text-sm focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
               />
             </div>
             ),

@@ -34,11 +34,11 @@ export function WissensOrdnerGrid({
         value={suchtext}
         onChange={(ereignis) => setSuchtext(ereignis.target.value)}
         placeholder="Ordner suchen …"
-        className="h-9 w-full max-w-xs rounded-lg border border-neutral-300 px-2 text-sm"
+        className="h-9 w-full max-w-xs rounded-lg border border-flaeche-300 px-2 text-sm"
       />
 
       {gefiltert.length === 0 ? (
-        <p className="mt-3 text-sm text-neutral-500">Keine Ordner gefunden.</p>
+        <p className="mt-3 text-sm text-sekundaer">Keine Ordner gefunden.</p>
       ) : (
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {gefiltert.map((o) => (

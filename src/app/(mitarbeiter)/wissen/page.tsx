@@ -62,14 +62,14 @@ export default async function WissenSeite() {
     <main className="mx-auto max-w-4xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-marke-grau">Wissen</h1>
+        <h1 className="text-2xl font-semibold text-ueberschrift">Wissen</h1>
         {darfVerwalten && (
           <OrdnerErstellenDialog label="+ Ordner" titel="Neuer Ordner" erstellenAktion={ordnerErstellen} />
         )}
       </div>
 
       {ordner.length === 0 ? (
-        <p className="mt-6 text-sm text-neutral-500">Noch keine Ordner angelegt.</p>
+        <p className="mt-6 text-sm text-sekundaer">Noch keine Ordner angelegt.</p>
       ) : (
         <div className="mt-6">
           <WissensOrdnerGrid
@@ -82,8 +82,8 @@ export default async function WissenSeite() {
         </div>
       )}
 
-      <div className="mt-8 rounded-xl border border-neutral-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-marke-grau">Zuletzt bearbeitet</h2>
+      <div className="mt-8 rounded-xl border border-rand bg-flaeche p-4">
+        <h2 className="text-sm font-semibold text-ueberschrift">Zuletzt bearbeitet</h2>
         <ArtikelListe
           artikel={zuletztBearbeitet}
           darfVerwalten={darfVerwalten}

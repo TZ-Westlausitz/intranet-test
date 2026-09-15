@@ -44,7 +44,7 @@ export function AusleiheAnlegenFormular({
           name="entleiherId"
           required
           defaultValue=""
-          className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+          className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
         >
           <option value="" disabled>
             Bitte auswählen
@@ -66,7 +66,7 @@ export function AusleiheAnlegenFormular({
             required
             defaultValue={heutigesDatumIso()}
             onChange={vonAendern}
-            className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
           />
         </label>
 
@@ -79,7 +79,7 @@ export function AusleiheAnlegenFormular({
             min={minBis}
             defaultValue={heutigesDatumIso()}
             ref={bisRef}
-            className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
           />
         </label>
       </div>
@@ -92,7 +92,7 @@ export function AusleiheAnlegenFormular({
           type="text"
           name="zweck"
           required
-          className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+          className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
         />
       </label>
 

@@ -122,14 +122,14 @@ export function ZustandUndVorschaeden({
   return (
     <>
       <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium text-neutral-500">
+        <h2 className="text-sm font-medium text-sekundaer">
           Zustand &amp; Ausstattung bei {phase === "ruecknahme" ? "Rücknahme" : "Übergabe"}
         </h2>
 
         {phase === "ruecknahme" && vorherigeSchadenspunkte && vorherigeSchadenspunkte.length > 0 && (
-          <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3 text-sm">
-            <p className="font-medium text-neutral-600">Vorherige Schäden:</p>
-            <ul className="mt-1 flex flex-col gap-0.5 text-neutral-600">
+          <div className="rounded-lg border border-rand bg-flaeche-schwach p-3 text-sm">
+            <p className="font-medium text-primaer">Vorherige Schäden:</p>
+            <ul className="mt-1 flex flex-col gap-0.5 text-primaer">
               {vorherigeSchadenspunkte.map((punkt, i) => (
                 <li key={i}>{alsZeile(punkt, i)}</li>
               ))}
@@ -140,8 +140,8 @@ export function ZustandUndVorschaeden({
         <div className="grid grid-cols-[1fr_auto_auto] items-center gap-x-4 gap-y-2 text-sm">
           {ZUSTAND_PUNKTE.map((punkt) => (
             <Fragment key={punkt.key}>
-              <span className="border-b border-neutral-100 py-1.5">{punkt.label}</span>
-              <label className="flex items-center justify-start gap-1 border-b border-neutral-100 py-1.5">
+              <span className="border-b border-flaeche-100 py-1.5">{punkt.label}</span>
+              <label className="flex items-center justify-start gap-1 border-b border-flaeche-100 py-1.5">
                 <input
                   type="radio"
                   name={`zustand_${punkt.key}`}
@@ -152,7 +152,7 @@ export function ZustandUndVorschaeden({
                 />
                 i.O.
               </label>
-              <label className="flex items-center justify-start gap-1 border-b border-neutral-100 py-1.5">
+              <label className="flex items-center justify-start gap-1 border-b border-flaeche-100 py-1.5">
                 <input
                   type="radio"
                   name={`zustand_${punkt.key}`}
@@ -214,7 +214,7 @@ export function ZustandUndVorschaeden({
           required={mindestensEinUnvollstaendig}
           defaultValue={anfangsVorschaeden}
           placeholder="Eine Angabe pro Zeile"
-          className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+          className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
         />
       </label>
     </>

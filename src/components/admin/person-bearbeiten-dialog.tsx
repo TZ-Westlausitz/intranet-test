@@ -80,22 +80,22 @@ export function PersonBearbeitenDialog({
       <button
         type="button"
         onClick={() => dialogRef.current?.showModal()}
-        className="h-9 shrink-0 rounded-lg px-2.5 text-xs font-medium text-neutral-500 transition hover:bg-neutral-100"
+        className="h-9 shrink-0 rounded-lg px-2.5 text-xs font-medium text-sekundaer transition hover:bg-flaeche-100"
       >
         Bearbeiten
       </button>
 
       <dialog
         ref={dialogRef}
-        className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-0 shadow-xl backdrop:bg-neutral-900/40"
+        className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
       >
-        <div className="border-b border-neutral-200 px-5 py-4">
-          <h2 className="text-lg font-semibold text-marke-grau">{name}</h2>
+        <div className="border-b border-rand px-5 py-4">
+          <h2 className="text-lg font-semibold text-ueberschrift">{name}</h2>
         </div>
 
         <div className="flex max-h-[75vh] flex-col gap-5 overflow-y-auto px-5 py-4 text-sm">
           <section>
-            <h3 className="text-xs font-semibold text-neutral-600">Benutzername</h3>
+            <h3 className="text-xs font-semibold text-primaer">Benutzername</h3>
             <form
               action={benutzernameAktualisierenAktion.bind(null, personId)}
               className="mt-2 flex items-center gap-2"
@@ -105,11 +105,11 @@ export function PersonBearbeitenDialog({
                 type="text"
                 defaultValue={benutzername}
                 required
-                className="h-9 flex-1 rounded-lg border border-neutral-300 px-2 text-sm"
+                className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
               />
               <button
                 type="submit"
-                className="h-9 shrink-0 rounded-lg bg-neutral-100 px-3 text-xs font-medium text-neutral-700 transition hover:bg-neutral-200"
+                className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
               >
                 Speichern
               </button>
@@ -117,23 +117,23 @@ export function PersonBearbeitenDialog({
           </section>
 
           <section>
-            <h3 className="text-xs font-semibold text-neutral-600">Zugehörigkeiten</h3>
+            <h3 className="text-xs font-semibold text-primaer">Zugehörigkeiten</h3>
 
             {zugehoerigkeiten.length > 0 && (
               <ul className="mt-2 flex flex-col gap-1.5">
                 {zugehoerigkeiten.map((z) => (
                   <li
                     key={z.id}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-neutral-50 px-2.5 py-1.5"
+                    className="flex items-center justify-between gap-2 rounded-lg bg-flaeche-schwach px-2.5 py-1.5"
                   >
-                    <span className="text-neutral-700">
+                    <span className="text-primaer">
                       {z.standort ? `${z.standort.name} · ` : ""}
                       {z.abteilung.name} · {ROLLE_NAMEN[z.rolle]}
                     </span>
                     <form action={zugehoerigkeitBeendenAktion.bind(null, z.id)}>
                       <button
                         type="submit"
-                        className="shrink-0 text-xs font-medium text-neutral-500 hover:text-red-600"
+                        className="shrink-0 text-xs font-medium text-sekundaer hover:text-red-600"
                       >
                         Beenden
                       </button>
@@ -150,7 +150,7 @@ export function PersonBearbeitenDialog({
               <select
                 name="standortId"
                 required
-                className="h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+                className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
               >
                 {standorte.map((standort) => (
                   <option key={standort.id} value={standort.id}>
@@ -161,7 +161,7 @@ export function PersonBearbeitenDialog({
               <select
                 name="abteilungId"
                 required
-                className="h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+                className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
               >
                 {abteilungen.map((abteilung) => (
                   <option key={abteilung.id} value={abteilung.id}>
@@ -169,7 +169,7 @@ export function PersonBearbeitenDialog({
                   </option>
                 ))}
               </select>
-              <select name="rolle" className="h-9 rounded-lg border border-neutral-300 px-2 text-sm">
+              <select name="rolle" className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm">
                 {ROLLEN_OPTIONEN.map((option) => (
                   <option key={option.wert} value={option.wert}>
                     {option.name}
@@ -178,7 +178,7 @@ export function PersonBearbeitenDialog({
               </select>
               <button
                 type="submit"
-                className="h-9 shrink-0 rounded-lg bg-neutral-100 px-3 text-xs font-medium text-neutral-700 transition hover:bg-neutral-200"
+                className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
               >
                 Hinzufügen
               </button>
@@ -186,17 +186,17 @@ export function PersonBearbeitenDialog({
           </section>
 
           <section>
-            <h3 className="text-xs font-semibold text-neutral-600">Gruppen</h3>
+            <h3 className="text-xs font-semibold text-primaer">Gruppen</h3>
             <form action={personGruppenAktualisierenAktion.bind(null, personId)} className="mt-2">
-              <div className="grid max-h-40 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-neutral-200 p-2.5">
+              <div className="grid max-h-40 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-rand p-2.5">
                 {gruppen.map((gruppe) => (
-                  <label key={gruppe.id} className="flex items-center gap-1.5 text-xs text-neutral-700">
+                  <label key={gruppe.id} className="flex items-center gap-1.5 text-xs text-primaer">
                     <input
                       type="checkbox"
                       name="gruppen"
                       value={gruppe.id}
                       defaultChecked={ausgewaehlteGruppenIds.includes(gruppe.id)}
-                      className="h-3.5 w-3.5 rounded border-neutral-300 text-marke-gruen focus:ring-marke-gruen"
+                      className="h-3.5 w-3.5 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
                     />
                     {gruppe.name}
                   </label>
@@ -204,7 +204,7 @@ export function PersonBearbeitenDialog({
               </div>
               <button
                 type="submit"
-                className="mt-2 h-8 rounded-lg bg-neutral-100 px-3 text-xs font-medium text-neutral-700 transition hover:bg-neutral-200"
+                className="mt-2 h-8 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
               >
                 Gruppen speichern
               </button>
@@ -212,17 +212,17 @@ export function PersonBearbeitenDialog({
           </section>
 
           <section>
-            <h3 className="text-xs font-semibold text-neutral-600">Berechtigungen</h3>
+            <h3 className="text-xs font-semibold text-primaer">Berechtigungen</h3>
             <form action={personBerechtigungenAktualisierenAktion.bind(null, personId)} className="mt-2">
-              <div className="grid max-h-40 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-neutral-200 p-2.5">
+              <div className="grid max-h-40 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-rand p-2.5">
                 {berechtigungenListe.map((berechtigung) => (
-                  <label key={berechtigung.id} className="flex items-center gap-1.5 text-xs text-neutral-700">
+                  <label key={berechtigung.id} className="flex items-center gap-1.5 text-xs text-primaer">
                     <input
                       type="checkbox"
                       name="berechtigungen"
                       value={berechtigung.id}
                       defaultChecked={ausgewaehlteBerechtigungIds.includes(berechtigung.id)}
-                      className="h-3.5 w-3.5 rounded border-neutral-300 text-marke-gruen focus:ring-marke-gruen"
+                      className="h-3.5 w-3.5 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
                     />
                     {berechtigung.name}
                   </label>
@@ -230,7 +230,7 @@ export function PersonBearbeitenDialog({
               </div>
               <button
                 type="submit"
-                className="mt-2 h-8 rounded-lg bg-neutral-100 px-3 text-xs font-medium text-neutral-700 transition hover:bg-neutral-200"
+                className="mt-2 h-8 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
               >
                 Berechtigungen speichern
               </button>
@@ -238,17 +238,17 @@ export function PersonBearbeitenDialog({
           </section>
 
           <section>
-            <h3 className="text-xs font-semibold text-neutral-600">Passwort</h3>
+            <h3 className="text-xs font-semibold text-primaer">Passwort</h3>
             <button
               type="button"
               onClick={passwortZuruecksetzen}
               disabled={istPending}
-              className="mt-2 h-8 rounded-lg bg-neutral-100 px-3 text-xs font-medium text-neutral-700 transition hover:bg-neutral-200 disabled:opacity-60"
+              className="mt-2 h-8 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200 disabled:opacity-60"
             >
               {istPending ? "Wird zurückgesetzt …" : "Passwort zurücksetzen"}
             </button>
             {neuesPasswort && (
-              <p className="mt-2 rounded-lg border border-marke-gruen/40 bg-marke-gruen/10 px-2.5 py-1.5 text-xs text-marke-grau">
+              <p className="mt-2 rounded-lg border border-marke-gruen/40 bg-marke-gruen/10 px-2.5 py-1.5 text-xs text-ueberschrift">
                 Neues Passwort: <span className="font-mono font-semibold">{neuesPasswort}</span>
                 <br />
                 Wird nur dieses eine Mal angezeigt — bitte jetzt notieren oder weitergeben.
@@ -257,11 +257,11 @@ export function PersonBearbeitenDialog({
           </section>
         </div>
 
-        <div className="flex justify-end border-t border-neutral-200 px-5 py-4">
+        <div className="flex justify-end border-t border-rand px-5 py-4">
           <button
             type="button"
             onClick={() => dialogRef.current?.close()}
-            className="h-9 rounded-lg px-3 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100"
+            className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
           >
             Schließen
           </button>

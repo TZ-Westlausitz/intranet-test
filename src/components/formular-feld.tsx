@@ -29,7 +29,7 @@ export function formularTriggerIds(elemente: { bedingungElementId?: string | nul
   return new Set(elemente.filter((e) => e.bedingungElementId).map((e) => e.bedingungElementId as string))
 }
 
-const EINGABE_KLASSE = "h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+const EINGABE_KLASSE = "h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
 
 /** Heutiges Datum als "YYYY-MM-DD" in der LOKALEN Zeitzone (nicht toISOString — die rechnet auf UTC um und würde nahe Mitternacht das falsche Datum liefern). */
 function heutigesDatumIso(): string {
@@ -66,7 +66,7 @@ function FormularDatumFeld({ id, name, required }: { id: string; name: string; r
  * tabelleErlaubt) außerhalb des Editors aus dem Rahmen.
  */
 export const RICH_TEXT_ANZEIGE_KLASSE =
-  "prose prose-sm max-w-none [&_a]:text-marke-gruen-dunkel [&_a]:underline [&_img]:max-w-full [&_table]:w-full [&_table]:table-fixed [&_table]:border-collapse [&_td]:border [&_td]:border-neutral-300 [&_td]:p-2 [&_td]:align-top [&_th]:border [&_th]:border-neutral-300 [&_th]:p-2 [&_th]:align-top"
+  "prose prose-sm max-w-none [&_a]:text-marke-gruen-dunkel [&_a]:underline [&_img]:max-w-full [&_table]:w-full [&_table]:table-fixed [&_table]:border-collapse [&_td]:border [&_td]:border-flaeche-300 [&_td]:p-2 [&_td]:align-top [&_th]:border [&_th]:border-flaeche-300 [&_th]:p-2 [&_th]:align-top"
 
 /** Linienstil für TRENNZEICHEN — siehe Kommentar am Model FormularElement (Wert steckt in `label`). */
 const TRENNZEICHEN_BORDER: Record<string, string> = {
@@ -105,7 +105,7 @@ export function FormularFeld({
   if (element.typ === FormularElementTyp.TEXTBLOCK) {
     return (
       <div
-        className={RICH_TEXT_ANZEIGE_KLASSE + " text-neutral-700"}
+        className={RICH_TEXT_ANZEIGE_KLASSE + " text-primaer"}
         dangerouslySetInnerHTML={{ __html: element.inhalt ?? "" }}
       />
     )
@@ -118,12 +118,12 @@ export function FormularFeld({
         : TRENNZEICHEN_BORDER[element.label ?? ""] === "dashed"
           ? "border-dashed border-t-2"
           : "border-solid border-t"
-    return <hr className={"border-neutral-300 " + stilKlasse} />
+    return <hr className={"border-flaeche-300 " + stilKlasse} />
   }
 
   return (
-    <div className={element.bedingungElementId ? "border-l-2 border-neutral-200 pl-3" : undefined}>
-      <label htmlFor={feldName} className="mb-1 block text-sm font-medium text-neutral-700">
+    <div className={element.bedingungElementId ? "border-l-2 border-rand pl-3" : undefined}>
+      <label htmlFor={feldName} className="mb-1 block text-sm font-medium text-primaer">
         {element.label}
         {element.pflicht && <span className="text-marke-orange"> *</span>}
       </label>
@@ -196,8 +196,8 @@ export function FormularFeld({
       {element.typ === FormularElementTyp.AUSWAHL_MEHRFACH && (
         <div className="flex flex-col gap-1.5">
           {element.optionen.map((option) => (
-            <label key={option.wert} className="flex items-center gap-2 text-sm text-neutral-700">
-              <input type="checkbox" name={feldName} value={option.wert} className="h-4 w-4 rounded border-neutral-300" />
+            <label key={option.wert} className="flex items-center gap-2 text-sm text-primaer">
+              <input type="checkbox" name={feldName} value={option.wert} className="h-4 w-4 rounded border-flaeche-300" />
               {option.wert}
             </label>
           ))}
@@ -205,8 +205,8 @@ export function FormularFeld({
       )}
 
       {element.typ === FormularElementTyp.CHECKBOX && (
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
-          <input id={feldName} name={feldName} type="checkbox" className="h-4 w-4 rounded border-neutral-300" />
+        <label className="flex items-center gap-2 text-sm text-primaer">
+          <input id={feldName} name={feldName} type="checkbox" className="h-4 w-4 rounded border-flaeche-300" />
           Ja
         </label>
       )}

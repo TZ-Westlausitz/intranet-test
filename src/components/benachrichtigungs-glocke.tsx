@@ -63,7 +63,7 @@ export function BenachrichtigungsGlocke({
         aria-expanded={offen}
         aria-haspopup="menu"
         aria-label="Benachrichtigungen"
-        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 transition hover:bg-marke-gruen/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+        className="relative flex h-9 w-9 items-center justify-center rounded-lg text-primaer transition hover:bg-marke-gruen/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
       >
         <svg
           viewBox="0 0 24 24"
@@ -92,22 +92,22 @@ export function BenachrichtigungsGlocke({
       {offen && (
         <div
           role="menu"
-          className="absolute right-0 z-10 mt-2 max-h-96 w-80 overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+          className="absolute right-0 z-10 mt-2 max-h-96 w-80 overflow-y-auto rounded-lg border border-rand bg-flaeche py-1 shadow-lg"
         >
-          <div className="border-b border-neutral-100 px-4 py-2 text-xs font-semibold text-neutral-500">
+          <div className="border-b border-rand px-4 py-2 text-xs font-semibold text-sekundaer">
             Benachrichtigungen
           </div>
 
           {benachrichtigungen.length === 0 ? (
-            <p className="px-4 py-6 text-center text-sm text-neutral-400">Noch keine Benachrichtigungen.</p>
+            <p className="px-4 py-6 text-center text-sm text-tertiaer">Noch keine Benachrichtigungen.</p>
           ) : (
             benachrichtigungen.map((b) => {
               const inhalt = (
                 <>
-                  <p className={"text-sm " + (b.gelesen ? "text-neutral-600" : "font-medium text-neutral-800")}>
+                  <p className={"text-sm " + (b.gelesen ? "text-primaer" : "font-medium text-ueberschrift")}>
                     {b.text}
                   </p>
-                  <p className="mt-0.5 text-xs text-neutral-400">{b.zeitpunktAnzeige}</p>
+                  <p className="mt-0.5 text-xs text-tertiaer">{b.zeitpunktAnzeige}</p>
                 </>
               )
 
@@ -116,12 +116,12 @@ export function BenachrichtigungsGlocke({
                   key={b.id}
                   href={b.link}
                   onClick={() => setOffen(false)}
-                  className="block border-b border-neutral-50 px-4 py-2.5 transition hover:bg-marke-gruen/5"
+                  className="block border-b border-rand px-4 py-2.5 transition hover:bg-marke-gruen/5"
                 >
                   {inhalt}
                 </Link>
               ) : (
-                <div key={b.id} className="border-b border-neutral-50 px-4 py-2.5">
+                <div key={b.id} className="border-b border-rand px-4 py-2.5">
                   {inhalt}
                 </div>
               )

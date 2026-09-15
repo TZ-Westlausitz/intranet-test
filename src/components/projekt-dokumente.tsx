@@ -31,9 +31,9 @@ export function ProjektDokumente({
   return (
     <div className="flex flex-col gap-3">
       {dokumente.length === 0 ? (
-        <p className="text-sm text-neutral-500">Noch keine Dokumente.</p>
+        <p className="text-sm text-sekundaer">Noch keine Dokumente.</p>
       ) : (
-        <ul className="flex flex-col divide-y divide-neutral-100">
+        <ul className="flex flex-col divide-y divide-flaeche-100">
           {dokumente.map((dokument) => {
             const url = `/api/projekte/${projektId}/dokumente/${dokument.id}`
             const istBild = dokument.mimetyp.startsWith("image/")
@@ -49,13 +49,13 @@ export function ProjektDokumente({
                   // eslint-disable-next-line @next/next/no-img-element -- interne Datei aus der Ablage, kein optimierbares Next-Image-Ziel
                   <img src={url} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
                 ) : (
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-neutral-100 text-neutral-400">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-flaeche-100 text-tertiaer">
                     📄
                   </span>
                 )}
                 <span className="truncate">{dokument.dateiname}</span>
               </a>
-              <span className="shrink-0 text-xs text-neutral-400">
+              <span className="shrink-0 text-xs text-tertiaer">
                 {formatiereGroesse(dokument.groesseBytes)} · {dokument.hochgeladenVon.vorname} {dokument.hochgeladenVon.nachname}
               </span>
               {dokument.darfLoeschen && !schreibgeschuetzt && (
@@ -63,7 +63,7 @@ export function ProjektDokumente({
                   <button
                     type="submit"
                     aria-label={`${dokument.dateiname} löschen`}
-                    className="shrink-0 rounded p-1 text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
+                    className="shrink-0 rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
                   >
                     ×
                   </button>
@@ -76,20 +76,20 @@ export function ProjektDokumente({
       )}
 
       {!schreibgeschuetzt && (
-        <form action={hochladenAktion.bind(null, projektId)} className="flex items-end gap-2 border-t border-neutral-100 pt-3">
+        <form action={hochladenAktion.bind(null, projektId)} className="flex items-end gap-2 border-t border-flaeche-100 pt-3">
           <div className="flex-1">
-            <label className="block text-xs font-medium text-neutral-600">Datei hochladen</label>
+            <label className="block text-xs font-medium text-primaer">Datei hochladen</label>
             <input
               type="file"
               name="dateien"
               multiple
               accept="application/pdf,image/jpeg,image/png,image/webp,image/heic,.doc,.docx,.xls,.xlsx"
-              className="mt-1.5 w-full text-sm text-neutral-600 file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+              className="mt-1.5 w-full text-sm text-primaer file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-flaeche-100 file:px-3 file:text-sm file:font-medium file:text-primaer hover:file:bg-flaeche-200"
             />
           </div>
           <button
             type="submit"
-            className="h-9 shrink-0 rounded-lg bg-neutral-100 px-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-200"
+            className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200"
           >
             Hochladen
           </button>

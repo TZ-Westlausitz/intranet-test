@@ -85,7 +85,7 @@ export function AnfrageFormular({
             required
             value={geplantVon}
             onChange={(e) => geplantVonAendern(e.target.value)}
-            className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
           />
         </label>
 
@@ -98,7 +98,7 @@ export function AnfrageFormular({
             min={geplantVon}
             value={geplantBis}
             onChange={(e) => setGeplantBis(e.target.value)}
-            className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
           />
         </label>
       </div>
@@ -111,7 +111,7 @@ export function AnfrageFormular({
           value={fahrer}
           onChange={(e) => setFahrer(e.target.value)}
           placeholder="Leer lassen, wenn du selbst fährst"
-          className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+          className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
         />
       </label>
 
@@ -123,15 +123,15 @@ export function AnfrageFormular({
           type="text"
           name="zweck"
           required
-          className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+          className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
         />
       </label>
 
       <details
-        className="rounded-lg border border-neutral-200 p-4"
+        className="rounded-lg border border-rand p-4"
         onToggle={(e) => setVorschauOffen(e.currentTarget.open)}
       >
-        <summary className="cursor-pointer text-sm font-medium text-marke-grau">
+        <summary className="cursor-pointer text-sm font-medium text-ueberschrift">
           Nutzungsvereinbarung ansehen
         </summary>
         <div className="mt-3">
@@ -139,7 +139,7 @@ export function AnfrageFormular({
             <iframe
               src={vorschauUrl}
               title="Nutzungsvereinbarung (Vorschau, unterschrieben wird bei der Übergabe)"
-              className="h-[70vh] w-full rounded border border-neutral-200"
+              className="h-[70vh] w-full rounded border border-rand"
             />
           )}
         </div>

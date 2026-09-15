@@ -29,25 +29,25 @@ export function KachelPopup({
         type="button"
         onClick={() => dialogRef.current?.showModal()}
         className={
-          "flex w-full flex-col items-start justify-between gap-2 rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 bg-white p-4 text-left shadow-sm transition hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2 " +
+          "flex w-full flex-col items-start justify-between gap-2 rounded-2xl border border-x-rand border-b-rand border-t-4 bg-flaeche p-4 text-left shadow-sm transition hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2 " +
           akzentKlasse
         }
       >
-        <h2 className="text-lg font-semibold text-marke-grau">{titel}</h2>
-        <div className="text-sm text-neutral-500">{vorschau}</div>
+        <h2 className="text-lg font-semibold text-ueberschrift">{titel}</h2>
+        <div className="text-sm text-sekundaer">{vorschau}</div>
       </button>
 
       <dialog
         ref={dialogRef}
-        className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-0 shadow-xl backdrop:bg-neutral-900/40"
+        className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
       >
-        <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
-          <h2 className="text-lg font-semibold text-marke-grau">{titel}</h2>
+        <div className="flex items-center justify-between border-b border-rand px-5 py-4">
+          <h2 className="text-lg font-semibold text-ueberschrift">{titel}</h2>
           <button
             type="button"
             onClick={() => dialogRef.current?.close()}
             aria-label="Schließen"
-            className="rounded p-1 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
+            className="rounded p-1 text-tertiaer transition hover:bg-flaeche-schwach hover:text-primaer"
           >
             ×
           </button>

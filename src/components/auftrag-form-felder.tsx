@@ -53,7 +53,7 @@ export function AuftragFormFelder({ standardwerte, personen }: { standardwerte: 
   return (
     <>
       <div>
-        <label htmlFor="titel" className="block text-xs font-medium text-neutral-600">
+        <label htmlFor="titel" className="block text-xs font-medium text-primaer">
           Titel
         </label>
         <input
@@ -61,12 +61,12 @@ export function AuftragFormFelder({ standardwerte, personen }: { standardwerte: 
           name="titel"
           type="text"
           defaultValue={standardwerte.titel}
-          className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+          className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
         />
       </div>
 
       <div>
-        <label htmlFor="auftrag-zuweisen-suche" className="block text-xs font-medium text-neutral-600">
+        <label htmlFor="auftrag-zuweisen-suche" className="block text-xs font-medium text-primaer">
           Zuweisen an
         </label>
         <div className="mt-1.5">
@@ -81,7 +81,7 @@ export function AuftragFormFelder({ standardwerte, personen }: { standardwerte: 
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-neutral-600">Notizen (optional)</label>
+        <label className="block text-xs font-medium text-primaer">Notizen (optional)</label>
         <div className="mt-1">
           <RichTextEditor name="beschreibung" defaultValue={standardwerte.beschreibung} />
         </div>
@@ -89,7 +89,7 @@ export function AuftragFormFelder({ standardwerte, personen }: { standardwerte: 
 
       <div className="flex flex-wrap items-end gap-3">
         <div>
-          <label htmlFor="faelligAm" className="block text-xs font-medium text-neutral-600">
+          <label htmlFor="faelligAm" className="block text-xs font-medium text-primaer">
             Fällig am
           </label>
           <input
@@ -97,12 +97,12 @@ export function AuftragFormFelder({ standardwerte, personen }: { standardwerte: 
             name="faelligAm"
             type="date"
             defaultValue={standardwerte.faelligAm ?? ""}
-            className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+            className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
           />
         </div>
 
         <fieldset>
-          <legend className="text-xs font-medium text-neutral-600">Priorität</legend>
+          <legend className="text-xs font-medium text-primaer">Priorität</legend>
           <div className="mt-1.5 flex gap-2">
             {AUFGABE_PRIORITAETEN.map((prioritaet) => (
               <label key={prioritaet.wert} className="flex cursor-pointer items-center gap-1.5" title={prioritaet.name}>
@@ -126,7 +126,7 @@ export function AuftragFormFelder({ standardwerte, personen }: { standardwerte: 
       </div>
 
       <div>
-        <label htmlFor="geplantAm" className="block text-xs font-medium text-neutral-600">
+        <label htmlFor="geplantAm" className="block text-xs font-medium text-primaer">
           Geplant für (optional)
         </label>
         <input
@@ -134,19 +134,19 @@ export function AuftragFormFelder({ standardwerte, personen }: { standardwerte: 
           name="geplantAm"
           type="date"
           defaultValue={standardwerte.geplantAm ?? ""}
-          className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+          className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
         />
-        <p className="mt-1.5 text-xs text-neutral-500">Die zugewiesene Person sieht den Auftrag erst ab diesem Datum.</p>
+        <p className="mt-1.5 text-xs text-sekundaer">Die zugewiesene Person sieht den Auftrag erst ab diesem Datum.</p>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-neutral-600">Anhänge (Dokumente/Fotos)</label>
+        <label className="block text-xs font-medium text-primaer">Anhänge (Dokumente/Fotos)</label>
         <input
           type="file"
           name="anhaenge"
           multiple
           accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
-          className="mt-1.5 w-full text-sm text-neutral-600 file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+          className="mt-1.5 w-full text-sm text-primaer file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-flaeche-100 file:px-3 file:text-sm file:font-medium file:text-primaer hover:file:bg-flaeche-200"
         />
       </div>
     </>

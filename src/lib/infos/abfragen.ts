@@ -1,10 +1,19 @@
+import type { Prisma } from "@/generated/prisma/client"
+
 import { prisma } from "@/lib/db"
-import { infoSichtbarFuer, infoEmpfaengerIds, darfInfoBearbeiten, darfInfoLoeschen } from "@/lib/infos/sichtbarkeit"
+import {
+  infoSichtbarFuer,
+  infoVeroeffentlichtFuer,
+  infoEmpfaengerIds,
+  istInfoEmpfaenger,
+  darfInfoBearbeiten,
+  darfInfoLoeschen,
+} from "@/lib/infos/sichtbarkeit"
 
 /** Anzeigename, wenn Info.alsUnternehmen gesetzt ist (siehe Kommentar am Model Info). */
 export const UNTERNEHMENSNAME = "Therapie- und Pflegezentrum"
 
-type InfoKontext = { personId: string; berechtigungen: string[] }
+type InfoKontext = { personId: string; berechtigungen: string[]; adminModusAktiv: boolean }
 
 async function bestaetigungsstand(infoId: string, mitBestaetigung: boolean) {
   if (!mitBestaetigung) return { empfaengerAnzahl: 0, bestaetigtAnzahl: 0 }
@@ -88,11 +97,15 @@ export function ersteBildInfo(inhalt: string | null): Titelbild | null {
   return { src, breite: breite ? Number(breite) : null, hoehe: hoehe ? Number(hoehe) : null }
 }
 
-/** Chronologischer Feed (neueste zuerst) — nur für diese Person sichtbare Infos, siehe infoSichtbarFuer. */
-export async function infosFuerPerson(kontext: InfoKontext) {
+/**
+ * Gemeinsamer Kern von `infosFuerPerson` und `alleInfos` (Admin-Modus) —
+ * unterscheiden sich nur im `where`, Anreicherung (Bestätigungsstand,
+ * Umfrageergebnis, Bearbeiten/Löschen-Flags) ist identisch.
+ */
+async function infosMitWhere(where: Prisma.InfoWhereInput, kontext: InfoKontext) {
   const jetzt = new Date()
   const infos = await prisma.info.findMany({
-    where: infoSichtbarFuer(kontext.personId),
+    where,
     include: {
       kategorie: { select: { name: true } },
       erstelltVon: { select: { benutzername: true, vorname: true, nachname: true, profilbildPfad: true } },
@@ -129,9 +142,30 @@ export async function infosFuerPerson(kontext: InfoKontext) {
       titelbild: ersteBildInfo(info.inhalt),
       nochNichtVeroeffentlicht: info.veroeffentlichtAm > jetzt,
       umfrage: info.umfrage ? await umfrageErgebnis(info.umfrage.id, kontext.personId) : null,
+      // Ohne Admin-Modus ist `where` oben schon infoSichtbarFuer — jeder
+      // Treffer damit zwangsläufig ein echter Empfänger, keine
+      // Zusatzabfrage nötig. Nur im Admin-Modus (wo `where` firmenweit
+      // ohne diese Einschränkung ist) tatsächlich prüfen — für das
+      // Ausblenden von Liken/Bestätigen/Kommentieren bei Infos, die nur
+      // über den Admin-Modus sichtbar sind (Rückmeldung vom 2026-09-14).
+      istEmpfaenger: kontext.adminModusAktiv ? await istInfoEmpfaenger(info.id, kontext.personId) : true,
       ...(await bestaetigungsstand(info.id, info.mitBestaetigung)),
     })),
   )
+}
+
+/** Chronologischer Feed (neueste zuerst) — nur für diese Person sichtbare Infos, siehe infoSichtbarFuer. */
+export async function infosFuerPerson(kontext: InfoKontext) {
+  return infosMitWhere(infoSichtbarFuer(kontext.personId), kontext)
+}
+
+/**
+ * Admin-Modus (siehe Kontext.adminModusAktiv): derselbe chronologische
+ * Feed, aber jede veröffentlichte Info firmenweit statt nur die eigenen
+ * Empfänger-Gruppen/-Abteilungen/-Personen — siehe infoVeroeffentlichtFuer.
+ */
+export async function alleInfos(kontext: InfoKontext) {
+  return infosMitWhere(infoVeroeffentlichtFuer(kontext.personId), kontext)
 }
 
 /**
@@ -159,8 +193,15 @@ export async function eigeneInfoEntwuerfe(personId: string) {
 /** Volle Detailansicht — `null`, wenn die Info für diese Person nicht sichtbar ist. */
 export async function infoDetailFuerPerson(infoId: string, kontext: InfoKontext) {
   const jetzt = new Date()
+  // Admin-Modus (siehe Kontext.adminModusAktiv): dieselbe firmenweite
+  // Sicht wie in alleInfos — sonst ließ sich eine Info, die nur über den
+  // Admin-Modus in der Liste auftaucht (nicht direkt an diese Person
+  // adressiert), zwar anklicken, das Pop-up blieb aber für immer bei
+  // "Lädt …" hängen, weil infoSichtbarFuer sie für das Detail ablehnte
+  // (Rückmeldung vom 2026-09-14).
+  const sichtbarkeit = kontext.adminModusAktiv ? infoVeroeffentlichtFuer(kontext.personId) : infoSichtbarFuer(kontext.personId)
   const info = await prisma.info.findFirst({
-    where: { id: infoId, ...infoSichtbarFuer(kontext.personId) },
+    where: { id: infoId, ...sichtbarkeit },
     include: {
       kategorie: { select: { name: true } },
       erstelltVon: { select: { benutzername: true, vorname: true, nachname: true, profilbildPfad: true } },
@@ -193,6 +234,10 @@ export async function infoDetailFuerPerson(infoId: string, kontext: InfoKontext)
     selbstGeliked: info.likes.length > 0,
     darfBearbeiten: darfInfoBearbeiten(info, kontext),
     darfLoeschen: darfInfoLoeschen(kontext),
+    // Siehe Kommentar in infosMitWhere: nur im Admin-Modus tatsächlich
+    // prüfen, sonst durch die strengere where-Klausel oben schon
+    // garantiert ein echter Empfänger.
+    istEmpfaenger: kontext.adminModusAktiv ? await istInfoEmpfaenger(infoId, kontext.personId) : true,
     nochNichtVeroeffentlicht: info.veroeffentlichtAm > jetzt,
     umfrage: info.umfrage ? await umfrageErgebnis(info.umfrage.id, kontext.personId) : null,
     ...(await bestaetigungsstand(info.id, info.mitBestaetigung)),

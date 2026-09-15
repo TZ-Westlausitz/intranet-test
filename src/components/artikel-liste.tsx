@@ -46,12 +46,12 @@ export function ArtikelListe({
   const dialogRef = useRef<ArtikelAnzeigenDialogHandle>(null)
 
   if (artikel.length === 0) {
-    return <p className="mt-3 text-sm text-neutral-500">Noch keine Artikel.</p>
+    return <p className="mt-3 text-sm text-sekundaer">Noch keine Artikel.</p>
   }
 
   return (
     <>
-      <ul className="mt-3 flex flex-col divide-y divide-neutral-100">
+      <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
         {artikel.map((eintrag) => (
           <li key={eintrag.id} className="flex items-center gap-3 py-2.5">
             <button
@@ -60,12 +60,12 @@ export function ArtikelListe({
               className="flex min-w-0 flex-1 items-center gap-2 text-left"
             >
               <span aria-hidden>📖</span>
-              <span className="truncate text-sm text-neutral-800">{eintrag.titel}</span>
+              <span className="truncate text-sm text-primaer">{eintrag.titel}</span>
               {eintrag.anhaenge.length > 0 && (
-                <span className="shrink-0 text-xs text-neutral-400">📎 {eintrag.anhaenge.length}</span>
+                <span className="shrink-0 text-xs text-tertiaer">📎 {eintrag.anhaenge.length}</span>
               )}
             </button>
-            <span className="shrink-0 text-xs text-neutral-400">{formatiereDatumAusDate(eintrag.aktualisiertAm)}</span>
+            <span className="shrink-0 text-xs text-tertiaer">{formatiereDatumAusDate(eintrag.aktualisiertAm)}</span>
             <ArtikelAktionenMenu
               artikelId={eintrag.id}
               darfVerwalten={darfVerwalten}

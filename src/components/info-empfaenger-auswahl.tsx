@@ -18,9 +18,9 @@ const KATEGORIE_LABEL: Record<EmpfaengerTyp, string> = {
   person: "Personen",
 }
 const CHIP_FARBE: Record<EmpfaengerTyp, string> = {
-  abteilung: "bg-neutral-200 text-neutral-700",
-  gruppe: "bg-marke-orange/20 text-marke-grau",
-  person: "bg-marke-gruen/15 text-marke-grau",
+  abteilung: "bg-flaeche-200 text-primaer",
+  gruppe: "bg-marke-orange/20 text-ueberschrift",
+  person: "bg-marke-gruen/15 text-ueberschrift",
 }
 const REIHENFOLGE: EmpfaengerTyp[] = ["abteilung", "gruppe", "person"]
 
@@ -140,7 +140,7 @@ export function InfoEmpfaengerAuswahl({
                 type="button"
                 aria-label={`${e.name} entfernen`}
                 onClick={() => entfernen(e.id)}
-                className="flex h-4 w-4 items-center justify-center rounded-full text-neutral-500 hover:bg-white/60"
+                className="flex h-4 w-4 items-center justify-center rounded-full text-sekundaer hover:bg-flaeche/60"
               >
                 ×
               </button>
@@ -166,7 +166,7 @@ export function InfoEmpfaengerAuswahl({
         onBlur={() => window.setTimeout(() => setGeoeffnet(false), 150)}
         onKeyDown={beiTaste}
         placeholder="Abteilung, Gruppe oder Person suchen …"
-        className="h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+        className="h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
       />
 
       {geoeffnet && (
@@ -174,17 +174,17 @@ export function InfoEmpfaengerAuswahl({
           ref={listeRef}
           id={`${id}-liste`}
           role="listbox"
-          className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-neutral-200 bg-white shadow-lg"
+          className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-rand bg-flaeche shadow-lg"
         >
           {gefiltert.length === 0 ? (
-            <p className="px-3 py-2 text-sm text-neutral-400">Keine Treffer</p>
+            <p className="px-3 py-2 text-sm text-tertiaer">Keine Treffer</p>
           ) : (
             REIHENFOLGE.map((typ) => {
               const eintraege = gefiltert.filter((e) => e.typ === typ)
               if (eintraege.length === 0) return null
               return (
                 <div key={typ}>
-                  <p className="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wide text-neutral-400 uppercase">
+                  <p className="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wide text-tertiaer uppercase">
                     {KATEGORIE_LABEL[typ]}
                   </p>
                   {eintraege.map((e) => {
@@ -202,8 +202,8 @@ export function InfoEmpfaengerAuswahl({
                         onMouseEnter={() => setHervorgehoben(index)}
                         onClick={() => hinzufuegen(e)}
                         className={
-                          "block w-full px-3 py-2 text-left text-sm text-neutral-700 " +
-                          (index === hervorgehobenerIndex ? "bg-marke-gruen/10" : "hover:bg-neutral-50")
+                          "block w-full px-3 py-2 text-left text-sm text-primaer " +
+                          (index === hervorgehobenerIndex ? "bg-marke-gruen/10" : "hover:bg-flaeche-schwach")
                         }
                       >
                         {e.name}

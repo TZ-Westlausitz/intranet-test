@@ -51,8 +51,8 @@ export function AuftragKommentare({
         {kommentare.length > 0 && (
           <ul className="flex flex-col gap-2">
             {kommentare.map((kommentar) => (
-              <li key={kommentar.id} className="rounded-lg bg-neutral-50 px-2.5 py-1.5">
-                <p className="text-xs font-medium text-neutral-500">
+              <li key={kommentar.id} className="rounded-lg bg-flaeche-schwach px-2.5 py-1.5">
+                <p className="text-xs font-medium text-sekundaer">
                   {kommentar.person.vorname} {kommentar.person.nachname} ·{" "}
                   {kommentar.erstelltAm.toLocaleString("de-DE", {
                     day: "2-digit",
@@ -61,7 +61,7 @@ export function AuftragKommentare({
                     minute: "2-digit",
                   })}
                 </p>
-                <p className="text-sm text-neutral-700">{kommentar.text}</p>
+                <p className="text-sm text-primaer">{kommentar.text}</p>
                 {kommentar.anhaenge.length > 0 && (
                   <div className="mt-1 flex flex-col">
                     {kommentar.anhaenge.map((anhang) => (
@@ -88,11 +88,11 @@ export function AuftragKommentare({
               name="text"
               required
               placeholder="Frage oder Hinweis …"
-              className="h-9 flex-1 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
             />
             <label
               title="Anhang hinzufügen"
-              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-neutral-100 text-lg leading-none text-neutral-600 transition hover:bg-neutral-200"
+              className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-flaeche-100 text-lg leading-none text-primaer transition hover:bg-flaeche-200"
             >
               +
               <input
@@ -106,12 +106,12 @@ export function AuftragKommentare({
             </label>
             <button
               type="submit"
-              className="h-9 shrink-0 rounded-lg bg-neutral-100 px-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-200"
+              className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200"
             >
               Senden
             </button>
           </div>
-          {anhaenge.length > 0 && <p className="text-xs text-neutral-500">Anhang: {anhaenge.join(", ")}</p>}
+          {anhaenge.length > 0 && <p className="text-xs text-sekundaer">Anhang: {anhaenge.join(", ")}</p>}
         </form>
       </div>
     </details>

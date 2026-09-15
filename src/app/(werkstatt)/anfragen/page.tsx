@@ -65,18 +65,18 @@ export default async function AnfragenSeite() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-2xl font-semibold text-marke-grau">Offene Anfragen</h1>
+      <h1 className="text-2xl font-semibold text-ueberschrift">Offene Anfragen</h1>
 
       {anfragen.length === 0 ? (
-        <p className="mt-6 text-neutral-600">Keine offenen Anfragen.</p>
+        <p className="mt-6 text-primaer">Keine offenen Anfragen.</p>
       ) : (
         <ul className="mt-6 flex flex-col gap-4">
           {anfragen.map((a) => (
-            <li key={a.id} className="rounded-lg border border-neutral-200 p-4">
+            <li key={a.id} className="rounded-lg border border-rand p-4">
               <p className="font-medium">
                 {a.entleiher.vorname} {a.entleiher.nachname}
               </p>
-              <p className="mt-1 text-sm text-neutral-600">
+              <p className="mt-1 text-sm text-primaer">
                 {a.fahrzeug.bezeichnung} · {a.geplantVon.toLocaleDateString("de-DE")}–
                 {a.geplantBis.toLocaleDateString("de-DE")} · {a.zweck}
               </p>
@@ -98,11 +98,11 @@ export default async function AnfragenSeite() {
                     type="text"
                     name="ablehnungsgrund"
                     placeholder="Grund (optional)"
-                    className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-3 py-1.5 text-sm"
+                    className="min-w-0 flex-1 rounded-lg border border-flaeche-300 px-3 py-1.5 text-sm"
                   />
                   <button
                     type="submit"
-                    className="whitespace-nowrap rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-400"
+                    className="whitespace-nowrap rounded-lg border border-flaeche-300 px-3 py-1.5 text-sm font-medium text-primaer transition hover:border-tertiaer"
                   >
                     Ablehnen
                   </button>

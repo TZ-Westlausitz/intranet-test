@@ -48,9 +48,9 @@ export function PersonErstellenFormular({
   }
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-4">
+    <div className="rounded-xl border border-rand bg-flaeche p-4">
       {ergebnis && (
-        <div className="mb-4 rounded-lg border border-marke-gruen/40 bg-marke-gruen/10 px-3 py-2 text-sm text-marke-grau">
+        <div className="mb-4 rounded-lg border border-marke-gruen/40 bg-marke-gruen/10 px-3 py-2 text-sm text-ueberschrift">
           <p className="font-medium">{ergebnis.name} wurde angelegt.</p>
           <p className="mt-1">
             Benutzername: <span className="font-mono font-semibold">{ergebnis.benutzername}</span>
@@ -58,7 +58,7 @@ export function PersonErstellenFormular({
           <p className="mt-1">
             Startpasswort: <span className="font-mono font-semibold">{ergebnis.passwort}</span>
           </p>
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-1 text-xs text-sekundaer">
             Das Passwort wird nur dieses eine Mal angezeigt — bitte jetzt notieren oder weitergeben. Der
             Benutzername steht danach dauerhaft im Profil der Person.
           </p>
@@ -72,7 +72,7 @@ export function PersonErstellenFormular({
       <form ref={formRef} onSubmit={absenden} className="flex flex-col gap-3">
         <div className="flex flex-wrap gap-3">
           <div className="flex-1">
-            <label htmlFor="pe-vorname" className="block text-xs font-medium text-neutral-600">
+            <label htmlFor="pe-vorname" className="block text-xs font-medium text-primaer">
               Vorname
             </label>
             <input
@@ -80,11 +80,11 @@ export function PersonErstellenFormular({
               name="vorname"
               type="text"
               required
-              className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
           <div className="flex-1">
-            <label htmlFor="pe-nachname" className="block text-xs font-medium text-neutral-600">
+            <label htmlFor="pe-nachname" className="block text-xs font-medium text-primaer">
               Nachname
             </label>
             <input
@@ -92,12 +92,12 @@ export function PersonErstellenFormular({
               name="nachname"
               type="text"
               required
-              className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
         </div>
 
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-sekundaer">
           Der Benutzername wird automatisch aus Vorname, Nachname und Abteilung gebildet
           (vorname.nachname@kuerzel) — keine Personalnummer und keine E-Mail nötig. Ein fester Standort ist
           hier bewusst kein Pflichtfeld: manche Personen bekommen ihren Einsatzort nur über mehrere Gruppen
@@ -106,14 +106,14 @@ export function PersonErstellenFormular({
 
         <div className="flex flex-wrap gap-3">
           <div className="flex-1">
-            <label htmlFor="pe-abteilung" className="block text-xs font-medium text-neutral-600">
+            <label htmlFor="pe-abteilung" className="block text-xs font-medium text-primaer">
               Abteilung
             </label>
             <select
               id="pe-abteilung"
               name="abteilungId"
               required
-              className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
             >
               {abteilungen.map((abteilung) => (
                 <option key={abteilung.id} value={abteilung.id}>
@@ -123,14 +123,14 @@ export function PersonErstellenFormular({
             </select>
           </div>
           <div className="flex-1">
-            <label htmlFor="pe-rolle" className="block text-xs font-medium text-neutral-600">
+            <label htmlFor="pe-rolle" className="block text-xs font-medium text-primaer">
               Rolle
             </label>
             <select
               id="pe-rolle"
               name="rolle"
               defaultValue={Rolle.MITARBEITENDE}
-              className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
             >
               {ROLLEN_OPTIONEN.map((option) => (
                 <option key={option.wert} value={option.wert}>

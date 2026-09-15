@@ -138,14 +138,14 @@ const MentionListe = forwardRef<MentionListeHandle, SuggestionProps<ErwaehnungsE
 
     if (items.length === 0) {
       return (
-        <div className="rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-400 shadow-lg">
+        <div className="rounded-lg border border-rand bg-flaeche px-3 py-2 text-sm text-tertiaer shadow-lg">
           Keine Treffer
         </div>
       )
     }
 
     return (
-      <div className="max-h-48 overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+      <div className="max-h-48 overflow-y-auto rounded-lg border border-rand bg-flaeche py-1 shadow-lg">
         {items.map((eintrag, index) => (
           <button
             key={eintrag.id}
@@ -154,7 +154,7 @@ const MentionListe = forwardRef<MentionListeHandle, SuggestionProps<ErwaehnungsE
             onClick={() => waehlen(index)}
             className={
               "block w-full px-3 py-2 text-left text-sm " +
-              (index === ausgewaehlt ? "bg-marke-gruen/10 text-marke-grau" : "text-neutral-700 hover:bg-neutral-50")
+              (index === ausgewaehlt ? "bg-marke-gruen/10 text-ueberschrift" : "text-primaer hover:bg-flaeche-schwach")
             }
           >
             {eintrag.label}

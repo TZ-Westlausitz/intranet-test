@@ -4,9 +4,9 @@
  * src/lib/aufgaben-optionen.ts.
  */
 export const PROJEKT_STATUS: { wert: string; name: string; klasse: string }[] = [
-  { wert: "PLANUNG", name: "Planung", klasse: "bg-neutral-100 text-neutral-600" },
+  { wert: "PLANUNG", name: "Planung", klasse: "bg-flaeche-100 text-primaer" },
   { wert: "AKTIV", name: "Aktiv", klasse: "bg-marke-gruen/15 text-marke-gruen-dunkel" },
-  { wert: "ABGESCHLOSSEN", name: "Abgeschlossen", klasse: "bg-neutral-200 text-neutral-600" },
+  { wert: "ABGESCHLOSSEN", name: "Abgeschlossen", klasse: "bg-flaeche-200 text-primaer" },
   { wert: "ABGEBROCHEN", name: "Abgebrochen", klasse: "bg-red-100 text-red-700" },
 ]
 
@@ -20,8 +20,8 @@ export const PROJEKT_STATUS_KLASSEN: Record<string, string> = Object.fromEntries
 
 /** Status einer Projekt-Aufgabe (siehe enum AufgabeStatus) — nicht zu verwechseln mit AufgabePrioritaet. */
 export const AUFGABE_STATUS: { wert: string; name: string; klasse: string }[] = [
-  { wert: "OFFEN", name: "Offen", klasse: "bg-neutral-100 text-neutral-600" },
-  { wert: "ANGENOMMEN", name: "Angenommen", klasse: "bg-marke-orange/15 text-marke-grau" },
+  { wert: "OFFEN", name: "Offen", klasse: "bg-flaeche-100 text-primaer" },
+  { wert: "ANGENOMMEN", name: "Angenommen", klasse: "bg-marke-orange/15 text-ueberschrift" },
   { wert: "IN_ARBEIT", name: "In Arbeit", klasse: "bg-blue-100 text-blue-700" },
   { wert: "ERLEDIGT", name: "Erledigt", klasse: "bg-marke-gruen/15 text-marke-gruen-dunkel" },
 ]

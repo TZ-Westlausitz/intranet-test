@@ -39,23 +39,23 @@ export const GeplanteAuftragPunkt = forwardRef<
 
       <dialog
         ref={dialogRef}
-        className="fixed top-1/2 left-1/2 w-full max-w-xs -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-0 shadow-xl backdrop:bg-neutral-900/40"
+        className="fixed top-1/2 left-1/2 w-full max-w-xs -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
       >
         <div className="px-5 py-4">
-          <p className="text-sm font-semibold text-marke-grau">{auftrag.titel}</p>
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="text-sm font-semibold text-ueberschrift">{auftrag.titel}</p>
+          <p className="mt-1 text-xs text-sekundaer">
             🕒 Geplant für {auftrag.geplantAm && formatiereDatumAusDate(auftrag.geplantAm)}
           </p>
           {/* auftraegeGeplantFuerZeitraum schließt Entwürfe aus (istEntwurf: false) — zugewiesenAn ist hier immer gesetzt. */}
-          <p className="mt-1 text-xs text-neutral-500">
+          <p className="mt-1 text-xs text-sekundaer">
             Zugewiesen an {auftrag.zugewiesenAn!.vorname} {auftrag.zugewiesenAn!.nachname}
           </p>
         </div>
-        <div className="flex justify-end gap-2 border-t border-neutral-200 px-5 py-3">
+        <div className="flex justify-end gap-2 border-t border-rand px-5 py-3">
           <button
             type="button"
             onClick={() => dialogRef.current?.close()}
-            className="h-9 rounded-lg px-3 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100"
+            className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
           >
             Schließen
           </button>

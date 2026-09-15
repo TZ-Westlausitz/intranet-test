@@ -70,7 +70,7 @@ export function ArtikelFormFelder({
   return (
     <>
       <div>
-        <label htmlFor="artikel-titel" className="block text-xs font-medium text-neutral-600">
+        <label htmlFor="artikel-titel" className="block text-xs font-medium text-primaer">
           Titel
         </label>
         <input
@@ -79,19 +79,19 @@ export function ArtikelFormFelder({
           type="text"
           required
           defaultValue={standardwerte.titel}
-          className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+          className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-neutral-600">Inhalt (optional)</label>
+        <label className="block text-xs font-medium text-primaer">Inhalt (optional)</label>
         <div className="mt-1">
           <RichTextEditor name="inhalt" defaultValue={standardwerte.inhalt} />
         </div>
       </div>
 
       <div>
-        <h3 className="text-xs font-medium text-neutral-600">Sichtbar für</h3>
+        <h3 className="text-xs font-medium text-primaer">Sichtbar für</h3>
         <div className="mt-1.5">
           <InfoEmpfaengerAuswahl
             abteilungen={abteilungen}
@@ -104,19 +104,19 @@ export function ArtikelFormFelder({
             }}
           />
         </div>
-        <p className="mt-1.5 text-xs text-neutral-500">
+        <p className="mt-1.5 text-xs text-sekundaer">
           Mindestens eine Abteilung, Gruppe oder Person ist erforderlich.
         </p>
       </div>
 
       {bestehendeAnhaenge.length > 0 && artikelId && (
         <div>
-          <label className="block text-xs font-medium text-neutral-600">Bestehende Anhänge</label>
+          <label className="block text-xs font-medium text-primaer">Bestehende Anhänge</label>
           <ul className="mt-1.5 flex flex-col gap-1">
             {bestehendeAnhaenge.map((anhang) => (
               <li
                 key={anhang.id}
-                className="flex items-center justify-between gap-2 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm"
+                className="flex items-center justify-between gap-2 rounded-lg border border-rand px-2.5 py-1.5 text-sm"
               >
                 <a
                   href={`/api/wissen/${artikelId}/anhaenge/${anhang.id}`}
@@ -131,7 +131,7 @@ export function ArtikelFormFelder({
                     <button
                       type="submit"
                       aria-label={`${anhang.dateiname} entfernen`}
-                      className="shrink-0 rounded p-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-600"
+                      className="shrink-0 rounded p-1 text-xs text-tertiaer hover:bg-red-50 hover:text-red-600"
                     >
                       entfernen
                     </button>
@@ -144,7 +144,7 @@ export function ArtikelFormFelder({
       )}
 
       <div>
-        <label className="block text-xs font-medium text-neutral-600">
+        <label className="block text-xs font-medium text-primaer">
           {bestehendeAnhaenge.length > 0 ? "Weitere Anhänge" : "Anhänge (Dokumente/Fotos)"}
         </label>
         <input
@@ -152,7 +152,7 @@ export function ArtikelFormFelder({
           name="anhaenge"
           multiple
           accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
-          className="mt-1.5 w-full text-sm text-neutral-600 file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+          className="mt-1.5 w-full text-sm text-primaer file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-flaeche-100 file:px-3 file:text-sm file:font-medium file:text-primaer hover:file:bg-flaeche-200"
         />
       </div>
     </>

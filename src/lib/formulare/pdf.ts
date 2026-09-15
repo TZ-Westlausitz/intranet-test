@@ -16,7 +16,9 @@ const ZEILENHOEHE = 16
 /// (siehe uebergabeprotokoll.ts), hier frisch gezeichnet, weil es keine
 /// feste Vorlagenseite gibt, aus der sich das schneiden ließe.
 const LOGO_HOEHE = 24
-const LOGO_SEITENVERHAELTNIS = 153 / 779
+/// Höhe/Breite von public/logo.png (Stand 2026-09-11: 439×2278) — bei einem
+/// erneuten Logo-Austausch hier nachziehen, sonst wirkt es im PDF gestaucht.
+const LOGO_SEITENVERHAELTNIS = 439 / 2278
 const LOGO_PFAD = path.join(process.cwd(), "public/logo.png")
 /// Abstand zwischen Logo-Unterkante und dem eigentlichen Inhalt.
 const KOPFZEILE_INHALT_ABSTAND = 14

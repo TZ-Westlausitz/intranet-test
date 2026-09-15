@@ -38,7 +38,7 @@ export default async function ProfilSeite({
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-2xl font-semibold text-marke-grau">Profil</h1>
+      <h1 className="text-2xl font-semibold text-ueberschrift">Profil</h1>
 
       <div className="mt-6 flex flex-col items-center gap-3">
         <InfoAvatar
@@ -53,23 +53,23 @@ export default async function ProfilSeite({
       </div>
 
       <dl className="mt-6 flex flex-col gap-3 text-sm">
-        <div className="flex justify-between border-b border-neutral-100 pb-2">
-          <dt className="text-neutral-500">Name</dt>
+        <div className="flex justify-between border-b border-flaeche-100 pb-2">
+          <dt className="text-sekundaer">Name</dt>
           <dd className="font-medium">{kontext.name}</dd>
         </div>
-        <div className="flex justify-between border-b border-neutral-100 pb-2">
-          <dt className="text-neutral-500">Benutzername</dt>
+        <div className="flex justify-between border-b border-flaeche-100 pb-2">
+          <dt className="text-sekundaer">Benutzername</dt>
           <dd className="font-medium">{kontext.benutzername}</dd>
         </div>
-        <div className="flex justify-between border-b border-neutral-100 pb-2">
-          <dt className="text-neutral-500">Rolle(n)</dt>
+        <div className="flex justify-between border-b border-flaeche-100 pb-2">
+          <dt className="text-sekundaer">Rolle(n)</dt>
           <dd className="font-medium">
             {kontext.rollen.length > 0 ? kontext.rollen.map((r) => ROLLE_NAMEN[r]).join(", ") : "—"}
           </dd>
         </div>
         {person.zugehoerigkeiten.length > 0 && (
-          <div className="flex justify-between border-b border-neutral-100 pb-2">
-            <dt className="text-neutral-500">Abteilung</dt>
+          <div className="flex justify-between border-b border-flaeche-100 pb-2">
+            <dt className="text-sekundaer">Abteilung</dt>
             <dd className="text-right font-medium">
               {person.zugehoerigkeiten.map((z, index) => (
                 <span key={z.id}>
@@ -91,10 +91,10 @@ export default async function ProfilSeite({
 
       <form
         action={profilAktualisieren}
-        className="mt-6 flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4"
+        className="mt-6 flex flex-col gap-4 rounded-xl border border-rand bg-flaeche p-4"
       >
         <div>
-          <label htmlFor="profil-email" className="block text-xs font-medium text-neutral-600">
+          <label htmlFor="profil-email" className="block text-xs font-medium text-primaer">
             E-Mail (optional)
           </label>
           <input
@@ -103,12 +103,12 @@ export default async function ProfilSeite({
             type="email"
             defaultValue={person.email ?? ""}
             placeholder="name@beispiel.de"
-            className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
           />
         </div>
 
         <div>
-          <label htmlFor="profil-telefon" className="block text-xs font-medium text-neutral-600">
+          <label htmlFor="profil-telefon" className="block text-xs font-medium text-primaer">
             Telefon (optional)
           </label>
           <input
@@ -117,12 +117,12 @@ export default async function ProfilSeite({
             type="tel"
             defaultValue={person.telefon ?? ""}
             placeholder="0171 2345678"
-            className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+            className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
           />
         </div>
 
         <div>
-          <label htmlFor="profil-weitere-informationen" className="block text-xs font-medium text-neutral-600">
+          <label htmlFor="profil-weitere-informationen" className="block text-xs font-medium text-primaer">
             Weitere Informationen (optional)
           </label>
           <textarea
@@ -131,7 +131,7 @@ export default async function ProfilSeite({
             defaultValue={person.weitereInformationen ?? ""}
             rows={3}
             placeholder="z. B. Erreichbarkeit, Zuständigkeit …"
-            className="mt-1 w-full rounded-lg border border-neutral-300 px-2 py-1.5 text-sm"
+            className="mt-1 w-full rounded-lg border border-flaeche-300 px-2 py-1.5 text-sm"
           />
         </div>
 

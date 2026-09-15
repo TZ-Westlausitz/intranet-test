@@ -83,9 +83,9 @@ export const FormularBearbeitenDialog = forwardRef<
     <dialog
       ref={dialogRef}
       onClose={() => setGeladen(null)}
-      className="fixed top-1/2 left-1/2 max-h-[90vh] w-[95vw] max-w-6xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-neutral-200 p-6 shadow-xl backdrop:bg-neutral-900/40"
+      className="fixed top-1/2 left-1/2 max-h-[90vh] w-[95vw] max-w-6xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-rand bg-flaeche p-6 shadow-xl backdrop:bg-neutral-900/40"
     >
-      <h2 className="mb-4 text-lg font-semibold text-marke-grau">Formular bearbeiten</h2>
+      <h2 className="mb-4 text-lg font-semibold text-ueberschrift">Formular bearbeiten</h2>
 
       {(!hatEmpfaenger || !hatZielgruppe) && (
         <div className="mb-4">

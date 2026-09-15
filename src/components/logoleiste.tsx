@@ -6,7 +6,7 @@ export function Logoleiste() {
       <Image
         src="/logo.png"
         alt="Therapie- und Pflegezentrum Westlausitz"
-        width={160}
+        width={166}
         height={32}
         priority
         className="h-8 w-auto"

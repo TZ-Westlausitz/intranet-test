@@ -15,7 +15,7 @@ export function ZurueckButton() {
     <button
       type="button"
       onClick={() => router.back()}
-      className="mt-8 flex w-fit items-center gap-1.5 text-sm font-medium text-neutral-600 transition hover:text-marke-gruen-dunkel"
+      className="mt-8 flex w-fit items-center gap-1.5 text-sm font-medium text-primaer transition hover:text-marke-gruen-dunkel"
     >
       <span aria-hidden>←</span> Zurück
     </button>

@@ -25,12 +25,22 @@ import { prisma } from "@/lib/db"
  * am" genauso (keine Ausnahme für die erstellende Person), hier nicht
  * mitrepariert.
  */
+/**
+ * Der Basisteil von `infoSichtbarFuer` OHNE die Empfänger-Einschränkung —
+ * geteilt mit `infoVeroeffentlichtFuer` (Admin-Modus, siehe dort), damit
+ * "veröffentlicht bzw. eigener Entwurf mit Termin" nur an einer Stelle
+ * definiert ist.
+ */
+function infoVeroeffentlichtBasis(personId: string): Prisma.InfoWhereInput[] {
+  const jetzt = new Date()
+  return [{ istEntwurf: false }, { OR: [{ veroeffentlichtAm: { lte: jetzt } }, { erstelltVonId: personId }] }]
+}
+
 export function infoSichtbarFuer(personId: string): Prisma.InfoWhereInput {
   const jetzt = new Date()
   return {
     AND: [
-      { istEntwurf: false },
-      { OR: [{ veroeffentlichtAm: { lte: jetzt } }, { erstelltVonId: personId }] },
+      ...infoVeroeffentlichtBasis(personId),
       {
         OR: [
           { empfaengerPersonen: { some: { personId } } },
@@ -53,15 +63,48 @@ export function infoSichtbarFuer(personId: string): Prisma.InfoWhereInput {
 }
 
 /**
+ * Admin-Modus (siehe Kontext.adminModusAktiv): jede veröffentlichte Info
+ * firmenweit, OHNE die Empfänger-Einschränkung von `infoSichtbarFuer` —
+ * bewusst weiterhin ohne Entwürfe (die bleiben immer privat, siehe
+ * `eigeneInfoEntwuerfe`), sonst identisches "veröffentlicht"-Kriterium.
+ */
+export function infoVeroeffentlichtFuer(personId: string): Prisma.InfoWhereInput {
+  return { AND: infoVeroeffentlichtBasis(personId) }
+}
+
+/**
  * Reine Boolean-Prüfung ohne Fehlerwurf-Kontext — für Server Actions, die
- * selbst entscheiden, ob sie NichtBerechtigt werfen (Bestätigen/
- * Kommentieren) oder mit 404 antworten (Anhang-Download-Route).
+ * selbst entscheiden, ob sie NichtBerechtigt werfen (Bestätigen/Liken/
+ * Kommentieren/Umfrage-Abstimmen). Bewusst OHNE Admin-Modus-Ausnahme,
+ * anders als darfInfoLesen: diese Aktionen sind kein reines Lesen, Admin-
+ * Modus bleibt "rein lesend" (siehe Kommentar dort) — wer nicht wirklich
+ * Empfänger ist, darf über den Admin-Modus trotzdem nicht bestätigen,
+ * liken, kommentieren oder abstimmen.
  */
 export async function istInfoEmpfaenger(infoId: string, personId: string): Promise<boolean> {
   const treffer = await prisma.info.findFirst({
     where: { id: infoId, ...infoSichtbarFuer(personId) },
     select: { id: true },
   })
+  return treffer !== null
+}
+
+/**
+ * Lesezugriff auf eine Info bzw. ihre Anhänge — im Admin-Modus (siehe
+ * Kontext.adminModusAktiv) dieselbe firmenweite Sicht wie in alleInfos,
+ * sonst nur für echte Empfänger (istInfoEmpfaenger). Für die
+ * Anhang-Download-Route: ohne diese Ausnahme blieben Bilder in einer nur
+ * über den Admin-Modus sichtbaren Info als 404 hängen, obwohl das Pop-up
+ * selbst schon lädt (Rückmeldung vom 2026-09-14).
+ */
+export async function darfInfoLesen(
+  infoId: string,
+  kontext: { personId: string; adminModusAktiv: boolean },
+): Promise<boolean> {
+  const sichtbarkeit = kontext.adminModusAktiv
+    ? infoVeroeffentlichtFuer(kontext.personId)
+    : infoSichtbarFuer(kontext.personId)
+  const treffer = await prisma.info.findFirst({ where: { id: infoId, ...sichtbarkeit }, select: { id: true } })
   return treffer !== null
 }
 

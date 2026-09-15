@@ -88,7 +88,7 @@ export function FormularAktionenMenu({
       role="menu"
       style={{ position: "fixed", top: position.top, right: position.right }}
       onClick={(ereignis) => ereignis.stopPropagation()}
-      className="z-20 w-44 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+      className="z-20 w-44 overflow-hidden rounded-lg border border-rand bg-flaeche py-1 shadow-lg"
     >
       <button
         type="button"
@@ -97,7 +97,7 @@ export function FormularAktionenMenu({
           setOffen(false)
           onBearbeitenKlick()
         }}
-        className="block w-full px-4 py-2.5 text-left text-sm text-neutral-600 transition hover:bg-marke-gruen/10"
+        className="block w-full px-4 py-2.5 text-left text-sm text-primaer transition hover:bg-marke-gruen/10"
       >
         Bearbeiten
       </button>
@@ -105,7 +105,7 @@ export function FormularAktionenMenu({
         <button
           type="submit"
           role="menuitem"
-          className="block w-full px-4 py-2.5 text-left text-sm text-neutral-600 transition hover:bg-marke-gruen/10"
+          className="block w-full px-4 py-2.5 text-left text-sm text-primaer transition hover:bg-marke-gruen/10"
         >
           Duplizieren
         </button>
@@ -114,7 +114,7 @@ export function FormularAktionenMenu({
         <button
           type="submit"
           role="menuitem"
-          className="block w-full px-4 py-2.5 text-left text-sm text-neutral-600 transition hover:bg-marke-gruen/10"
+          className="block w-full px-4 py-2.5 text-left text-sm text-primaer transition hover:bg-marke-gruen/10"
         >
           {aktiv ? "Deaktivieren" : "Aktivieren"}
         </button>
@@ -155,7 +155,7 @@ export function FormularAktionenMenu({
         aria-label="Aktionen"
         aria-expanded={offen}
         aria-haspopup="menu"
-        className="flex h-8 w-8 items-center justify-center rounded-full text-lg leading-none text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
+        className="flex h-8 w-8 items-center justify-center rounded-full text-lg leading-none text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
       >
         ⋮
       </button>

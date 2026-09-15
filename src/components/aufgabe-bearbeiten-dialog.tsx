@@ -40,25 +40,25 @@ export function AufgabeBearbeitenDialog({
         type="button"
         aria-label="Aufgabe bearbeiten"
         onClick={() => dialogRef.current?.showModal()}
-        className="mt-0.5 shrink-0 rounded p-1 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
+        className="mt-0.5 shrink-0 rounded p-1 text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
       >
         ✎
       </button>
 
       <dialog
         ref={dialogRef}
-        className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-0 shadow-xl backdrop:bg-neutral-900/40"
+        className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
       >
         <form
           action={aktualisierenAktion.bind(null, aufgabeId)}
           onSubmit={schliessenNachAbsenden}
           className="flex max-h-[85vh] flex-col"
         >
-          <div className="border-b border-neutral-200 px-5 py-4">
-            <h2 className="text-lg font-semibold text-marke-grau">Aufgabe bearbeiten</h2>
+          <div className="border-b border-rand px-5 py-4">
+            <h2 className="text-lg font-semibold text-ueberschrift">Aufgabe bearbeiten</h2>
           </div>
 
-          <div className="flex flex-col gap-4 overflow-y-auto px-5 py-4">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
             <AufgabeFormFelder
               standardwerte={standardwerte}
               weitereOptionenOffen
@@ -68,11 +68,11 @@ export function AufgabeBearbeitenDialog({
             />
           </div>
 
-          <div className="flex justify-end gap-2 border-t border-neutral-200 px-5 py-4">
+          <div className="flex justify-end gap-2 border-t border-rand px-5 py-4">
             <button
               type="button"
               onClick={() => dialogRef.current?.close()}
-              className="h-9 rounded-lg px-3 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100"
+              className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
             >
               Abbrechen
             </button>

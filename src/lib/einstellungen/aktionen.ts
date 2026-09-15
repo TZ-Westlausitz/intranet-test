@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { BAUSTEINE } from "@/lib/bausteine"
+import { Farbschema } from "@/generated/prisma/enums"
 
 /**
  * Speichert, welches "Weiteres"-Modul auf der Startseite in Zeile 3,
@@ -25,5 +26,25 @@ export async function nutzeroberflaecheAktualisieren(formData: FormData) {
   })
 
   revalidatePath("/")
-  revalidatePath("/einstellungen/nutzeroberflaeche")
+  revalidatePath("/einstellungen")
+}
+
+/**
+ * Speichert das persönliche Farbschema (Person.farbschema). Wirkt sich
+ * über das `data-theme`-Attribut im Root-Layout (src/app/layout.tsx) aus
+ * — deshalb `revalidatePath("/", "layout")` statt eines einzelnen Pfads
+ * wie bei `nutzeroberflaecheAktualisieren` (Muster: adminModusUmschalten).
+ */
+export async function farbschemaAktualisieren(formData: FormData) {
+  const kontext = await berechtigung()
+
+  const gewaehlt = String(formData.get("farbschema") ?? "")
+  if (gewaehlt !== Farbschema.HELL && gewaehlt !== Farbschema.DUNKEL) return
+
+  await prisma.person.update({
+    where: { benutzername: kontext.personId },
+    data: { farbschema: gewaehlt },
+  })
+
+  revalidatePath("/", "layout")
 }

@@ -79,15 +79,15 @@ export function TerminZeile({ eintrag, aktionen }: { eintrag: TerminListenEintra
         }}
         className="contents"
       >
-        <span className="shrink-0 cursor-pointer text-sm font-medium text-marke-grau">
+        <span className="shrink-0 cursor-pointer text-sm font-medium text-ueberschrift">
           {eintrag.datumAnzeige}
           {!eintrag.ganztaegig && <> · {eintrag.zeitraumAnzeige}</>}
         </span>
-        <span className="shrink-0 cursor-pointer font-medium text-neutral-800">{eintrag.titel}</span>
-        <span className="min-w-0 cursor-pointer truncate text-sm text-neutral-500">
+        <span className="shrink-0 cursor-pointer font-medium text-primaer">{eintrag.titel}</span>
+        <span className="min-w-0 cursor-pointer truncate text-sm text-sekundaer">
           {eintrag.beschreibungVorschau}
         </span>
-        <span className="cursor-pointer text-xs text-neutral-400 sm:text-right">
+        <span className="cursor-pointer text-xs text-tertiaer sm:text-right">
           {eintrag.teilnehmer.map((t, i) => (
             <span key={t.personId}>
               {i > 0 && ", "}
@@ -154,11 +154,11 @@ export function TerminListe({
   aktionen: TerminListenAktionen
 }) {
   if (eintraege.length === 0) {
-    return <p className="mt-3 text-sm text-neutral-500">{leerText}</p>
+    return <p className="mt-3 text-sm text-sekundaer">{leerText}</p>
   }
 
   return (
-    <ul className="mt-3 flex flex-col divide-y divide-neutral-100">
+    <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
       {eintraege.map((eintrag) => (
         <TerminZeile key={eintrag.id} eintrag={eintrag} aktionen={aktionen} />
       ))}

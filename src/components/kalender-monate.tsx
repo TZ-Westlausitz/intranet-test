@@ -70,20 +70,20 @@ export function KalenderMonate({
           <div
             key={`${monat.jahr}-${monat.monatIndex0}`}
             className={
-              "overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm " +
+              "overflow-hidden rounded-2xl border border-rand bg-flaeche bg-flaeche shadow-sm " +
               // Auf dem Handy nur den aktuellen Monat zeigen — für die
               // beiden folgenden reicht dort der Platz nicht, ab `md:`
               // stehen wie gehabt alle drei nebeneinander.
               (index > 0 ? "hidden md:block" : "")
             }
           >
-            <div className="border-b border-neutral-200 bg-gradient-to-r from-marke-gruen/15 via-marke-gruen/5 to-transparent px-4 py-3">
-              <h2 className="font-semibold text-marke-grau">
+            <div className="border-b border-rand bg-gradient-to-r from-marke-gruen/15 via-marke-gruen/5 to-transparent px-4 py-3">
+              <h2 className="font-semibold text-ueberschrift">
                 {monat.monatsname} {monat.jahr}
               </h2>
             </div>
 
-            <div className="grid grid-cols-7 gap-1 px-3 pt-3 text-center text-xs font-medium text-neutral-400">
+            <div className="grid grid-cols-7 gap-1 px-3 pt-3 text-center text-xs font-medium text-tertiaer">
               {WOCHENTAGE_KURZ.map((tag) => (
                 <span key={tag}>{tag}</span>
               ))}
@@ -112,23 +112,23 @@ export function KalenderMonate({
         ))}
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
+      <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-rand bg-flaeche-schwach px-4 py-3">
+        <label className="flex items-center gap-2 text-sm text-primaer">
           <input
             type="checkbox"
             checked={zeigeFeiertage}
             onChange={(ereignis) => setZeigeFeiertage(ereignis.target.checked)}
-            className="h-4 w-4 rounded border-neutral-300 text-marke-gruen focus:ring-marke-gruen"
+            className="h-4 w-4 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
           />
           Feiertage in Sachsen markieren
         </label>
 
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
+        <label className="flex items-center gap-2 text-sm text-primaer">
           <input
             type="checkbox"
             checked={zeigeSchulferien}
             onChange={(ereignis) => setZeigeSchulferien(ereignis.target.checked)}
-            className="h-4 w-4 rounded border-neutral-300 text-marke-gruen focus:ring-marke-gruen"
+            className="h-4 w-4 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
           />
           Schulferien in Sachsen markieren
         </label>

@@ -49,18 +49,18 @@ export function ProjektFormFelder({
   return (
     <>
       <div>
-        <label className="block text-xs font-medium text-neutral-600">Projektname</label>
+        <label className="block text-xs font-medium text-primaer">Projektname</label>
         <input
           name="titel"
           type="text"
           required
           defaultValue={standardwerte.titel}
-          className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+          className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-neutral-600">Ziel</label>
+        <label className="block text-xs font-medium text-primaer">Ziel</label>
         <div className="mt-1">
           <RichTextEditor name="ziel" defaultValue={standardwerte.ziel} />
         </div>
@@ -68,18 +68,18 @@ export function ProjektFormFelder({
 
       <div className="flex flex-wrap items-end gap-3">
         <div>
-          <label className="block text-xs font-medium text-neutral-600">Start</label>
+          <label className="block text-xs font-medium text-primaer">Start</label>
           <input
             name="start"
             type="date"
             required
             defaultValue={standardwerte.start}
             onChange={beiStartAendern}
-            className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+            className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
           />
         </div>
         <div>
-          <label className="block text-xs font-medium text-neutral-600">Enddatum</label>
+          <label className="block text-xs font-medium text-primaer">Enddatum</label>
           <input
             name="ende"
             type="date"
@@ -87,17 +87,17 @@ export function ProjektFormFelder({
             min={minEnde}
             defaultValue={standardwerte.ende}
             ref={endeRef}
-            className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+            className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
           />
         </div>
 
         {zeigeStatus && (
           <div>
-            <label className="block text-xs font-medium text-neutral-600">Status</label>
+            <label className="block text-xs font-medium text-primaer">Status</label>
             <select
               name="status"
               defaultValue={standardwerte.status}
-              className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
             >
               {/* "Aktiv" fehlt hier absichtlich, solange das Projekt noch in
                   der Planung ist — dieser Übergang läuft ausschließlich über

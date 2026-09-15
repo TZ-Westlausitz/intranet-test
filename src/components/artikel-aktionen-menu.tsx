@@ -61,7 +61,7 @@ export function ArtikelAktionenMenu({
         aria-label="Aktionen"
         aria-expanded={offen}
         aria-haspopup="menu"
-        className="flex h-8 w-8 items-center justify-center rounded-full text-lg leading-none text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
+        className="flex h-8 w-8 items-center justify-center rounded-full text-lg leading-none text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
       >
         ⋮
       </button>
@@ -70,7 +70,7 @@ export function ArtikelAktionenMenu({
         <div
           role="menu"
           onClick={(ereignis) => ereignis.stopPropagation()}
-          className="absolute right-0 z-10 mt-1 w-36 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+          className="absolute right-0 z-10 mt-1 w-36 overflow-hidden rounded-lg border border-rand bg-flaeche py-1 shadow-lg"
         >
           <button
             type="button"
@@ -80,7 +80,7 @@ export function ArtikelAktionenMenu({
               setOffen(false)
               bearbeitenDialogRef.current?.oeffnen()
             }}
-            className="block w-full px-4 py-2.5 text-left text-sm text-neutral-600 transition hover:bg-marke-gruen/10"
+            className="block w-full px-4 py-2.5 text-left text-sm text-primaer transition hover:bg-marke-gruen/10"
           >
             Bearbeiten
           </button>

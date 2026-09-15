@@ -46,7 +46,7 @@ export function ProjektZwischenziele({
   return (
     <div className="flex flex-1 flex-col gap-3">
       {zwischenziele.length > 0 && (
-        <ul className="flex flex-col divide-y divide-neutral-100">
+        <ul className="flex flex-col divide-y divide-flaeche-100">
           {zwischenziele.map((zwischenziel, index) => {
             const status = zwischenzielStatus(zwischenziel, heute)
             return (
@@ -61,17 +61,17 @@ export function ProjektZwischenziele({
                     {index + 1}
                   </span>
                   <div className="min-w-0">
-                    <span className={"block truncate text-sm " + (zwischenziel.erreicht ? "text-neutral-400 line-through" : "text-neutral-800")}>
+                    <span className={"block truncate text-sm " + (zwischenziel.erreicht ? "text-tertiaer line-through" : "text-primaer")}>
                       {zwischenziel.titel}
                     </span>
-                    <span className={"text-xs " + (status === "UEBERFAELLIG" ? "font-medium text-red-600" : "text-neutral-400")}>
+                    <span className={"text-xs " + (status === "UEBERFAELLIG" ? "font-medium text-red-600" : "text-tertiaer")}>
                       {relativesDatum(zwischenziel.frist, heute)}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-xs text-neutral-400">
+                  <span className="text-xs text-tertiaer">
                     {zwischenziel.aufgabenErledigt}/{zwischenziel.aufgabenGesamt} Aufgaben
                   </span>
 
@@ -80,7 +80,7 @@ export function ProjektZwischenziele({
                       <button
                         type="submit"
                         aria-label={`${zwischenziel.titel} löschen`}
-                        className="rounded p-1 text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
+                        className="rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
                       >
                         ×
                       </button>
@@ -94,23 +94,23 @@ export function ProjektZwischenziele({
       )}
 
       {istLeitung && !schreibgeschuetzt && (
-        <form action={erstellenAktion.bind(null, projektId)} className="mt-auto flex items-end gap-2 border-t border-neutral-100 pt-3">
+        <form action={erstellenAktion.bind(null, projektId)} className="mt-auto flex items-end gap-2 border-t border-flaeche-100 pt-3">
           <div>
-            <label className="block text-xs font-medium text-neutral-600">Neues Zwischenziel</label>
+            <label className="block text-xs font-medium text-primaer">Neues Zwischenziel</label>
             <input
               name="titel"
               type="text"
               required
-              className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-neutral-600">Frist</label>
-            <input name="frist" type="date" required className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm" />
+            <label className="block text-xs font-medium text-primaer">Frist</label>
+            <input name="frist" type="date" required className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm" />
           </div>
           <button
             type="submit"
-            className="h-9 shrink-0 rounded-lg bg-neutral-100 px-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-200"
+            className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200"
           >
             Hinzufügen
           </button>

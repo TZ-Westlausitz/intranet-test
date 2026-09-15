@@ -24,26 +24,26 @@ export default async function FahrzeugMietenSeite() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-2xl font-semibold text-marke-grau">Fahrzeug mieten</h1>
-      <p className="mt-1 text-sm text-neutral-600">
+      <h1 className="text-2xl font-semibold text-ueberschrift">Fahrzeug mieten</h1>
+      <p className="mt-1 text-sm text-primaer">
         Privat ein Firmenfahrzeug anfragen — die Werkstattleitung bestätigt
         oder lehnt ab.
       </p>
 
       {fahrzeuge.length === 0 ? (
-        <p className="mt-6 text-neutral-600">Derzeit ist kein Fahrzeug freigegeben.</p>
+        <p className="mt-6 text-primaer">Derzeit ist kein Fahrzeug freigegeben.</p>
       ) : (
         <ul className="mt-6 flex flex-col gap-2">
           {fahrzeuge.map((f) => (
             <li key={f.id}>
               <Link
                 href={`/fahrzeug-mieten/${f.id}`}
-                className="block rounded-lg border border-neutral-200 p-4 transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2"
+                className="block rounded-lg border border-rand p-4 transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2"
               >
                 <span className="font-medium">{f.bezeichnung}</span>
-                <span className="ml-2 text-sm text-neutral-600">{f.kennzeichen}</span>
+                <span className="ml-2 text-sm text-primaer">{f.kennzeichen}</span>
                 {f.merkmale && (
-                  <span className="mt-1 block text-sm text-neutral-600">{f.merkmale}</span>
+                  <span className="mt-1 block text-sm text-primaer">{f.merkmale}</span>
                 )}
               </Link>
             </li>

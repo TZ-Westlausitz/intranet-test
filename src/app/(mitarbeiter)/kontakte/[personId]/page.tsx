@@ -32,7 +32,7 @@ export default async function KontaktDetailSeite({ params }: { params: Promise<{
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
 
-      <div className="rounded-xl border border-neutral-200 bg-white p-5">
+      <div className="rounded-xl border border-rand bg-flaeche p-5">
         <KontaktProfil person={person} />
       </div>
 

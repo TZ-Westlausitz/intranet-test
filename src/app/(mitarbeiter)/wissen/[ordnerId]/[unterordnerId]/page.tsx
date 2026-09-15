@@ -51,13 +51,13 @@ export default async function WissensUnterordnerSeite({
   return (
     <main className="mx-auto max-w-4xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-sekundaer">
         <Link href={`/wissen/${ordnerId}`} className="hover:underline">
           {unterordner.ordner.name}
         </Link>
       </p>
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold text-marke-grau">{unterordner.name}</h1>
+        <h1 className="text-2xl font-semibold text-ueberschrift">{unterordner.name}</h1>
         {darfVerwalten && (
           <ArtikelErstellenDialog
             ordnerId={ordnerId}
@@ -68,8 +68,8 @@ export default async function WissensUnterordnerSeite({
         )}
       </div>
 
-      <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
-        <h2 className="text-sm font-semibold text-marke-grau">Artikel</h2>
+      <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
+        <h2 className="text-sm font-semibold text-ueberschrift">Artikel</h2>
         <ArtikelListe
           artikel={artikel}
           darfVerwalten={darfVerwalten}

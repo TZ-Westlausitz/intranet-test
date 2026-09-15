@@ -25,19 +25,19 @@ export default async function OrteSeite() {
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
       <div className="flex items-center justify-center gap-3 md:justify-start">
-        <h1 className="text-2xl font-semibold text-marke-grau">Orte</h1>
+        <h1 className="text-2xl font-semibold text-ueberschrift">Orte</h1>
         <Link href="/admin/info-kategorien" className="text-sm font-medium text-marke-gruen-dunkel hover:underline">
           Info-Kategorien →
         </Link>
       </div>
 
-      <form action={ortErstellen} className="mt-6 flex gap-2 rounded-xl border border-neutral-200 bg-white p-4">
+      <form action={ortErstellen} className="mt-6 flex gap-2 rounded-xl border border-rand bg-flaeche p-4">
         <input
           name="name"
           type="text"
           required
           placeholder="Neuer Ort"
-          className="h-9 flex-1 rounded-lg border border-neutral-300 px-2 text-sm"
+          className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
         />
         <button
           type="submit"
@@ -47,7 +47,7 @@ export default async function OrteSeite() {
         </button>
       </form>
 
-      <ul className="mt-6 flex flex-col divide-y divide-neutral-100 rounded-xl border border-neutral-200 bg-white">
+      <ul className="mt-6 flex flex-col divide-y divide-flaeche-100 rounded-xl border border-rand bg-flaeche">
         {orte.map((ort) => (
           <li key={ort.id} className="flex items-center gap-2 px-4 py-2.5">
             <form action={ortUmbenennen.bind(null, ort.id)} className="flex flex-1 items-center gap-2">
@@ -57,13 +57,13 @@ export default async function OrteSeite() {
                 defaultValue={ort.name}
                 required
                 className={
-                  "h-9 flex-1 rounded-lg border border-neutral-300 px-2 text-sm " +
-                  (ort.aktiv ? "" : "text-neutral-400")
+                  "h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm " +
+                  (ort.aktiv ? "" : "text-tertiaer")
                 }
               />
               <button
                 type="submit"
-                className="h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-neutral-500 transition hover:bg-neutral-100"
+                className="h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-sekundaer transition hover:bg-flaeche-100"
               >
                 Speichern
               </button>
@@ -74,7 +74,7 @@ export default async function OrteSeite() {
                 className={
                   "h-9 shrink-0 rounded-lg px-2.5 text-xs font-medium transition " +
                   (ort.aktiv
-                    ? "text-neutral-500 hover:bg-neutral-100"
+                    ? "text-sekundaer hover:bg-flaeche-100"
                     : "bg-marke-gruen/15 text-marke-gruen-dunkel hover:bg-marke-gruen/25")
                 }
               >

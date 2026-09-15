@@ -66,7 +66,15 @@ export function NewsfeedListe({
           const standardwerte = infoZuStandardwerte(info)
 
           return (
-            <li key={info.id} className="rounded-xl border border-neutral-200 bg-white p-4">
+            // block/min-h-0/shrink-0 gegen denselben Safari-Fehler wie in
+            // NewsfeedHomeKachel (Rückmeldung vom 2026-09-14): <li> als
+            // Flex-Kind von <ul> bekommt sonst seine automatische
+            // Mindesthöhe aus dem ungekürzten Text der line-clamp-Box
+            // weiter unten statt aus deren sichtbar gekürzter Höhe;
+            // shrink-0 verhindert, dass min-h-0 die Karten stattdessen
+            // zusammendrückt/überlappen lässt. Kein Aufzählungspunkt
+            // ohnehin sichtbar, daher block statt list-item unbedenklich.
+            <li key={info.id} className="block min-h-0 shrink-0 rounded-xl border border-rand bg-flaeche p-4">
               <div className="flex items-start gap-2">
                 <InfoAvatar
                   alsUnternehmen={info.alsUnternehmen}
@@ -76,8 +84,8 @@ export function NewsfeedListe({
                   profilbildPfad={info.erstelltVon.profilbildPfad}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-neutral-700">{info.absenderName}</p>
-                  <p className="text-xs text-neutral-400">
+                  <p className="truncate text-sm font-medium text-primaer">{info.absenderName}</p>
+                  <p className="text-xs text-tertiaer">
                     {formatiereDatumAusDate(info.veroeffentlichtAm)} · {zeitAusDate(info.veroeffentlichtAm)}
                   </p>
                 </div>
@@ -100,11 +108,11 @@ export function NewsfeedListe({
                 className="mt-2 block w-full text-left"
               >
                 {info.kategorie && (
-                  <span className="rounded-full bg-marke-gruen/15 px-2 py-0.5 text-[11px] font-medium text-marke-grau">
+                  <span className="rounded-full bg-marke-gruen/15 px-2 py-0.5 text-[11px] font-medium text-ueberschrift">
                     {info.kategorie.name}
                   </span>
                 )}
-                <h2 className="mt-1 text-lg font-bold text-marke-grau hover:underline">{info.titel}</h2>
+                <h2 className="mt-1 text-lg font-bold text-ueberschrift hover:underline">{info.titel}</h2>
                 {info.titelbild ? (
                   // Vorschau endet direkt nach dem Titelbild — ein
                   // zusätzlicher Textauszug darunter würde bei einem schon
@@ -112,10 +120,10 @@ export function NewsfeedListe({
                   // eslint-disable-next-line @next/next/no-img-element -- interne Datei aus der Ablage, kein optimierbares Next-Image-Ziel
                   <img src={info.titelbild.src} alt="" className="mt-2 w-full rounded-lg object-cover" />
                 ) : (
-                  info.vorschauText && <p className="mt-2 line-clamp-3 text-sm text-neutral-500">{info.vorschauText}</p>
+                  info.vorschauText && <p className="mt-2 line-clamp-3 text-sm text-sekundaer">{info.vorschauText}</p>
                 )}
                 {(info.anhaenge.length > 0 || info._count.kommentare > 0 || info.likeAnzahl > 0 || info.umfrage) && (
-                  <div className="mt-2 flex gap-3 text-xs text-neutral-400">
+                  <div className="mt-2 flex gap-3 text-xs text-tertiaer">
                     {info.anhaenge.length > 0 && <span>📎 {info.anhaenge.length}</span>}
                     {info._count.kommentare > 0 && <span>💬 {info._count.kommentare}</span>}
                     {info.likeAnzahl > 0 && <span>👍 {info.likeAnzahl}</span>}
@@ -125,27 +133,28 @@ export function NewsfeedListe({
               </button>
 
               {info.nochNichtVeroeffentlicht ? (
-                <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-marke-orange/15 px-3 py-2 text-xs font-medium text-marke-grau">
+                <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-marke-orange/15 px-3 py-2 text-xs font-medium text-ueberschrift">
                   🕒 Geplant für {formatiereDatumAusDate(info.veroeffentlichtAm)}, {zeitAusDate(info.veroeffentlichtAm)} Uhr
                 </div>
               ) : (
                 info.mitBestaetigung && (
-                  <div className="mt-2 flex items-center gap-2 border-t border-neutral-100 pt-2">
-                    {info.selbstBestaetigt ? (
-                      <span className="rounded-full bg-marke-gruen/15 px-2.5 py-1 text-xs font-medium text-marke-gruen-dunkel">
-                        ✓ Bestätigt
-                      </span>
-                    ) : (
-                      <form action={infoBestaetigen.bind(null, info.id)}>
-                        <button
-                          type="submit"
-                          className="h-8 rounded-lg bg-marke-gruen px-3 text-xs font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
-                        >
-                          Bestätigen
-                        </button>
-                      </form>
-                    )}
-                    <span className="text-xs text-neutral-400">
+                  <div className="mt-2 flex items-center gap-2 border-t border-flaeche-100 pt-2">
+                    {info.istEmpfaenger &&
+                      (info.selbstBestaetigt ? (
+                        <span className="rounded-full bg-marke-gruen/15 px-2.5 py-1 text-xs font-medium text-marke-gruen-dunkel">
+                          ✓ Bestätigt
+                        </span>
+                      ) : (
+                        <form action={infoBestaetigen.bind(null, info.id)}>
+                          <button
+                            type="submit"
+                            className="h-8 rounded-lg bg-marke-gruen px-3 text-xs font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
+                          >
+                            Bestätigen
+                          </button>
+                        </form>
+                      ))}
+                    <span className="text-xs text-tertiaer">
                       {info.bestaetigtAnzahl} von {info.empfaengerAnzahl} bestätigt
                     </span>
                   </div>

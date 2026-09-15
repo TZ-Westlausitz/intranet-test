@@ -32,10 +32,10 @@ export function FormularAusfuellen({
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-marke-grau">{vorlage.titel}</h1>
+      <h1 className="text-2xl font-semibold text-ueberschrift">{vorlage.titel}</h1>
       {vorlage.beschreibung && (
         <div
-          className={RICH_TEXT_ANZEIGE_KLASSE + " mt-2 text-neutral-600"}
+          className={RICH_TEXT_ANZEIGE_KLASSE + " mt-2 text-primaer"}
           dangerouslySetInnerHTML={{ __html: vorlage.beschreibung }}
         />
       )}

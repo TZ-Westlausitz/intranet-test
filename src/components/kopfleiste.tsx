@@ -19,7 +19,7 @@ import { MobilesMenu } from "@/components/mobiles-menu"
  */
 export function Kopfleiste({ name }: { name: string }) {
   return (
-    <header className="mb-8 flex items-center justify-between border-b border-neutral-200 pb-4 md:hidden">
+    <header className="mb-8 flex items-center justify-between border-b border-rand pb-4 md:hidden">
       <div className="flex items-center gap-2">
         <MobilesMenu />
 
@@ -28,13 +28,27 @@ export function Kopfleiste({ name }: { name: string }) {
           aria-label="Zur Startseite"
           className="rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2"
         >
+          {/* Zwei Bilder statt eines umgefärbten, dieselbe an data-theme
+              gekoppelte dark:-Variante wie im Desktop-Header (siehe
+              src/app/layout.tsx) — das weiße Logo ist eine eigene Datei.
+              Dieselben width/height wie beim normalen Logo (siehe Kommentar
+              in layout.tsx), weil logo-weiss.png in denselben Abmessungen
+              angelegt ist. */}
           <Image
             src="/logo.png"
             alt="Therapie- und Pflegezentrum Westlausitz"
-            width={160}
+            width={166}
             height={32}
             priority
-            className="h-8 w-auto"
+            className="h-8 w-auto dark:hidden"
+          />
+          <Image
+            src="/logo-weiss.png"
+            alt="Therapie- und Pflegezentrum Westlausitz"
+            width={166}
+            height={32}
+            priority
+            className="hidden h-8 w-auto dark:block"
           />
         </Link>
       </div>

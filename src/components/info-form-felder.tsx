@@ -118,7 +118,7 @@ export function InfoFormFelder({
   return (
     <>
       <div>
-        <label htmlFor="info-titel" className="block text-xs font-medium text-neutral-600">
+        <label htmlFor="info-titel" className="block text-xs font-medium text-primaer">
           Titel
         </label>
         <input
@@ -127,19 +127,19 @@ export function InfoFormFelder({
           type="text"
           required
           defaultValue={standardwerte.titel}
-          className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+          className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-neutral-600">Inhalt (optional)</label>
+        <label className="block text-xs font-medium text-primaer">Inhalt (optional)</label>
         <div className="mt-1">
           <RichTextEditor name="inhalt" defaultValue={standardwerte.inhalt} bilderErlaubt mentionPersonen={personen} />
         </div>
       </div>
 
       <div>
-        <h3 className="text-xs font-medium text-neutral-600">Empfänger</h3>
+        <h3 className="text-xs font-medium text-primaer">Empfänger</h3>
         <div className="mt-1.5">
           <InfoEmpfaengerAuswahl
             abteilungen={abteilungen}
@@ -152,37 +152,37 @@ export function InfoFormFelder({
             }}
           />
         </div>
-        <p className="mt-1.5 text-xs text-neutral-500">
+        <p className="mt-1.5 text-xs text-sekundaer">
           Mindestens eine Abteilung, Gruppe oder Person ist erforderlich.
         </p>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
+        <label className="flex items-center gap-2 text-sm text-primaer">
           <input
             type="checkbox"
             name="mitBestaetigung"
             defaultChecked={standardwerte.mitBestaetigung}
-            className="h-4 w-4 rounded border-neutral-300"
+            className="h-4 w-4 rounded border-flaeche-300"
           />
           Mit Bestätigung (jeder Empfänger muss ausdrücklich bestätigen)
         </label>
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
+        <label className="flex items-center gap-2 text-sm text-primaer">
           <input
             type="checkbox"
             name="kommentareErlaubt"
             defaultChecked={standardwerte.kommentareErlaubt}
-            className="h-4 w-4 rounded border-neutral-300"
+            className="h-4 w-4 rounded border-flaeche-300"
           />
           Kommentare erlauben
         </label>
         {darfAlsUnternehmen && (
-          <label className="flex items-center gap-2 text-sm text-neutral-700">
+          <label className="flex items-center gap-2 text-sm text-primaer">
             <input
               type="checkbox"
               name="alsUnternehmen"
               defaultChecked={standardwerte.alsUnternehmen}
-              className="h-4 w-4 rounded border-neutral-300"
+              className="h-4 w-4 rounded border-flaeche-300"
             />
             Im Namen des Unternehmens veröffentlichen
           </label>
@@ -191,12 +191,12 @@ export function InfoFormFelder({
 
       {bestehendeAnhaenge.length > 0 && infoId && (
         <div>
-          <label className="block text-xs font-medium text-neutral-600">Bestehende Anhänge</label>
+          <label className="block text-xs font-medium text-primaer">Bestehende Anhänge</label>
           <ul className="mt-1.5 flex flex-col gap-1">
             {bestehendeAnhaenge.map((anhang) => (
               <li
                 key={anhang.id}
-                className="flex items-center justify-between gap-2 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm"
+                className="flex items-center justify-between gap-2 rounded-lg border border-rand px-2.5 py-1.5 text-sm"
               >
                 <a
                   href={`/api/infos/${infoId}/anhaenge/${anhang.id}`}
@@ -211,7 +211,7 @@ export function InfoFormFelder({
                     <button
                       type="submit"
                       aria-label={`${anhang.dateiname} entfernen`}
-                      className="shrink-0 rounded p-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-600"
+                      className="shrink-0 rounded p-1 text-xs text-tertiaer hover:bg-red-50 hover:text-red-600"
                     >
                       entfernen
                     </button>
@@ -224,7 +224,7 @@ export function InfoFormFelder({
       )}
 
       <div>
-        <label className="block text-xs font-medium text-neutral-600">
+        <label className="block text-xs font-medium text-primaer">
           {bestehendeAnhaenge.length > 0 ? "Weitere Anhänge" : "Anhänge (Dokumente/Fotos)"}
         </label>
         <input
@@ -232,19 +232,19 @@ export function InfoFormFelder({
           name="anhaenge"
           multiple
           accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
-          className="mt-1.5 w-full text-sm text-neutral-600 file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+          className="mt-1.5 w-full text-sm text-primaer file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-flaeche-100 file:px-3 file:text-sm file:font-medium file:text-primaer hover:file:bg-flaeche-200"
         />
       </div>
 
       <div>
-        <label htmlFor="info-kategorie" className="block text-xs font-medium text-neutral-600">
+        <label htmlFor="info-kategorie" className="block text-xs font-medium text-primaer">
           Kategorie (optional)
         </label>
         <select
           id="info-kategorie"
           name="kategorieId"
           defaultValue={standardwerte.kategorieId}
-          className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+          className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
         >
           <option value="">Keine</option>
           {kategorien.map((kategorie) => (
@@ -257,11 +257,11 @@ export function InfoFormFelder({
 
       {standardwerte.geplantAmBearbeitbar && (
         <div>
-          <label className="block text-xs font-medium text-neutral-600">Geplant für (optional)</label>
+          <label className="block text-xs font-medium text-primaer">Geplant für (optional)</label>
           <div className="mt-1">
             <DatumUhrzeitFeld name="geplantAm" defaultValue={standardwerte.geplantAm ?? undefined} />
           </div>
-          <p className="mt-1.5 text-xs text-neutral-500">Leer lassen, um sofort zu veröffentlichen.</p>
+          <p className="mt-1.5 text-xs text-sekundaer">Leer lassen, um sofort zu veröffentlichen.</p>
         </div>
       )}
 

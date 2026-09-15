@@ -73,6 +73,32 @@ export async function auftraegeFuerPerson(personId: string) {
   return { zugewiesenOffen, zugewiesenErledigt, vergebenOffen, vergebenErledigt }
 }
 
+/**
+ * Admin-Modus (siehe Kontext.adminModusAktiv): jeder offene, aktive
+ * Auftrag firmenweit — anders als `auftraegeFuerPerson` EIN flaches
+ * Ergebnis statt vier Listen (es gibt kein "mir zugewiesen"/"von mir
+ * vergeben" mehr), dafür mit BEIDEN Namen (erstellt von, zugewiesen an)
+ * pro Zeile. Dieselben Ausschlüsse wie dort: kein Entwurf, kein noch
+ * nicht aktiv gewordener geplanter Auftrag.
+ */
+export async function alleOffenenAuftraege() {
+  const jetzt = new Date()
+  return prisma.auftrag.findMany({
+    where: {
+      istEntwurf: false,
+      erledigtAm: null,
+      OR: [{ geplantAm: null }, { geplantAm: { lte: jetzt } }],
+    },
+    include: {
+      erstelltVon: { select: { vorname: true, nachname: true } },
+      zugewiesenAn: { select: { vorname: true, nachname: true } },
+      anhaenge: { where: { kommentarId: null }, select: ANHANG_SELECT },
+      kommentare: KOMMENTARE_INCLUDE,
+    },
+    orderBy: [{ faelligAm: { sort: "asc", nulls: "last" } }, { prioritaet: "asc" }, { erstelltAm: "asc" }],
+  })
+}
+
 /** Eigene, unfertige Auftrag-Entwürfe (siehe auftragAlsEntwurfSpeichern) — rein privat, für die Entwürfe-Liste unter "Von dir vergeben". */
 export async function eigeneAuftragEntwuerfe(personId: string) {
   return prisma.auftrag.findMany({

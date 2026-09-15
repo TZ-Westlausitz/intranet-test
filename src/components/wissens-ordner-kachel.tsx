@@ -60,7 +60,7 @@ export function WissensOrdnerKachel({
     <div ref={containerRef} className="relative">
       <Link
         href={href}
-        className="group flex flex-col items-center gap-2 rounded-xl p-3 text-center transition hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+        className="group flex flex-col items-center gap-2 rounded-xl p-3 text-center transition hover:bg-flaeche-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
       >
         <span className="relative">
           <Image src="/Ordner.png" alt="" width={112} height={112} className="h-28 w-28" aria-hidden="true" />
@@ -70,7 +70,7 @@ export function WissensOrdnerKachel({
             </span>
           )}
         </span>
-        <h3 className="line-clamp-2 text-sm font-semibold text-marke-grau group-hover:underline">{name}</h3>
+        <h3 className="line-clamp-2 text-sm font-semibold text-ueberschrift group-hover:underline">{name}</h3>
       </Link>
 
       {darfVerwalten && (
@@ -85,7 +85,7 @@ export function WissensOrdnerKachel({
             aria-label="Aktionen"
             aria-expanded={menuOffen}
             aria-haspopup="menu"
-            className="flex h-7 w-7 items-center justify-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
+            className="flex h-7 w-7 items-center justify-center rounded-full text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
           >
             ⋮
           </button>
@@ -94,7 +94,7 @@ export function WissensOrdnerKachel({
             <div
               role="menu"
               onClick={(ereignis) => ereignis.stopPropagation()}
-              className="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+              className="absolute right-0 z-10 mt-1 w-40 overflow-hidden rounded-lg border border-rand bg-flaeche py-1 shadow-lg"
             >
               <button
                 type="button"
@@ -104,7 +104,7 @@ export function WissensOrdnerKachel({
                   setMenuOffen(false)
                   umbenennenDialogRef.current?.showModal()
                 }}
-                className="block w-full px-4 py-2.5 text-left text-sm text-neutral-600 transition hover:bg-marke-gruen/10"
+                className="block w-full px-4 py-2.5 text-left text-sm text-primaer transition hover:bg-marke-gruen/10"
               >
                 Umbenennen
               </button>
@@ -112,7 +112,7 @@ export function WissensOrdnerKachel({
                 <button
                   type="submit"
                   role="menuitem"
-                  className="block w-full px-4 py-2.5 text-left text-sm text-neutral-600 transition hover:bg-neutral-100"
+                  className="block w-full px-4 py-2.5 text-left text-sm text-primaer transition hover:bg-flaeche-100"
                 >
                   {aktiv ? "Deaktivieren" : "Aktivieren"}
                 </button>
@@ -125,11 +125,11 @@ export function WissensOrdnerKachel({
       <dialog
         ref={umbenennenDialogRef}
         onClick={(ereignis) => ereignis.stopPropagation()}
-        className="fixed top-1/2 left-1/2 w-full max-w-xs -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-0 shadow-xl backdrop:bg-neutral-900/40"
+        className="fixed top-1/2 left-1/2 w-full max-w-xs -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
       >
         <form action={umbenennenAktion.bind(null, id)} onSubmit={schliessenNachAbsenden} className="flex flex-col">
           <div className="px-5 py-4">
-            <label htmlFor={`ordner-umbenennen-${id}`} className="block text-xs font-medium text-neutral-600">
+            <label htmlFor={`ordner-umbenennen-${id}`} className="block text-xs font-medium text-primaer">
               Name
             </label>
             <input
@@ -138,14 +138,14 @@ export function WissensOrdnerKachel({
               type="text"
               required
               defaultValue={name}
-              className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
-          <div className="flex justify-end gap-2 border-t border-neutral-200 px-5 py-3">
+          <div className="flex justify-end gap-2 border-t border-rand px-5 py-3">
             <button
               type="button"
               onClick={() => umbenennenDialogRef.current?.close()}
-              className="h-9 rounded-lg px-3 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100"
+              className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
             >
               Abbrechen
             </button>

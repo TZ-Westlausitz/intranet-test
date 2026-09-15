@@ -10,7 +10,7 @@ export function Hinweis({ children }: { children: React.ReactNode }) {
   return (
     <p
       role="alert"
-      className="rounded-lg border border-marke-orange/40 bg-marke-orange/10 px-3 py-2 text-sm text-marke-grau"
+      className="rounded-lg border border-marke-orange/40 bg-marke-orange/10 px-3 py-2 text-sm text-ueberschrift"
     >
       {children}
     </p>

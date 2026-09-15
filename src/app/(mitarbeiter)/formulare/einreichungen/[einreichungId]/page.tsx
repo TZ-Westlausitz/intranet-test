@@ -44,14 +44,14 @@ export default async function EinreichungDetailSeite({ params }: { params: Promi
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-2xl font-semibold text-marke-grau">{einreichung.vorlage.titel}</h1>
-      <p className="mt-1 text-sm text-neutral-500">
+      <h1 className="text-2xl font-semibold text-ueberschrift">{einreichung.vorlage.titel}</h1>
+      <p className="mt-1 text-sm text-sekundaer">
         Eingereicht von {einreichung.eingereichtVon.vorname} {einreichung.eingereichtVon.nachname} am{" "}
         {formatiereDatumAusDate(einreichung.eingereichtAm)}, {zeitAusDate(einreichung.eingereichtAm)} Uhr
       </p>
       {einreichung.vorlage.beschreibung && (
         <div
-          className={RICH_TEXT_ANZEIGE_KLASSE + " mt-2 text-neutral-600"}
+          className={RICH_TEXT_ANZEIGE_KLASSE + " mt-2 text-primaer"}
           dangerouslySetInnerHTML={{ __html: einreichung.vorlage.beschreibung }}
         />
       )}
@@ -67,19 +67,19 @@ export default async function EinreichungDetailSeite({ params }: { params: Promi
         </a>
       )}
 
-      <div className="mt-6 flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-4">
+      <div className="mt-6 flex flex-col gap-4 rounded-xl border border-rand bg-flaeche p-4">
         {einreichung.vorlage.elemente.map((element) => {
           if (element.typ === FormularElementTyp.TEXTBLOCK || element.typ === FormularElementTyp.TRENNZEICHEN) {
             return (
-              <div key={element.id} className="border-b border-neutral-100 pb-4 last:border-0 last:pb-0">
+              <div key={element.id} className="border-b border-flaeche-100 pb-4 last:border-0 last:pb-0">
                 <FormularFeld element={{ ...element, optionen: [] }} orte={[]} />
               </div>
             )
           }
           const anhang = anhaengeNachElement.get(element.id)
           return (
-            <div key={element.id} className="border-b border-neutral-100 pb-4 last:border-0 last:pb-0">
-              <p className="text-xs font-semibold tracking-wide text-neutral-400 uppercase">{element.label}</p>
+            <div key={element.id} className="border-b border-flaeche-100 pb-4 last:border-0 last:pb-0">
+              <p className="text-xs font-semibold tracking-wide text-tertiaer uppercase">{element.label}</p>
               {element.typ === FormularElementTyp.DATEI && anhang ? (
                 <a
                   href={`/api/formulare/einreichungen/${einreichung.id}/anhaenge/${anhang.id}`}
@@ -88,7 +88,7 @@ export default async function EinreichungDetailSeite({ params }: { params: Promi
                   {anhang.dateiname}
                 </a>
               ) : (
-                <p className="text-sm text-neutral-700">
+                <p className="text-sm text-primaer">
                   {antwortAnzeige(element, antwortenNachElement.get(element.id), anhang)}
                 </p>
               )}
@@ -98,8 +98,8 @@ export default async function EinreichungDetailSeite({ params }: { params: Promi
       </div>
 
       {darfStatusSetzen && (
-        <div className="mt-6 rounded-xl border border-neutral-200 bg-white p-4">
-          <h2 className="text-sm font-semibold text-marke-grau">Status</h2>
+        <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
+          <h2 className="text-sm font-semibold text-ueberschrift">Status</h2>
           <form action={async (formData) => {
             "use server"
             await einreichungStatusSetzen(einreichung.id, formData.get("status") as FormularEinreichungStatus)
@@ -108,7 +108,7 @@ export default async function EinreichungDetailSeite({ params }: { params: Promi
               key={einreichung.status}
               name="status"
               defaultValue={einreichung.status}
-              className="h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
             >
               {Object.values(FormularEinreichungStatus).map((status) => (
                 <option key={status} value={status}>

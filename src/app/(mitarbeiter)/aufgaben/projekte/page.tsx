@@ -5,7 +5,7 @@ import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { Hinweis } from "@/components/hinweis"
 import { ProjektFormFelder, LEERE_PROJEKT_STANDARDWERTE } from "@/components/projekt-form-felder"
-import { projekteFuerPerson } from "@/lib/projekte/abfragen"
+import { projekteFuerPerson, alleProjekte } from "@/lib/projekte/abfragen"
 import { projektErstellen } from "@/lib/projekte/aktionen"
 import { PROJEKT_STATUS_KLASSEN, PROJEKT_STATUS_NAMEN } from "@/lib/projekte-optionen"
 import { formatiereDatumAusDate } from "@/lib/datum"
@@ -32,13 +32,15 @@ export default async function ProjekteSeite({
 }) {
   const kontext = await berechtigung()
   const { fehler } = await searchParams
-  const projekte = await projekteFuerPerson(kontext.personId)
+  const projekte = kontext.adminModusAktiv ? await alleProjekte() : await projekteFuerPerson(kontext.personId)
   const darfAnlegen = kontext.berechtigungen.includes("Projektmanager")
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-center text-2xl font-semibold text-marke-grau md:text-left">Projekte</h1>
+      <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">
+        {kontext.adminModusAktiv ? "Alle Projekte (Firma)" : "Projekte"}
+      </h1>
 
       {fehler && (
         <div className="mt-4">
@@ -49,9 +51,9 @@ export default async function ProjekteSeite({
       {darfAnlegen && (
         <form
           action={projektErstellen}
-          className="mt-6 flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4"
+          className="mt-6 flex flex-col gap-3 rounded-xl border border-rand bg-flaeche p-4"
         >
-          <h2 className="text-sm font-semibold text-marke-grau">Neues Projekt</h2>
+          <h2 className="text-sm font-semibold text-ueberschrift">Neues Projekt</h2>
           <ProjektFormFelder standardwerte={LEERE_PROJEKT_STANDARDWERTE} />
           <button
             type="submit"
@@ -64,19 +66,23 @@ export default async function ProjekteSeite({
 
       <div className="mt-6 flex flex-col gap-3">
         {projekte.length === 0 ? (
-          <p className="text-sm text-neutral-500">
-            {darfAnlegen ? "Noch keine Projekte." : "Du bist aktuell in keinem Projekt Mitglied."}
+          <p className="text-sm text-sekundaer">
+            {kontext.adminModusAktiv
+              ? "Aktuell keine offenen Projekte in der Firma."
+              : darfAnlegen
+                ? "Noch keine Projekte."
+                : "Du bist aktuell in keinem Projekt Mitglied."}
           </p>
         ) : (
           projekte.map((projekt) => (
             <Link
               key={projekt.id}
               href={`/aufgaben/projekte/${projekt.id}`}
-              className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 bg-white p-4 shadow-sm transition hover:border-marke-gruen-dunkel"
+              className="flex items-center justify-between gap-3 rounded-xl border border-rand bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen-dunkel"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-marke-grau">{projekt.titel}</p>
-                <p className="mt-0.5 text-xs text-neutral-400">
+                <p className="truncate text-sm font-semibold text-ueberschrift">{projekt.titel}</p>
+                <p className="mt-0.5 text-xs text-tertiaer">
                   {formatiereDatumAusDate(projekt.start)} – {formatiereDatumAusDate(projekt.ende)}
                 </p>
               </div>

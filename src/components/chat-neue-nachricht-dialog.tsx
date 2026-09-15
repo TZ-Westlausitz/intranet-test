@@ -42,12 +42,12 @@ export function ChatNeueNachrichtDialog({
       <dialog
         ref={dialogRef}
         onClose={() => setOffen(false)}
-        className="fixed top-1/2 left-1/2 w-[95vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-6 shadow-xl backdrop:bg-neutral-900/40"
+        className="fixed top-1/2 left-1/2 w-[95vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-6 shadow-xl backdrop:bg-neutral-900/40"
       >
         {offen && (
           <form action={oeffnenAktion}>
-            <h2 className="mb-4 text-lg font-semibold text-marke-grau">Neuer Chat</h2>
-            <label htmlFor="chat-neue-nachricht-suche" className="block text-xs font-medium text-neutral-600">
+            <h2 className="mb-4 text-lg font-semibold text-ueberschrift">Neuer Chat</h2>
+            <label htmlFor="chat-neue-nachricht-suche" className="block text-xs font-medium text-primaer">
               An
             </label>
             <div className="mt-1.5">
@@ -57,7 +57,7 @@ export function ChatNeueNachrichtDialog({
               <button
                 type="button"
                 onClick={() => dialogRef.current?.close()}
-                className="h-9 rounded-lg px-3 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
+                className="h-9 rounded-lg px-3 text-sm font-medium text-primaer hover:bg-flaeche-100"
               >
                 Abbrechen
               </button>

@@ -52,7 +52,7 @@ function AufgabeZeile({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <span className={"h-2 w-2 shrink-0 rounded-full " + AUFGABE_PRIORITAET_KLASSEN[aufgabe.prioritaet]} />
-          <span className={"text-sm text-neutral-800 " + (aufgabe.status === "ERLEDIGT" ? "text-neutral-400 line-through" : "")}>
+          <span className={"text-sm text-primaer " + (aufgabe.status === "ERLEDIGT" ? "text-tertiaer line-through" : "")}>
             {aufgabe.titel}
           </span>
           <span
@@ -63,7 +63,7 @@ function AufgabeZeile({
             {AUFGABE_STATUS_NAMEN[aufgabe.status ?? "OFFEN"]}
           </span>
         </div>
-        <p className="mt-0.5 text-xs text-neutral-400">
+        <p className="mt-0.5 text-xs text-tertiaer">
           {aufgabe.zugewiesenAn ? `${aufgabe.zugewiesenAn.vorname} ${aufgabe.zugewiesenAn.nachname}` : "niemand übernommen"}
           {aufgabe.faelligAm &&
             ` · fällig ${aufgabe.faelligAm.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}`}
@@ -76,7 +76,7 @@ function AufgabeZeile({
                 href={`/api/aufgaben/${aufgabe.id}/anhaenge/${anhang.id}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex max-w-[10rem] items-center gap-1 truncate rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600 hover:underline"
+                className="flex max-w-[10rem] items-center gap-1 truncate rounded-full bg-flaeche-100 px-2 py-0.5 text-xs text-primaer hover:underline"
               >
                 📎 {anhang.dateiname}
               </a>
@@ -90,7 +90,7 @@ function AufgabeZeile({
           <form action={annehmenAktion.bind(null, projektId, aufgabe.id)}>
             <button
               type="submit"
-              className="h-7 rounded-lg bg-neutral-100 px-2.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-200"
+              className="h-7 rounded-lg bg-flaeche-100 px-2.5 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
             >
               Übernehmen
             </button>
@@ -101,7 +101,7 @@ function AufgabeZeile({
           <form action={kenntnisnahmeAktion.bind(null, projektId, aufgabe.id)}>
             <button
               type="submit"
-              className="h-7 rounded-lg bg-marke-orange/15 px-2.5 text-xs font-medium text-marke-grau transition hover:bg-marke-orange/25"
+              className="h-7 rounded-lg bg-marke-orange/15 px-2.5 text-xs font-medium text-ueberschrift transition hover:bg-marke-orange/25"
             >
               Annehmen
             </button>
@@ -134,7 +134,7 @@ function AufgabeZeile({
           <form action={statusSetzenAktion.bind(null, projektId, aufgabe.id, false)}>
             <button
               type="submit"
-              className="h-7 rounded-lg bg-neutral-100 px-2.5 text-xs font-medium text-neutral-700 transition hover:bg-neutral-200"
+              className="h-7 rounded-lg bg-flaeche-100 px-2.5 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
             >
               Wieder öffnen
             </button>
@@ -146,7 +146,7 @@ function AufgabeZeile({
             <button
               type="submit"
               aria-label="Aufgabe löschen"
-              className="rounded p-1 text-neutral-400 transition hover:bg-red-50 hover:text-red-600"
+              className="rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
             >
               ×
             </button>
@@ -226,12 +226,12 @@ export function ProjektAufgaben({
   return (
     <div className="flex flex-col gap-4">
       {gruppen.length === 0 ? (
-        <p className="text-sm text-neutral-500">Noch keine Aufgaben.</p>
+        <p className="text-sm text-sekundaer">Noch keine Aufgaben.</p>
       ) : (
         gruppen.map((gruppe) => (
           <div key={gruppe.id ?? "ohne"}>
-            <h3 className="text-xs font-semibold text-neutral-500">{gruppe.titel}</h3>
-            <ul className="mt-1 flex flex-col divide-y divide-neutral-100">
+            <h3 className="text-xs font-semibold text-sekundaer">{gruppe.titel}</h3>
+            <ul className="mt-1 flex flex-col divide-y divide-flaeche-100">
               {gruppe.aufgaben.map((aufgabe) => (
                 <AufgabeZeile
                   key={aufgabe.id}
@@ -257,26 +257,26 @@ export function ProjektAufgaben({
           key={formVersion}
           action={erstellenAktion.bind(null, projektId)}
           onSubmit={beiErstellenAbsenden}
-          className="flex flex-col gap-3 border-t border-neutral-100 pt-4"
+          className="flex flex-col gap-3 border-t border-flaeche-100 pt-4"
         >
           <div>
-            <label className="block text-xs font-medium text-neutral-600">Titel</label>
+            <label className="block text-xs font-medium text-primaer">Titel</label>
             <input
               name="titel"
               type="text"
               required
               placeholder="Neue Aufgabe"
-              className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
 
           <div className="flex flex-wrap items-end gap-3">
             <div>
-              <label className="block text-xs font-medium text-neutral-600">Zwischenziel</label>
+              <label className="block text-xs font-medium text-primaer">Zwischenziel</label>
               <select
                 name="zwischenzielId"
                 onChange={beiZwischenzielAendern}
-                className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+                className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
               >
                 <option value="">Ohne Zwischenziel</option>
                 {zwischenziele.map((m) => (
@@ -288,17 +288,17 @@ export function ProjektAufgaben({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-neutral-600">Fällig am</label>
+              <label className="block text-xs font-medium text-primaer">Fällig am</label>
               <input
                 name="faelligAm"
                 type="date"
                 ref={faelligRef}
-                className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+                className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
               />
             </div>
 
             <fieldset>
-              <legend className="text-xs font-medium text-neutral-600">Priorität</legend>
+              <legend className="text-xs font-medium text-primaer">Priorität</legend>
               <div className="mt-1.5 flex gap-2">
                 {AUFGABE_PRIORITAETEN.map((prioritaet) => (
                   <label key={prioritaet.wert} className="flex cursor-pointer items-center gap-1.5" title={prioritaet.name}>
@@ -322,7 +322,7 @@ export function ProjektAufgaben({
           </div>
 
           <div>
-            <label htmlFor="projekt-aufgabe-zuweisen-suche" className="block text-xs font-medium text-neutral-600">
+            <label htmlFor="projekt-aufgabe-zuweisen-suche" className="block text-xs font-medium text-primaer">
               Zuweisen
             </label>
             <div className="mt-1">
@@ -337,13 +337,13 @@ export function ProjektAufgaben({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-neutral-600">Anhänge (Dokumente/Fotos)</label>
+            <label className="block text-xs font-medium text-primaer">Anhänge (Dokumente/Fotos)</label>
             <input
               type="file"
               name="anhaenge"
               multiple
               accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
-              className="mt-1.5 w-full text-sm text-neutral-600 file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+              className="mt-1.5 w-full text-sm text-primaer file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-flaeche-100 file:px-3 file:text-sm file:font-medium file:text-primaer hover:file:bg-flaeche-200"
             />
           </div>
 

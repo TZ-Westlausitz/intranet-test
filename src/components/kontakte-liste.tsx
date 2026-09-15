@@ -43,10 +43,10 @@ function AbteilungenGruppenChips({ person }: { person: Person }) {
   // Zelle beginnen, Gruppen folgen dahinter — nicht alphabetisch oder
   // sonstwie gemischt.
   const eintraege = [
-    ...person.zugehoerigkeiten.map((z) => ({ key: `a-${z.id}`, name: z.abteilung.name, farbe: "bg-neutral-200 text-neutral-700" })),
-    ...person.gruppen.map((g) => ({ key: `g-${g.gruppeId}`, name: g.gruppe.name, farbe: "bg-marke-orange/20 text-marke-grau" })),
+    ...person.zugehoerigkeiten.map((z) => ({ key: `a-${z.id}`, name: z.abteilung.name, farbe: "bg-flaeche-200 text-primaer" })),
+    ...person.gruppen.map((g) => ({ key: `g-${g.gruppeId}`, name: g.gruppe.name, farbe: "bg-marke-orange/20 text-ueberschrift" })),
   ]
-  if (eintraege.length === 0) return <span className="text-neutral-400">—</span>
+  if (eintraege.length === 0) return <span className="text-tertiaer">—</span>
   return (
     <>
       {eintraege.map((e) => (
@@ -121,12 +121,12 @@ function AbteilungGruppeFilter({
         onClick={() => setOffen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={offen}
-        className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-neutral-300 px-2 text-left text-sm"
+        className="flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-flaeche-300 px-2 text-left text-sm"
       >
-        <span className={"truncate " + (ausgewaehlterName ? "text-marke-grau" : "text-neutral-500")}>
+        <span className={"truncate " + (ausgewaehlterName ? "text-ueberschrift" : "text-sekundaer")}>
           {ausgewaehlterName ?? "Abteilungen & Gruppen"}
         </span>
-        <span aria-hidden className="shrink-0 text-neutral-400">
+        <span aria-hidden className="shrink-0 text-tertiaer">
           ▾
         </span>
       </button>
@@ -134,7 +134,7 @@ function AbteilungGruppeFilter({
       {offen && (
         <div
           role="listbox"
-          className="absolute right-0 z-20 mt-1 w-72 rounded-lg border border-neutral-200 bg-white shadow-lg sm:right-auto sm:left-0"
+          className="absolute right-0 z-20 mt-1 w-72 rounded-lg border border-rand bg-flaeche shadow-lg sm:right-auto sm:left-0"
         >
           <input
             ref={sucheRef}
@@ -142,26 +142,26 @@ function AbteilungGruppeFilter({
             value={suchtext}
             onChange={(ereignis) => setSuchtext(ereignis.target.value)}
             placeholder="Suchen …"
-            className="w-full border-b border-neutral-200 px-3 py-2 text-sm focus:outline-none"
+            className="w-full border-b border-rand px-3 py-2 text-sm focus:outline-none"
           />
           <div className="max-h-64 overflow-y-auto py-1">
             <button
               type="button"
               onClick={() => auswaehlen("")}
-              className="block w-full px-3 py-1.5 text-left text-sm text-neutral-700 hover:bg-neutral-50"
+              className="block w-full px-3 py-1.5 text-left text-sm text-primaer hover:bg-flaeche-schwach"
             >
               Alle
             </button>
 
             {abteilungenGefiltert.length > 0 && (
               <>
-                <p className="px-3 pt-2 pb-1 text-[11px] font-medium text-neutral-400">Abteilungen</p>
+                <p className="px-3 pt-2 pb-1 text-[11px] font-medium text-tertiaer">Abteilungen</p>
                 {abteilungenGefiltert.map((a) => (
                   <button
                     key={a.id}
                     type="button"
                     onClick={() => auswaehlen(`abteilung:${a.id}`)}
-                    className="block w-full px-3 py-1.5 text-left text-sm text-neutral-700 hover:bg-neutral-50"
+                    className="block w-full px-3 py-1.5 text-left text-sm text-primaer hover:bg-flaeche-schwach"
                   >
                     {a.name}
                   </button>
@@ -171,13 +171,13 @@ function AbteilungGruppeFilter({
 
             {gruppenGefiltert.length > 0 && (
               <>
-                <p className="px-3 pt-2 pb-1 text-[11px] font-medium text-neutral-400">Gruppen</p>
+                <p className="px-3 pt-2 pb-1 text-[11px] font-medium text-tertiaer">Gruppen</p>
                 {gruppenGefiltert.map((g) => (
                   <button
                     key={g.id}
                     type="button"
                     onClick={() => auswaehlen(`gruppe:${g.id}`)}
-                    className="block w-full px-3 py-1.5 text-left text-sm text-neutral-700 hover:bg-neutral-50"
+                    className="block w-full px-3 py-1.5 text-left text-sm text-primaer hover:bg-flaeche-schwach"
                   >
                     {g.name}
                   </button>
@@ -186,7 +186,7 @@ function AbteilungGruppeFilter({
             )}
 
             {abteilungenGefiltert.length === 0 && gruppenGefiltert.length === 0 && (
-              <p className="px-3 py-2 text-sm text-neutral-400">Keine Treffer</p>
+              <p className="px-3 py-2 text-sm text-tertiaer">Keine Treffer</p>
             )}
           </div>
         </div>
@@ -232,15 +232,15 @@ export function KontakteListe({
           value={suchtext}
           onChange={(ereignis) => setSuchtext(ereignis.target.value)}
           placeholder="Name suchen …"
-          className="h-9 flex-1 rounded-lg border border-neutral-300 px-2 text-sm"
+          className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
         />
         <AbteilungGruppeFilter abteilungen={abteilungen} gruppen={gruppen} wert={filter} onChange={setFilter} />
       </div>
 
       {gefiltert.length === 0 ? (
-        <p className="mt-6 text-sm text-neutral-500">Keine Treffer.</p>
+        <p className="mt-6 text-sm text-sekundaer">Keine Treffer.</p>
       ) : (
-        <div className="mt-4 rounded-xl border border-neutral-200 bg-white">
+        <div className="mt-4 rounded-xl border border-rand bg-flaeche">
           {/* sticky + top-0 reicht hier ohne weiteren Offset: die Seite
               scrollt ab `md:` nicht über den ganzen Bildschirm, sondern
               nur innerhalb des eigenen Bereichs unter der festen
@@ -252,7 +252,7 @@ export function KontakteListe({
               zum "scrollenden Vorfahren" würde) — die passende Rundung
               oben liegt deshalb direkt an der Kopfzeile selbst, nicht am
               Zuschneiden durch den Rahmen. */}
-          <div className="sticky top-0 z-10 flex items-center gap-3 rounded-t-xl border-b border-neutral-200 bg-neutral-50 px-4 py-2 text-xs font-medium text-neutral-500">
+          <div className="sticky top-0 z-10 flex items-center gap-3 rounded-t-xl border-b border-rand bg-flaeche-schwach px-4 py-2 text-xs font-medium text-sekundaer">
             <span aria-hidden className="w-9 shrink-0" />
             <span className="min-w-0 flex-1">Name</span>
             <span className="hidden w-56 shrink-0 md:block">Abteilungen & Gruppen</span>
@@ -260,15 +260,24 @@ export function KontakteListe({
             <span className="hidden w-44 shrink-0 lg:block">E-Mail</span>
           </div>
 
-          <ul className="flex flex-col divide-y divide-neutral-100">
+          <ul className="flex flex-col divide-y divide-flaeche-100">
             {gefiltert.map((person) => {
               const aktivitaet = aktivitaetsAnzeige(person.letzteAktivitaet)
               return (
-                <li key={person.benutzername}>
+                // block/min-h-0/shrink-0 gegen denselben Safari-Fehler wie
+                // in NewsfeedHomeKachel (Rückmeldung vom 2026-09-14): <li>
+                // als Flex-Kind von <ul> bekommt sonst seine automatische
+                // Mindesthöhe aus dem ungekürzten Text der line-clamp-Box
+                // weiter unten statt aus deren sichtbar gekürzter Höhe;
+                // shrink-0 verhindert, dass min-h-0 die Zeilen stattdessen
+                // zusammendrückt/überlappen lässt. Kein Aufzählungspunkt
+                // ohnehin sichtbar, daher block statt list-item
+                // unbedenklich.
+                <li key={person.benutzername} className="block min-h-0 shrink-0">
                   <button
                     type="button"
                     onClick={() => dialogRef.current?.oeffnen(person.benutzername)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-neutral-50"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left transition hover:bg-flaeche-schwach"
                   >
                     <InfoAvatar
                       alsUnternehmen={false}
@@ -278,7 +287,7 @@ export function KontakteListe({
                       profilbildPfad={person.profilbildPfad}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-marke-grau">
+                      <p className="truncate text-sm font-medium text-ueberschrift">
                         {person.vorname} {person.nachname}
                       </p>
                       <p className={"text-xs " + aktivitaet.farbe}>{aktivitaet.text}</p>
@@ -297,10 +306,10 @@ export function KontakteListe({
                     <div className="hidden w-56 shrink-0 md:line-clamp-3">
                       <AbteilungenGruppenChips person={person} />
                     </div>
-                    <div className="hidden w-32 shrink-0 truncate text-xs text-neutral-500 lg:block">
+                    <div className="hidden w-32 shrink-0 truncate text-xs text-sekundaer lg:block">
                       {person.telefon ?? "—"}
                     </div>
-                    <div className="hidden w-44 shrink-0 truncate text-xs text-neutral-500 lg:block">
+                    <div className="hidden w-44 shrink-0 truncate text-xs text-sekundaer lg:block">
                       {person.email ?? "—"}
                     </div>
                   </button>

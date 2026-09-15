@@ -24,12 +24,12 @@ export function TerminSucheFeld({ suchtext }: { suchtext: string }) {
           type="search"
           defaultValue={suchtext}
           placeholder="Titel oder Teilnehmer …"
-          className="h-9 w-40 rounded-lg border border-neutral-300 px-2 text-sm sm:w-52"
+          className="h-9 w-40 rounded-lg border border-flaeche-300 px-2 text-sm sm:w-52"
         />
       </div>
       <button
         type="submit"
-        className="h-9 rounded-lg bg-neutral-100 px-3 text-sm font-medium text-neutral-700 transition hover:bg-neutral-200"
+        className="h-9 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200"
       >
         Suchen
       </button>

@@ -80,12 +80,12 @@ export function ProjektZeitstrahl({
 
   return (
     <div className="mt-2">
-      <div className="flex justify-between text-xs text-neutral-400">
+      <div className="flex justify-between text-xs text-tertiaer">
         <span>{formatiereDatumAusDate(start)}</span>
         <span>{formatiereDatumAusDate(ende)}</span>
       </div>
 
-      <div className="relative mt-3 mb-12 h-2.5 rounded-full bg-neutral-200">
+      <div className="relative mt-3 mb-12 h-2.5 rounded-full bg-flaeche-200">
         <div
           className="zwischenziel-balken-fuellung h-2.5 rounded-full bg-marke-gruen transition-all"
           style={{ width: `${fuellPosition}%` }}
@@ -102,7 +102,7 @@ export function ProjektZeitstrahl({
               title={`${zwischenziel.titel} — ${formatiereDatumAusDate(zwischenziel.frist)}`}
             >
               <span className={"h-2.5 w-2.5 rounded-sm border-2 border-white shadow " + ZWISCHENZIEL_STATUS_KLASSEN[status]} />
-              <span className="h-3 w-px bg-neutral-300" />
+              <span className="h-3 w-px bg-flaeche-300" />
               <span
                 className={
                   "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow " +

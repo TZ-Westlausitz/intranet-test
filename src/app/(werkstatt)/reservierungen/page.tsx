@@ -80,15 +80,15 @@ export default async function ReservierungenSeite() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-2xl font-semibold text-marke-grau">Reservierungen</h1>
-      <p className="mt-1 text-sm text-neutral-600">Bestätigte Ausleihen</p>
+      <h1 className="text-2xl font-semibold text-ueberschrift">Reservierungen</h1>
+      <p className="mt-1 text-sm text-primaer">Bestätigte Ausleihen</p>
 
       {reservierungen.length === 0 ? (
-        <p className="mt-6 text-neutral-600">Derzeit keine bestätigten Reservierungen.</p>
+        <p className="mt-6 text-primaer">Derzeit keine bestätigten Reservierungen.</p>
       ) : (
         <ul className="mt-6 flex flex-col gap-2">
           {reservierungen.map((r) => (
-            <li key={r.id} className="rounded-lg border border-neutral-200 p-4">
+            <li key={r.id} className="rounded-lg border border-rand p-4">
               <div className="flex items-start gap-2">
                 <Link
                   href={`/ausleihen/${r.id}`}
@@ -102,7 +102,7 @@ export default async function ReservierungenSeite() {
                       <StatusBadge status={r.status} />
                     )}
                   </p>
-                  <p className="mt-1 text-sm text-neutral-600">
+                  <p className="mt-1 text-sm text-primaer">
                     {r.fahrzeug.bezeichnung} · {r.geplantVon.toLocaleDateString("de-DE")}–
                     {r.geplantBis.toLocaleDateString("de-DE")} · {r.zweck}
                   </p>
@@ -117,7 +117,7 @@ export default async function ReservierungenSeite() {
                 <Link
                   href={`/api/ausleihen/${r.id}/vereinbarungsentwurf`}
                   target="_blank"
-                  className="mt-2 inline-block text-sm font-semibold text-marke-gruen-dunkel underline hover:text-marke-grau"
+                  className="mt-2 inline-block text-sm font-semibold text-marke-gruen-dunkel underline hover:text-ueberschrift"
                 >
                   Nutzungsvereinbarung (PDF) ansehen
                 </Link>

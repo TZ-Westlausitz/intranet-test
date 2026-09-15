@@ -1,11 +1,23 @@
 import { prisma } from "@/lib/db"
-import { AufgabeStatus } from "@/generated/prisma/enums"
+import { AufgabeStatus, ProjektStatus } from "@/generated/prisma/enums"
 import { projektSichtbarFuer } from "@/lib/projekte/mitgliedschaft"
 
 /** "Meine Projekte" für die Übersichtsseite /aufgaben/projekte. */
 export async function projekteFuerPerson(personId: string) {
   return prisma.projekt.findMany({
     where: projektSichtbarFuer(personId),
+    orderBy: [{ status: "asc" }, { ende: "asc" }],
+  })
+}
+
+/**
+ * Admin-Modus (siehe Kontext.adminModusAktiv): jedes noch nicht
+ * abgeschlossene/abgebrochene Projekt firmenweit, ohne Mitgliedschafts-
+ * Einschränkung — rein lesend, siehe Plan "Admin-Modus".
+ */
+export async function alleProjekte() {
+  return prisma.projekt.findMany({
+    where: { status: { notIn: [ProjektStatus.ABGESCHLOSSEN, ProjektStatus.ABGEBROCHEN] } },
     orderBy: [{ status: "asc" }, { ende: "asc" }],
   })
 }
@@ -60,6 +72,25 @@ export async function projektAufgabenFuerPerson(personId: string) {
     include: {
       projekt: { select: { id: true, titel: true } },
       zwischenziel: { select: { titel: true } },
+    },
+    orderBy: [{ faelligAm: { sort: "asc", nulls: "last" } }, { erstelltAm: "asc" }],
+  })
+}
+
+/**
+ * Admin-Modus (siehe Kontext.adminModusAktiv): dieselbe Liste wie
+ * `projektAufgabenFuerPerson`, aber jede noch nicht erledigte
+ * Projekt-Aufgabe firmenweit statt nur die eigenen — inklusive Name der
+ * zugewiesenen Person, weil das anders als bei der persönlichen Variante
+ * nicht mehr implizit "ich" ist.
+ */
+export async function alleOffenenProjektAufgaben() {
+  return prisma.aufgabe.findMany({
+    where: { projektId: { not: null }, status: { not: AufgabeStatus.ERLEDIGT } },
+    include: {
+      projekt: { select: { id: true, titel: true } },
+      zwischenziel: { select: { titel: true } },
+      zugewiesenAn: { select: { vorname: true, nachname: true } },
     },
     orderBy: [{ faelligAm: { sort: "asc", nulls: "last" } }, { erstelltAm: "asc" }],
   })

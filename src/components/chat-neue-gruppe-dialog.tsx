@@ -46,13 +46,13 @@ export function ChatNeueGruppeDialog({
       <dialog
         ref={dialogRef}
         onClose={() => setOffen(false)}
-        className="fixed top-1/2 left-1/2 w-[95vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-6 shadow-xl backdrop:bg-neutral-900/40"
+        className="fixed top-1/2 left-1/2 w-[95vw] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-6 shadow-xl backdrop:bg-neutral-900/40"
       >
         {offen && (
           <form action={erstellenAktion}>
-            <h2 className="mb-4 text-lg font-semibold text-marke-grau">Neue Gruppe</h2>
+            <h2 className="mb-4 text-lg font-semibold text-ueberschrift">Neue Gruppe</h2>
 
-            <label htmlFor="chat-neue-gruppe-titel" className="block text-xs font-medium text-neutral-600">
+            <label htmlFor="chat-neue-gruppe-titel" className="block text-xs font-medium text-primaer">
               Name der Gruppe
             </label>
             <input
@@ -60,10 +60,10 @@ export function ChatNeueGruppeDialog({
               name="titel"
               type="text"
               required
-              className="mt-1.5 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+              className="mt-1.5 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
             />
 
-            <label className="mt-4 block text-xs font-medium text-neutral-600">Mitglieder</label>
+            <label className="mt-4 block text-xs font-medium text-primaer">Mitglieder</label>
             <div className="mt-1.5">
               <InfoEmpfaengerAuswahl
                 abteilungen={[]}
@@ -78,7 +78,7 @@ export function ChatNeueGruppeDialog({
               <button
                 type="button"
                 onClick={() => dialogRef.current?.close()}
-                className="h-9 rounded-lg px-3 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
+                className="h-9 rounded-lg px-3 text-sm font-medium text-primaer hover:bg-flaeche-100"
               >
                 Abbrechen
               </button>

@@ -53,17 +53,17 @@ export function FormularZeile({
   const bearbeitenRef = useRef<FormularBearbeitenDialogHandle>(null)
 
   return (
-    <tr className="border-b border-neutral-100 last:border-0">
+    <tr className="border-b border-flaeche-100 last:border-0">
       <td className="px-4 py-3">
         <button
           type="button"
           onClick={() => bearbeitenRef.current?.oeffnen()}
-          className="text-marke-grau hover:underline"
+          className="text-ueberschrift hover:underline"
         >
           {vorlage.titel}
         </button>
       </td>
-      <td className="px-4 py-3 text-neutral-600">
+      <td className="px-4 py-3 text-primaer">
         {benutzerText || <span className="text-marke-orange">Keine Nutzer</span>}
       </td>
       <td className="px-4 py-3">
@@ -75,7 +75,7 @@ export function FormularZeile({
           <span
             className={
               "rounded-full px-2 py-0.5 text-xs font-medium " +
-              (vorlage.aktiv ? "bg-marke-gruen/15 text-marke-grau" : "bg-neutral-200 text-neutral-500")
+              (vorlage.aktiv ? "bg-marke-gruen/15 text-ueberschrift" : "bg-flaeche-200 text-sekundaer")
             }
           >
             {vorlage.aktiv ? "Aktiv" : "Inaktiv"}

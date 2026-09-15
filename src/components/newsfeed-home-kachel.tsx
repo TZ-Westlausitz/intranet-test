@@ -50,12 +50,12 @@ export function NewsfeedHomeKachel({
   const dialogRef = useRef<InfoAnzeigenDialogHandle>(null)
 
   return (
-    <div className="col-span-2 row-span-2 flex flex-col rounded-2xl border border-x-neutral-200 border-b-neutral-200 border-t-4 border-t-marke-gruen bg-white p-5 shadow-sm">
+    <div className="col-span-2 row-span-2 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-5 shadow-sm">
       <Link
         href="/newsfeed"
         className="flex shrink-0 items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
       >
-        <h2 className="text-xl font-semibold text-marke-grau hover:underline">Newsfeed</h2>
+        <h2 className="text-xl font-semibold text-ueberschrift hover:underline">Newsfeed</h2>
         {offeneBestaetigungen > 0 && (
           <span
             aria-label={`${offeneBestaetigungen} offene Bestätigungen`}
@@ -67,7 +67,7 @@ export function NewsfeedHomeKachel({
       </Link>
 
       {infos.length === 0 ? (
-        <p className="mt-2 text-sm text-neutral-500">Noch keine Infos für dich.</p>
+        <p className="mt-2 text-sm text-sekundaer">Noch keine Infos für dich.</p>
       ) : (
         // Jede Info als eigenes kleines "Fenster" statt einer schlichten
         // Liste (siehe Rückmeldung/Skizze), dieser Bereich scrollt für sich
@@ -76,18 +76,34 @@ export function NewsfeedHomeKachel({
         // erreichbar bleiben, nicht nur die neuesten zwei wie zuvor.
         <ul className="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
           {infos.map((info) => (
-            <li key={info.id}>
+            // block/min-h-0/shrink-0 nötig, weil <li> hier ein Flex-Kind
+            // von <ul> ist: als reguläres list-item (Safari-Standard für
+            // <li>) berechnet Safari dessen Höhe als Flex-Element falsch
+            // aus dem UNgekürzten Text der line-clamp-Box weiter unten
+            // statt aus deren sichtbar gekürzter Höhe (Rückmeldung vom
+            // 2026-09-14, per Web Inspector nachgemessen: <li> 598px/508px
+            // hoch bei nur 111px sichtbarem Inhalt, min-h-0/shrink-0
+            // allein reichten nicht — erst zusätzlich block statt
+            // list-item behebt es zuverlässig). Kein Aufzählungspunkt
+            // ohnehin sichtbar, daher unbedenklich.
+            <li key={info.id} className="block min-h-0 shrink-0">
               <button
                 type="button"
                 onClick={() => dialogRef.current?.oeffnen(info.id)}
-                className="w-full min-w-0 rounded-xl border border-neutral-200 p-2.5 text-left transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+                // block statt dem Button-Standard inline-block — Verdacht
+                // (Rückmeldung vom 2026-09-15): Safari berechnet bei
+                // mehrabsätzigem Inhalt mit Liste die Höhe eines
+                // inline-block-Buttons falsch. NewsfeedListe hat block an
+                // der entsprechenden Stelle schon und zeigt den Fehler
+                // nicht.
+                className="block w-full min-w-0 rounded-xl border border-rand p-2.5 text-left transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
               >
-                <p className="truncate text-[11px] text-neutral-400">
+                <p className="truncate text-[11px] text-tertiaer">
                   {info.absenderName}
                   {" · "}
                   {formatiereDatumAusDate(info.erstelltAm)} · {zeitAusDate(info.erstelltAm)}
                 </p>
-                <h3 className="mt-0.5 text-center text-sm font-semibold text-marke-grau">{info.titel}</h3>
+                <h3 className="mt-0.5 text-center text-sm font-semibold text-ueberschrift">{info.titel}</h3>
                 {info.titelbild ? (
                   // Bild ODER Text, nie beides nebeneinander (Vorbild
                   // Altsystem "Überblick", Rückmeldung vom 2026-09-07) —
@@ -106,14 +122,21 @@ export function NewsfeedHomeKachel({
                   />
                 ) : info.previewHtml ? (
                   // Dieselbe Formatierung wie im echten Artikel
-                  // (Fett/Kursiv/Ausrichtung/Listen bleiben sichtbar,
-                  // siehe Rückmeldung dazu) — CSS line-clamp schneidet nur
-                  // visuell auf 3 Zeilen, das zugrundeliegende Markup
-                  // bleibt unangetastet. Kein [&_img] hier nötig: ohne
+                  // (Fett/Kursiv/Ausrichtung/Listen bleiben sichtbar, siehe
+                  // Rückmeldung dazu). Kein [&_img] hier nötig: ohne
                   // titelbild enthält previewHtml laut ersteBildInfo gar
-                  // kein Bild mehr.
+                  // kein Bild mehr. BEWUSST OHNE line-clamp-3 (reines
+                  // max-h-12/overflow-hidden statt -webkit-line-clamp):
+                  // Safari zählt bei previewHtml mit mehreren Absätzen
+                  // UND einer eingebetteten Liste (<ul>) die Zeilen nicht
+                  // zuverlässig und berechnet die Kartenhöhe dann nach dem
+                  // ungekürzten Inhalt statt nach der sichtbar gekürzten
+                  // Höhe — ungleiche Lücken zwischen den Karten
+                  // (Rückmeldung vom 2026-09-14/15). Nachteil: kein "…" am
+                  // Ende, die letzte sichtbare Zeile wird einfach hart
+                  // abgeschnitten statt sauber am Zeilenende zu enden.
                   <div
-                    className="mt-1 line-clamp-3 text-xs text-neutral-500 [&_a]:text-marke-gruen-dunkel [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:my-0.5 [&_ul]:list-disc [&_ul]:pl-4"
+                    className="mt-1 max-h-12 overflow-hidden text-xs text-sekundaer [&_a]:text-marke-gruen-dunkel [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:my-0.5 [&_ul]:list-disc [&_ul]:pl-4"
                     dangerouslySetInnerHTML={{ __html: info.previewHtml }}
                   />
                 ) : (
@@ -124,7 +147,7 @@ export function NewsfeedHomeKachel({
                   )
                 )}
                 {(info.anhaengeAnzahl > 0 || info.kommentareAnzahl > 0 || info.likeAnzahl > 0 || info.umfrage) && (
-                  <div className="mt-1.5 flex justify-center gap-3 text-[11px] text-neutral-400">
+                  <div className="mt-1.5 flex justify-center gap-3 text-[11px] text-tertiaer">
                     {info.anhaengeAnzahl > 0 && <span>📎 {info.anhaengeAnzahl}</span>}
                     {info.kommentareAnzahl > 0 && <span>💬 {info.kommentareAnzahl}</span>}
                     {info.likeAnzahl > 0 && <span>👍 {info.likeAnzahl}</span>}

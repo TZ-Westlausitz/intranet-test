@@ -42,17 +42,17 @@ export function GeplanteAktionenMonate({
         <div
           key={`${monat.jahr}-${monat.monatIndex0}`}
           className={
-            "overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm " +
+            "overflow-hidden rounded-2xl border border-rand bg-flaeche bg-flaeche shadow-sm " +
             (index > 0 ? "hidden md:block" : "")
           }
         >
-          <div className="border-b border-neutral-200 bg-gradient-to-r from-marke-gruen/15 via-marke-gruen/5 to-transparent px-4 py-3">
-            <h2 className="font-semibold text-marke-grau">
+          <div className="border-b border-rand bg-gradient-to-r from-marke-gruen/15 via-marke-gruen/5 to-transparent px-4 py-3">
+            <h2 className="font-semibold text-ueberschrift">
               {monat.monatsname} {monat.jahr}
             </h2>
           </div>
 
-          <div className="grid grid-cols-7 gap-1 px-3 pt-3 text-center text-xs font-medium text-neutral-400">
+          <div className="grid grid-cols-7 gap-1 px-3 pt-3 text-center text-xs font-medium text-tertiaer">
             {WOCHENTAGE_KURZ.map((tag) => (
               <span key={tag}>{tag}</span>
             ))}

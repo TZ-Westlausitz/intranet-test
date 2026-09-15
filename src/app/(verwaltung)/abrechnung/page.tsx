@@ -70,13 +70,13 @@ export default async function AbrechnungSeite() {
     const ueberschritten = tageImMonat > FUENF_TAGE_GRENZE
 
     return (
-      <li key={a.id} className="rounded-lg border border-neutral-200 p-4">
+      <li key={a.id} className="rounded-lg border border-rand p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="font-medium">
               {a.entleiher.vorname} {a.entleiher.nachname}
             </p>
-            <p className="mt-0.5 text-sm text-neutral-600">
+            <p className="mt-0.5 text-sm text-primaer">
               {a.fahrzeug.bezeichnung} · Ausleihe {a.vorgangsnummer}
             </p>
           </div>
@@ -94,16 +94,16 @@ export default async function AbrechnungSeite() {
         </div>
 
         <dl className="mt-3 flex flex-col gap-1.5 text-sm">
-          <div className="flex justify-between border-b border-neutral-100 pb-1.5">
-            <dt className="text-neutral-500">Gefahrene Kilometer</dt>
+          <div className="flex justify-between border-b border-flaeche-100 pb-1.5">
+            <dt className="text-sekundaer">Gefahrene Kilometer</dt>
             <dd className="font-medium">{a.gefahreneKilometer ?? "—"} km</dd>
           </div>
-          <div className="flex justify-between border-b border-neutral-100 pb-1.5">
-            <dt className="text-neutral-500">Kalendertage</dt>
+          <div className="flex justify-between border-b border-flaeche-100 pb-1.5">
+            <dt className="text-sekundaer">Kalendertage</dt>
             <dd className="font-medium">{a.kalendertage ?? "—"}</dd>
           </div>
-          <div className="flex justify-between border-b border-neutral-100 pb-1.5">
-            <dt className="text-neutral-500">Geldwerter Vorteil</dt>
+          <div className="flex justify-between border-b border-flaeche-100 pb-1.5">
+            <dt className="text-sekundaer">Geldwerter Vorteil</dt>
             <dd className="font-medium">
               {a.geldwerterVorteilCent !== null
                 ? formatiereCentAlsEuro(a.geldwerterVorteilCent)
@@ -112,7 +112,7 @@ export default async function AbrechnungSeite() {
           </div>
           {a.anLohnbuchhaltungGemeldetAm && (
             <div className="flex justify-between">
-              <dt className="text-neutral-500">Gemeldet am</dt>
+              <dt className="text-sekundaer">Gemeldet am</dt>
               <dd className="font-medium">
                 {a.anLohnbuchhaltungGemeldetAm.toLocaleDateString("de-DE")}
               </dd>
@@ -121,7 +121,7 @@ export default async function AbrechnungSeite() {
         </dl>
 
         {ueberschritten && (
-          <p className="mt-3 rounded-lg border border-marke-orange/40 bg-marke-orange/10 px-3 py-2 text-sm text-marke-grau">
+          <p className="mt-3 rounded-lg border border-marke-orange/40 bg-marke-orange/10 px-3 py-2 text-sm text-ueberschrift">
             ⚠ {a.entleiher.vorname} {a.entleiher.nachname} kommt in{" "}
             {a.geplantVon.toLocaleDateString("de-DE", { month: "long", year: "numeric" })} auf{" "}
             {tageImMonat} Kalendertage — über der Fünf-Tage-Grenze. Statt der
@@ -136,8 +136,8 @@ export default async function AbrechnungSeite() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste name={kontext.name} />
-      <h1 className="text-2xl font-semibold text-marke-grau">Abrechnung</h1>
-      <p className="mt-1 text-sm text-neutral-600">
+      <h1 className="text-2xl font-semibold text-ueberschrift">Abrechnung</h1>
+      <p className="mt-1 text-sm text-primaer">
         Geldwerter Vorteil aus privater Fahrzeugnutzung — zur Meldung an die
         Lohnbuchhaltung.
       </p>
@@ -149,18 +149,18 @@ export default async function AbrechnungSeite() {
         entscheidet nicht, welche Regel im Einzelfall gilt.
       </Hinweis>
 
-      <h2 className="mt-8 text-sm font-medium text-neutral-500">
+      <h2 className="mt-8 text-sm font-medium text-sekundaer">
         Noch zu melden ({offene.length})
       </h2>
       {offene.length === 0 ? (
-        <p className="mt-3 text-neutral-600">Keine offenen Meldungen.</p>
+        <p className="mt-3 text-primaer">Keine offenen Meldungen.</p>
       ) : (
         <ul className="mt-3 flex flex-col gap-3">{offene.map(zeile)}</ul>
       )}
 
       {gemeldete.length > 0 && (
         <>
-          <h2 className="mt-8 text-sm font-medium text-neutral-500">
+          <h2 className="mt-8 text-sm font-medium text-sekundaer">
             Bereits gemeldet ({gemeldete.length})
           </h2>
           <ul className="mt-3 flex flex-col gap-3">{gemeldete.map(zeile)}</ul>

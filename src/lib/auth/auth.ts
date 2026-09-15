@@ -46,6 +46,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null
         }
 
+        // Admin-Modus startet bei jeder neuen Anmeldung deaktiviert — er
+        // soll nicht unbemerkt über Geräte/Sitzungen hinweg aktiv bleiben.
+        if (person.adminModusAktiv) {
+          await prisma.person.update({
+            where: { benutzername: person.benutzername },
+            data: { adminModusAktiv: false },
+          })
+        }
+
         return {
           id: person.benutzername,
           name: `${person.vorname} ${person.nachname}`,

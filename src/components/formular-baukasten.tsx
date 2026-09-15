@@ -116,7 +116,7 @@ function ElementBlock({
     <div
       ref={setNodeRef}
       style={style}
-      className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm"
+      className="rounded-xl border border-rand bg-flaeche p-4 shadow-sm"
     >
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -125,13 +125,13 @@ function ElementBlock({
             {...attributes}
             {...listeners}
             aria-label="Zum Sortieren ziehen"
-            className="cursor-grab text-neutral-400 hover:text-neutral-600 active:cursor-grabbing"
+            className="cursor-grab text-tertiaer hover:text-primaer active:cursor-grabbing"
           >
             ⠿
           </button>
-          <span className="text-xs font-semibold tracking-wide text-neutral-400 uppercase">{TYP_LABEL[element.typ]}</span>
+          <span className="text-xs font-semibold tracking-wide text-tertiaer uppercase">{TYP_LABEL[element.typ]}</span>
         </div>
-        <button type="button" onClick={entfernen} className="text-xs text-neutral-400 hover:text-red-600">
+        <button type="button" onClick={entfernen} className="text-xs text-tertiaer hover:text-red-600">
           Entfernen
         </button>
       </div>
@@ -142,7 +142,7 @@ function ElementBlock({
         <select
           value={element.label}
           onChange={(e) => aendern({ label: e.target.value })}
-          className="h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+          className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
         >
           {Object.entries(TRENNZEICHEN_STIL_LABEL).map(([wert, text]) => (
             <option key={wert} value={wert}>
@@ -158,14 +158,14 @@ function ElementBlock({
               value={element.label}
               onChange={(e) => aendern({ label: e.target.value })}
               placeholder="Beschriftung"
-              className="h-9 flex-1 rounded-lg border border-neutral-300 px-2 text-sm"
+              className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
             />
-            <label className="flex shrink-0 items-center gap-1.5 text-xs text-neutral-600">
+            <label className="flex shrink-0 items-center gap-1.5 text-xs text-primaer">
               <input
                 type="checkbox"
                 checked={element.pflicht}
                 onChange={(e) => aendern({ pflicht: e.target.checked })}
-                className="h-4 w-4 rounded border-neutral-300"
+                className="h-4 w-4 rounded border-flaeche-300"
               />
               Pflichtfeld
             </label>
@@ -184,13 +184,13 @@ function ElementBlock({
                       aendern({ optionen })
                     }}
                     placeholder={`Option ${index + 1}`}
-                    className="h-8 flex-1 rounded-lg border border-neutral-300 px-2 text-sm"
+                    className="h-8 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
                   />
                   <button
                     type="button"
                     onClick={() => aendern({ optionen: element.optionen.filter((_, i) => i !== index) })}
                     aria-label="Option entfernen"
-                    className="flex h-8 w-8 items-center justify-center text-neutral-400 hover:text-red-600"
+                    className="flex h-8 w-8 items-center justify-center text-tertiaer hover:text-red-600"
                   >
                     ×
                   </button>
@@ -209,12 +209,12 @@ function ElementBlock({
       )}
 
       {moeglicheTrigger.length > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-neutral-100 pt-3 text-xs text-neutral-600">
+        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-flaeche-100 pt-3 text-xs text-primaer">
           <span className="font-medium">Nur anzeigen, wenn</span>
           <select
             value={aktuellerTrigger?.clientId ?? ""}
             onChange={(e) => aendern({ bedingungClientId: e.target.value || null, bedingungWert: null })}
-            className="h-7 rounded-lg border border-neutral-300 px-1.5"
+            className="h-7 rounded-lg border border-flaeche-300 px-1.5"
           >
             <option value="">(immer anzeigen)</option>
             {moeglicheTrigger.map((t) => (
@@ -229,7 +229,7 @@ function ElementBlock({
               <select
                 value={aktuellerTrigger.optionen.includes(element.bedingungWert ?? "") ? (element.bedingungWert ?? "") : ""}
                 onChange={(e) => aendern({ bedingungWert: e.target.value })}
-                className="h-7 rounded-lg border border-neutral-300 px-1.5"
+                className="h-7 rounded-lg border border-flaeche-300 px-1.5"
               >
                 <option value="" disabled>
                   Wert wählen …
@@ -430,7 +430,7 @@ export function FormularBaukasten({
       >
         <input type="hidden" name="elemente" defaultValue="[]" />
         <div>
-          <label htmlFor={`${id}-titel`} className="mb-1 block text-sm font-medium text-neutral-700">
+          <label htmlFor={`${id}-titel`} className="mb-1 block text-sm font-medium text-primaer">
             Titel
           </label>
           <input
@@ -440,12 +440,12 @@ export function FormularBaukasten({
             required
             value={titel}
             onChange={(e) => setTitel(e.target.value)}
-            className="h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+            className="h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Beschreibung</label>
+          <label className="mb-1 block text-sm font-medium text-primaer">Beschreibung</label>
           <RichTextEditor
             name="beschreibung"
             defaultValue={vorlage?.beschreibung ?? ""}
@@ -456,7 +456,7 @@ export function FormularBaukasten({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Empfänger der Einreichungen</label>
+          <label className="mb-1 block text-sm font-medium text-primaer">Empfänger der Einreichungen</label>
           <InfoEmpfaengerAuswahl
             abteilungen={abteilungen}
             gruppen={gruppen}
@@ -470,7 +470,7 @@ export function FormularBaukasten({
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-700">Benutzbar für</label>
+          <label className="mb-1 block text-sm font-medium text-primaer">Benutzbar für</label>
           <InfoEmpfaengerAuswahl
             abteilungen={abteilungen}
             gruppen={gruppen}
@@ -484,22 +484,22 @@ export function FormularBaukasten({
           />
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-neutral-700">
+        <label className="flex items-center gap-2 text-sm text-primaer">
           <input
             type="checkbox"
             name="pdfExport"
             checked={pdfExport}
             onChange={(e) => setPdfExport(e.target.checked)}
-            className="h-4 w-4 rounded border-neutral-300"
+            className="h-4 w-4 rounded border-flaeche-300"
           />
           Ausgefüllte PDF bei jeder Einreichung erzeugen
         </label>
 
-        <div className="border-t border-neutral-200 pt-5">
-          <h2 className="mb-3 text-sm font-semibold text-marke-grau">Elemente</h2>
+        <div className="border-t border-rand pt-5">
+          <h2 className="mb-3 text-sm font-semibold text-ueberschrift">Elemente</h2>
 
           {!bearbeitbar && (
-            <p className="mb-3 rounded-lg bg-neutral-100 px-3 py-2 text-xs text-neutral-600">
+            <p className="mb-3 rounded-lg bg-flaeche-100 px-3 py-2 text-xs text-primaer">
               Dieses Formular hat bereits Einreichungen — die Elemente sind deshalb nicht mehr veränderbar, nur noch
               die Angaben oben.
             </p>
@@ -532,14 +532,14 @@ export function FormularBaukasten({
           ) : (
             <div className="flex flex-col gap-2">
               {elemente.map((element) => (
-                <div key={element.clientId} className="rounded-lg border border-neutral-200 px-3 py-2 text-sm">
-                  <span className="text-xs font-semibold tracking-wide text-neutral-400 uppercase">
+                <div key={element.clientId} className="rounded-lg border border-rand px-3 py-2 text-sm">
+                  <span className="text-xs font-semibold tracking-wide text-tertiaer uppercase">
                     {TYP_LABEL[element.typ]}
                   </span>
                   {element.typ === FormularElementTyp.TRENNZEICHEN ? (
-                    <p className="text-neutral-700">{TRENNZEICHEN_STIL_LABEL[element.label] ?? element.label}</p>
+                    <p className="text-primaer">{TRENNZEICHEN_STIL_LABEL[element.label] ?? element.label}</p>
                   ) : (
-                    element.typ !== FormularElementTyp.TEXTBLOCK && <p className="text-neutral-700">{element.label}</p>
+                    element.typ !== FormularElementTyp.TEXTBLOCK && <p className="text-primaer">{element.label}</p>
                   )}
                 </div>
               ))}
@@ -551,18 +551,18 @@ export function FormularBaukasten({
               <button
                 type="button"
                 onClick={() => setTypPickerOffen((v) => !v)}
-                className="h-9 rounded-lg border border-dashed border-neutral-300 px-3 text-sm font-medium text-neutral-600 hover:border-marke-gruen hover:text-marke-grau"
+                className="h-9 rounded-lg border border-dashed border-flaeche-300 px-3 text-sm font-medium text-primaer hover:border-marke-gruen hover:text-ueberschrift"
               >
                 + Element
               </button>
               {typPickerOffen && (
-                <div className="absolute z-10 mt-1 w-64 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+                <div className="absolute z-10 mt-1 w-64 overflow-hidden rounded-lg border border-rand bg-flaeche py-1 shadow-lg">
                   {(Object.keys(TYP_LABEL) as FormularElementTyp[]).map((typ) => (
                     <button
                       key={typ}
                       type="button"
                       onClick={() => elementHinzufuegen(typ)}
-                      className="block w-full px-3 py-2 text-left text-sm text-neutral-700 hover:bg-marke-gruen/10"
+                      className="block w-full px-3 py-2 text-left text-sm text-primaer hover:bg-marke-gruen/10"
                     >
                       {TYP_LABEL[typ]}
                     </button>
@@ -584,7 +584,7 @@ export function FormularBaukasten({
             <button
               type="button"
               onClick={abbrechenKlick}
-              className="h-10 rounded-lg px-3 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100"
+              className="h-10 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
             >
               Abbrechen
             </button>
@@ -614,18 +614,18 @@ export function FormularBaukasten({
          FormularFeld-Komponenten inkl. "required", die sonst die
          Baukasten-Absendung blockieren würden, obwohl sie leer bleiben. */}
       <div className="lg:sticky lg:top-6 lg:self-start">
-        <p className="mb-2 text-xs font-semibold tracking-wide text-neutral-400 uppercase">Vorschau</p>
-        <div className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm">
-          <h1 className="text-xl font-semibold text-marke-grau">{titel || "(Titel)"}</h1>
+        <p className="mb-2 text-xs font-semibold tracking-wide text-tertiaer uppercase">Vorschau</p>
+        <div className="rounded-xl border border-rand bg-flaeche p-5 shadow-sm">
+          <h1 className="text-xl font-semibold text-ueberschrift">{titel || "(Titel)"}</h1>
           {beschreibung && (
             <div
-              className={RICH_TEXT_ANZEIGE_KLASSE + " mt-2 text-neutral-600"}
+              className={RICH_TEXT_ANZEIGE_KLASSE + " mt-2 text-primaer"}
               dangerouslySetInnerHTML={{ __html: beschreibung }}
             />
           )}
           <div className="mt-5 flex flex-col gap-5">
             {vorschauElemente.length === 0 ? (
-              <p className="text-sm text-neutral-400">Noch keine Elemente hinzugefügt.</p>
+              <p className="text-sm text-tertiaer">Noch keine Elemente hinzugefügt.</p>
             ) : (
               vorschauElemente
                 .filter((element) => formularElementSichtbar(element, vorschauTriggerWerte))

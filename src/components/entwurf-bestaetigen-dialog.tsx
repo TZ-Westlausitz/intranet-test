@@ -55,16 +55,16 @@ export function EntwurfBestaetigenDialog({
     <dialog
       ref={dialogRef}
       onClose={onZurueckZumBearbeiten}
-      className="fixed top-1/2 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-5 shadow-xl backdrop:bg-neutral-900/40"
+      className="fixed top-1/2 left-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-5 shadow-xl backdrop:bg-neutral-900/40"
     >
-      <p className="text-sm text-neutral-700">
+      <p className="text-sm text-primaer">
         Ungespeicherte Änderungen — als Entwurf speichern, bevor du schließt?
       </p>
       <div className="mt-4 flex justify-end gap-2">
         <button
           type="button"
           onClick={onVerwerfen}
-          className="h-9 rounded-lg px-3 text-sm font-medium text-neutral-600 hover:bg-neutral-100"
+          className="h-9 rounded-lg px-3 text-sm font-medium text-primaer hover:bg-flaeche-100"
         >
           Verwerfen
         </button>

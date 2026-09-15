@@ -29,8 +29,8 @@ export default async function PasswortAendernSeite({
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-5 py-10">
       <Logoleiste />
-      <h1 className="text-2xl font-semibold text-marke-grau">Neues Passwort festlegen</h1>
-      <p className="mt-1 text-sm text-neutral-600">
+      <h1 className="text-2xl font-semibold text-ueberschrift">Neues Passwort festlegen</h1>
+      <p className="mt-1 text-sm text-primaer">
         Hallo {kontext.name}, bitte leg jetzt dein eigenes Passwort fest, bevor es weitergeht.
       </p>
 
@@ -43,7 +43,7 @@ export default async function PasswortAendernSeite({
             required
             minLength={8}
             autoComplete="new-password"
-            className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
           />
         </label>
 
@@ -55,7 +55,7 @@ export default async function PasswortAendernSeite({
             required
             minLength={8}
             autoComplete="new-password"
-            className="rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
           />
         </label>
 

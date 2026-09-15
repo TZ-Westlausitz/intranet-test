@@ -37,7 +37,7 @@ export function MobilesMenu() {
         aria-expanded={offen}
         aria-haspopup="menu"
         aria-label="Menü öffnen"
-        className="flex h-9 w-9 items-center justify-center rounded-lg text-neutral-600 transition hover:bg-marke-gruen/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+        className="flex h-9 w-9 items-center justify-center rounded-lg text-primaer transition hover:bg-marke-gruen/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className="h-5 w-5" aria-hidden>
           <line x1="3" y1="6" x2="21" y2="6" />
@@ -49,15 +49,15 @@ export function MobilesMenu() {
       {offen && (
         <div
           role="menu"
-          className="absolute left-0 z-10 mt-2 w-56 overflow-hidden rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+          className="absolute left-0 z-10 mt-2 w-56 overflow-hidden rounded-lg border border-rand bg-flaeche py-1 shadow-lg"
         >
           {BAUSTEINE.map((baustein) =>
             baustein.unterpunkte ? (
               // Kein zweites, ineinander geschachteltes Ausklappen auf dem
               // Handy — das Menü selbst ist ja schon offen, die Unterpunkte
               // stehen deshalb direkt eingerückt darunter.
-              <div key={baustein.name} className="border-t border-neutral-100 py-1">
-                <span className="block px-4 pt-1 pb-1.5 text-xs font-semibold tracking-wide text-neutral-400 uppercase">
+              <div key={baustein.name} className="border-t border-rand py-1">
+                <span className="block px-4 pt-1 pb-1.5 text-xs font-semibold tracking-wide text-tertiaer uppercase">
                   {baustein.name}
                 </span>
                 {baustein.unterpunkte.map((punkt) => (
@@ -88,7 +88,7 @@ export function MobilesMenu() {
                 role="menuitem"
                 aria-disabled="true"
                 title="Noch nicht verfügbar"
-                className="block cursor-default px-4 py-2.5 text-sm text-neutral-400"
+                className="block cursor-default px-4 py-2.5 text-sm text-tertiaer"
               >
                 {baustein.name}
               </span>

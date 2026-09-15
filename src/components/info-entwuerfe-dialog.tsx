@@ -43,8 +43,8 @@ function EntwurfZeile({
   return (
     <li className="flex items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-neutral-700">{entwurf.titel || "Entwurf ohne Titel"}</p>
-        <p className="text-xs text-neutral-400">{formatiereDatumAusDate(entwurf.erstelltAm)}</p>
+        <p className="truncate text-sm font-medium text-primaer">{entwurf.titel || "Entwurf ohne Titel"}</p>
+        <p className="text-xs text-tertiaer">{formatiereDatumAusDate(entwurf.erstelltAm)}</p>
       </div>
       <div className="flex shrink-0 items-center gap-3">
         <button
@@ -55,7 +55,7 @@ function EntwurfZeile({
           Bearbeiten
         </button>
         <form action={entwurfLoeschenAktion.bind(null, entwurf.id)}>
-          <button type="submit" className="text-xs text-neutral-400 hover:text-red-600">
+          <button type="submit" className="text-xs text-tertiaer hover:text-red-600">
             Löschen
           </button>
         </form>
@@ -101,22 +101,22 @@ export function InfoEntwuerfeDialog({
       <button
         type="button"
         onClick={() => dialogRef.current?.showModal()}
-        className="h-9 shrink-0 rounded-lg border border-neutral-300 px-3 text-sm font-medium text-neutral-600 transition hover:border-marke-gruen hover:text-marke-grau"
+        className="h-9 shrink-0 rounded-lg border border-flaeche-300 px-3 text-sm font-medium text-primaer transition hover:border-marke-gruen hover:text-ueberschrift"
       >
         Entwürfe anzeigen ({entwuerfe.length})
       </button>
 
       <dialog
         ref={dialogRef}
-        className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-0 shadow-xl backdrop:bg-neutral-900/40"
+        className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
       >
-        <div className="flex items-center justify-between border-b border-neutral-200 px-5 py-4">
-          <h2 className="text-lg font-semibold text-marke-grau">Entwürfe</h2>
-          <button type="button" onClick={() => dialogRef.current?.close()} className="text-sm text-neutral-500 hover:text-neutral-700">
+        <div className="flex items-center justify-between border-b border-rand px-5 py-4">
+          <h2 className="text-lg font-semibold text-ueberschrift">Entwürfe</h2>
+          <button type="button" onClick={() => dialogRef.current?.close()} className="text-sm text-sekundaer hover:text-primaer">
             Schließen
           </button>
         </div>
-        <ul className="max-h-[70vh] divide-y divide-neutral-100 overflow-y-auto">
+        <ul className="max-h-[70vh] divide-y divide-flaeche-100 overflow-y-auto">
           {entwuerfe.map((entwurf) => (
             <EntwurfZeile
               key={entwurf.id}

@@ -99,7 +99,7 @@ export function KalenderTagZelle({
             : feiertagAktiv
               ? "font-semibold text-red-600"
               : kalendertag.imAktuellenMonat
-                ? "text-neutral-700"
+                ? "text-primaer"
                 : "text-neutral-300")
         }
       >
@@ -125,7 +125,7 @@ export function KalenderTagZelle({
             />
           ))}
           {kalendertag.termine.length > 3 && (
-            <span className="text-[9px] leading-none text-neutral-400">
+            <span className="text-[9px] leading-none text-tertiaer">
               +{kalendertag.termine.length - 3}
             </span>
           )}
@@ -135,17 +135,17 @@ export function KalenderTagZelle({
       {feiertagAktiv && (
         <dialog
           ref={feiertagDialogRef}
-          className="fixed top-1/2 left-1/2 w-full max-w-xs -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-neutral-200 p-0 shadow-xl backdrop:bg-neutral-900/40"
+          className="fixed top-1/2 left-1/2 w-full max-w-xs -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
         >
           <div className="px-5 py-4">
-            <p className="text-sm font-semibold text-marke-grau">{kalendertag.feiertag}</p>
-            <p className="mt-1 text-xs text-neutral-500">Gesetzlicher Feiertag in Sachsen</p>
+            <p className="text-sm font-semibold text-ueberschrift">{kalendertag.feiertag}</p>
+            <p className="mt-1 text-xs text-sekundaer">Gesetzlicher Feiertag in Sachsen</p>
           </div>
-          <div className="flex justify-end border-t border-neutral-200 px-5 py-3">
+          <div className="flex justify-end border-t border-rand px-5 py-3">
             <button
               type="button"
               onClick={() => feiertagDialogRef.current?.close()}
-              className="h-9 rounded-lg px-3 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100"
+              className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
             >
               Schließen
             </button>

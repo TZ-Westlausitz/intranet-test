@@ -110,14 +110,14 @@ export function PersonenAuswahl({
             return (
               <span
                 key={personId}
-                className="flex items-center gap-1 rounded-full bg-marke-gruen/15 py-1 pl-2.5 pr-1 text-xs text-marke-grau"
+                className="flex items-center gap-1 rounded-full bg-marke-gruen/15 py-1 pl-2.5 pr-1 text-xs text-ueberschrift"
               >
                 {person.name}
                 <button
                   type="button"
                   aria-label={`${person.name} entfernen`}
                   onClick={() => entfernen(personId)}
-                  className="flex h-4 w-4 items-center justify-center rounded-full text-neutral-500 hover:bg-white/60"
+                  className="flex h-4 w-4 items-center justify-center rounded-full text-sekundaer hover:bg-flaeche/60"
                 >
                   ×
                 </button>
@@ -144,7 +144,7 @@ export function PersonenAuswahl({
         onBlur={() => window.setTimeout(() => setGeoeffnet(false), 150)}
         onKeyDown={beiTaste}
         placeholder="Person suchen …"
-        className="h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+        className="h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
       />
 
       {geoeffnet && (
@@ -152,10 +152,10 @@ export function PersonenAuswahl({
           ref={listeRef}
           id={`${id}-liste`}
           role="listbox"
-          className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-neutral-200 bg-white shadow-lg"
+          className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-lg border border-rand bg-flaeche shadow-lg"
         >
           {gefiltert.length === 0 ? (
-            <p className="px-3 py-2 text-sm text-neutral-400">Keine Treffer</p>
+            <p className="px-3 py-2 text-sm text-tertiaer">Keine Treffer</p>
           ) : (
             gefiltert.map((person, index) => (
               <button
@@ -170,8 +170,8 @@ export function PersonenAuswahl({
                 onMouseEnter={() => setHervorgehoben(index)}
                 onClick={() => hinzufuegen(person.id)}
                 className={
-                  "block w-full px-3 py-2 text-left text-sm text-neutral-700 " +
-                  (index === hervorgehobenerIndex ? "bg-marke-gruen/10" : "hover:bg-neutral-50")
+                  "block w-full px-3 py-2 text-left text-sm text-primaer " +
+                  (index === hervorgehobenerIndex ? "bg-marke-gruen/10" : "hover:bg-flaeche-schwach")
                 }
               >
                 {person.name}

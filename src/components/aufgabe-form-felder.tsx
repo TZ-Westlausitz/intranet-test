@@ -82,7 +82,7 @@ export function AufgabeFormFelder({
   return (
     <>
       <div>
-        <label className="block text-xs font-medium text-neutral-600">
+        <label className="block text-xs font-medium text-primaer">
           Titel
         </label>
         <input
@@ -90,7 +90,7 @@ export function AufgabeFormFelder({
           type="text"
           required
           defaultValue={standardwerte.titel}
-          className="mt-1 h-9 w-full rounded-lg border border-neutral-300 px-2 text-sm"
+          className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
         />
       </div>
 
@@ -101,7 +101,7 @@ export function AufgabeFormFelder({
 
         <div className="mt-3 flex flex-col gap-3">
           <div>
-            <label className="block text-xs font-medium text-neutral-600">Notizen (optional)</label>
+            <label className="block text-xs font-medium text-primaer">Notizen (optional)</label>
             <div className="mt-1">
               <RichTextEditor name="beschreibung" defaultValue={standardwerte.beschreibung} />
             </div>
@@ -109,17 +109,17 @@ export function AufgabeFormFelder({
 
           <div className="flex flex-wrap items-end gap-3">
             <div>
-              <label className="block text-xs font-medium text-neutral-600">Fällig am</label>
+              <label className="block text-xs font-medium text-primaer">Fällig am</label>
               <input
                 name="faelligAm"
                 type="date"
                 defaultValue={standardwerte.faelligAm}
-                className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+                className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
               />
             </div>
 
             <fieldset>
-              <legend className="text-xs font-medium text-neutral-600">Priorität</legend>
+              <legend className="text-xs font-medium text-primaer">Priorität</legend>
               <div className="mt-1.5 flex gap-2">
                 {AUFGABE_PRIORITAETEN.map((prioritaet) => (
                   <label
@@ -148,25 +148,25 @@ export function AufgabeFormFelder({
 
           {standardwerte.geplantAmBearbeitbar && (
             <div>
-              <label className="block text-xs font-medium text-neutral-600">Geplant für (optional)</label>
+              <label className="block text-xs font-medium text-primaer">Geplant für (optional)</label>
               <input
                 name="geplantAm"
                 type="date"
                 defaultValue={standardwerte.geplantAm}
-                className="mt-1 h-9 rounded-lg border border-neutral-300 px-2 text-sm"
+                className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
               />
-              <p className="mt-1.5 text-xs text-neutral-500">Taucht erst ab diesem Datum in der To-Do-Liste auf.</p>
+              <p className="mt-1.5 text-xs text-sekundaer">Taucht erst ab diesem Datum in der To-Do-Liste auf.</p>
             </div>
           )}
 
           {bestehendeAnhaenge.length > 0 && aufgabeId && (
             <div>
-              <label className="block text-xs font-medium text-neutral-600">Bestehende Anhänge</label>
+              <label className="block text-xs font-medium text-primaer">Bestehende Anhänge</label>
               <ul className="mt-1.5 flex flex-col gap-1">
                 {bestehendeAnhaenge.map((anhang) => (
                   <li
                     key={anhang.id}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-neutral-200 px-2.5 py-1.5 text-sm"
+                    className="flex items-center justify-between gap-2 rounded-lg border border-rand px-2.5 py-1.5 text-sm"
                   >
                     <a
                       href={`/api/aufgaben/${aufgabeId}/anhaenge/${anhang.id}`}
@@ -181,7 +181,7 @@ export function AufgabeFormFelder({
                         <button
                           type="submit"
                           aria-label={`${anhang.dateiname} entfernen`}
-                          className="shrink-0 rounded p-1 text-xs text-neutral-400 hover:bg-red-50 hover:text-red-600"
+                          className="shrink-0 rounded p-1 text-xs text-tertiaer hover:bg-red-50 hover:text-red-600"
                         >
                           entfernen
                         </button>
@@ -194,7 +194,7 @@ export function AufgabeFormFelder({
           )}
 
           <div>
-            <label className="block text-xs font-medium text-neutral-600">
+            <label className="block text-xs font-medium text-primaer">
               {bestehendeAnhaenge.length > 0 ? "Weitere Anhänge" : "Anhänge (Dokumente/Fotos)"}
             </label>
             <input
@@ -202,7 +202,7 @@ export function AufgabeFormFelder({
               name="anhaenge"
               multiple
               accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
-              className="mt-1.5 w-full text-sm text-neutral-600 file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-neutral-100 file:px-3 file:text-sm file:font-medium file:text-neutral-700 hover:file:bg-neutral-200"
+              className="mt-1.5 w-full text-sm text-primaer file:mr-3 file:h-8 file:rounded-lg file:border-0 file:bg-flaeche-100 file:px-3 file:text-sm file:font-medium file:text-primaer hover:file:bg-flaeche-200"
             />
           </div>
         </div>

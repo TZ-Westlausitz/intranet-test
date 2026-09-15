@@ -39,12 +39,12 @@ export function DatumUhrzeitFeld({
         name={name}
         required={required}
         defaultValue={defaultValue}
-        className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+        className="min-w-0 flex-1 rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
       />
       <button
         type="button"
         onClick={jetztEinsetzen}
-        className="shrink-0 rounded-lg border border-neutral-300 px-3 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-marke-gruen hover:text-marke-gruen-dunkel"
+        className="shrink-0 rounded-lg border border-flaeche-300 px-3 py-2.5 text-sm font-medium text-primaer transition hover:border-marke-gruen hover:text-marke-gruen-dunkel"
       >
         Jetzt
       </button>

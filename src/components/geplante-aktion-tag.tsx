@@ -82,7 +82,7 @@ export function GeplanteAktionenTag({
           (tag.istHeute
             ? "bg-marke-gruen font-semibold text-neutral-900"
             : tag.imAktuellenMonat
-              ? "text-neutral-700"
+              ? "text-primaer"
               : "text-neutral-300")
         }
       >
@@ -127,7 +127,7 @@ export function GeplanteAktionenTag({
             )
           })}
           {tag.eintraege.length > 3 && (
-            <span className="text-[9px] leading-none text-neutral-400">+{tag.eintraege.length - 3}</span>
+            <span className="text-[9px] leading-none text-tertiaer">+{tag.eintraege.length - 3}</span>
           )}
         </div>
       )}
