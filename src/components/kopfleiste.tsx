@@ -19,8 +19,13 @@ import { MobilesMenu } from "@/components/mobiles-menu"
  */
 export function Kopfleiste({ name }: { name: string }) {
   return (
-    <header className="mb-8 flex items-center justify-between border-b border-rand pb-4 md:hidden">
-      <div className="flex items-center gap-2">
+    // sticky (Rückmeldung vom 2026-09-15, "Kopfzeile verschönern"): bleibt
+    // beim Scrollen der jetzt längeren Handy-Startseite oben sichtbar,
+    // Menü/Profil bleiben so von überall auf der Seite erreichbar. Leicht
+    // transparent + backdrop-blur statt voll deckend, damit beim Scrollen
+    // kein harter Schnitt entsteht.
+    <header className="sticky top-0 z-10 -mx-5 mb-6 flex items-center justify-between border-b border-rand bg-flaeche/90 px-5 py-3 backdrop-blur-sm md:hidden">
+      <div className="flex items-center gap-3">
         <MobilesMenu />
 
         <Link
