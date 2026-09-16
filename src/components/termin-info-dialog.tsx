@@ -13,18 +13,21 @@ function dateigroesseAnzeige(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-/** Bild = kleine Vorschau, alles andere (PDF) = Dateisymbol. */
+/**
+ * Bild = kleine Vorschau, alles andere (PDF) = Dateisymbol. Bild-Klick
+ * öffnet eine In-App-Lightbox statt `target="_blank"` (Rückmeldung
+ * 2026-09-16, dasselbe Muster wie bei Info-/Chat-Anhängen, siehe
+ * AnhaengeListe in info-anzeigen-dialog.tsx): `target="_blank"`
+ * navigierte in der installierten Web-App (Standalone-Modus, keine
+ * Tab-Leiste) einfach die ganze App zum rohen Bild, ohne Weg zurück.
+ */
 function AnhangZeile({ terminId, anhang }: { terminId: string; anhang: TerminAnhangAnzeige }) {
   const url = `/api/termine/${terminId}/anhaenge/${anhang.id}`
   const istBild = anhang.mimetyp.startsWith("image/")
+  const lightboxRef = useRef<HTMLDialogElement>(null)
 
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-flaeche-schwach"
-    >
+  const inhalt = (
+    <>
       {istBild ? (
         // eslint-disable-next-line @next/next/no-img-element -- interne Datei aus der Ablage, kein optimierbares Next-Image-Ziel
         <img src={url} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
@@ -37,7 +40,53 @@ function AnhangZeile({ terminId, anhang }: { terminId: string; anhang: TerminAnh
         <span className="block truncate text-marke-gruen-dunkel hover:underline">{anhang.dateiname}</span>
         <span className="block text-xs text-tertiaer">{dateigroesseAnzeige(anhang.groesseBytes)}</span>
       </span>
-    </a>
+    </>
+  )
+
+  if (!istBild) {
+    return (
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 rounded-lg px-1 py-1 hover:bg-flaeche-schwach"
+      >
+        {inhalt}
+      </a>
+    )
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => lightboxRef.current?.showModal()}
+        className="flex items-center gap-2 rounded-lg px-1 py-1 text-left hover:bg-flaeche-schwach"
+      >
+        {inhalt}
+      </button>
+
+      <dialog
+        ref={lightboxRef}
+        onClick={(ereignis) => {
+          if (ereignis.target === lightboxRef.current) lightboxRef.current?.close()
+        }}
+        className="fixed top-1/2 left-1/2 max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-transparent p-0 backdrop:bg-neutral-900/70"
+      >
+        <div className="relative">
+          <button
+            type="button"
+            aria-label="Schließen"
+            onClick={() => lightboxRef.current?.close()}
+            className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900/60 text-white transition hover:bg-neutral-900/80"
+          >
+            ✕
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
+          <img src={url} alt={anhang.dateiname} className="max-h-[85vh] max-w-[92vw] rounded-xl object-contain" />
+        </div>
+      </dialog>
+    </>
   )
 }
 

@@ -53,6 +53,86 @@ function dateigroesseAnzeige(bytes: number): string {
 }
 
 /**
+ * Eine Zeile unter "Anhänge (Dokumente/Fotos)" im Bearbeiten-Formular —
+ * eigene Komponente statt inline im `.map()`, weil sie für den
+ * Bild-Klick (Lightbox statt `target="_blank"`) eigenen State braucht und
+ * Hooks nicht in einer `.map()`-Callback stehen dürfen. Dasselbe Muster
+ * wie bei Info-/Chat-Anhängen (Rückmeldung 2026-09-16, siehe AnhaengeListe
+ * in info-anzeigen-dialog.tsx): `target="_blank"` navigierte in der
+ * installierten Web-App (Standalone-Modus, keine Tab-Leiste) einfach die
+ * ganze App zum rohen Bild, ohne Weg zurück.
+ */
+function BestehenderAnhangZeile({ terminId, anhang }: { terminId: string; anhang: AnhangAnzeige }) {
+  const url = `/api/termine/${terminId}/anhaenge/${anhang.id}`
+  const istBild = anhang.mimetyp.startsWith("image/")
+  const lightboxRef = useRef<HTMLDialogElement>(null)
+
+  const inhalt = (
+    <>
+      {istBild ? (
+        // eslint-disable-next-line @next/next/no-img-element -- interne Datei aus der Ablage, kein optimierbares Next-Image-Ziel
+        <img src={url} alt="" className="h-8 w-8 shrink-0 rounded object-cover" />
+      ) : (
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-flaeche-100 text-tertiaer">
+          📄
+        </span>
+      )}
+      <span className="truncate text-marke-gruen-dunkel hover:underline">{anhang.dateiname}</span>
+    </>
+  )
+
+  return (
+    <li className="flex items-center gap-2 rounded-lg border border-rand px-2.5 py-1.5 text-sm">
+      {istBild ? (
+        <>
+          <button
+            type="button"
+            onClick={() => lightboxRef.current?.showModal()}
+            className="flex min-w-0 flex-1 items-center gap-2"
+          >
+            {inhalt}
+          </button>
+          <dialog
+            ref={lightboxRef}
+            onClick={(ereignis) => {
+              if (ereignis.target === lightboxRef.current) lightboxRef.current?.close()
+            }}
+            className="fixed top-1/2 left-1/2 max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-transparent p-0 backdrop:bg-neutral-900/70"
+          >
+            <div className="relative">
+              <button
+                type="button"
+                aria-label="Schließen"
+                onClick={() => lightboxRef.current?.close()}
+                className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900/60 text-white transition hover:bg-neutral-900/80"
+              >
+                ✕
+              </button>
+              {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
+              <img src={url} alt={anhang.dateiname} className="max-h-[85vh] max-w-[92vw] rounded-xl object-contain" />
+            </div>
+          </dialog>
+        </>
+      ) : (
+        <a href={url} target="_blank" rel="noopener noreferrer" className="flex min-w-0 flex-1 items-center gap-2">
+          {inhalt}
+        </a>
+      )}
+      <label className="flex shrink-0 items-center gap-1.5 text-xs text-sekundaer">
+        <input
+          type="checkbox"
+          name="anhaengeLoeschen"
+          value={anhang.id}
+          className="h-4 w-4 rounded border-flaeche-300 text-red-600 focus:ring-red-600"
+        />
+        entfernen
+      </label>
+      <span className="shrink-0 text-xs text-tertiaer">{dateigroesseAnzeige(anhang.groesseBytes)}</span>
+    </li>
+  )
+}
+
+/**
  * Die eigentlichen Formularfelder für einen Termin — geteilt zwischen dem
  * Anlegen-Pop-Up (TerminDialog) und dem Bearbeiten-Pop-Up (in
  * TerminBearbeitenDialog), damit die ca. 150 Zeilen Feld-Markup nicht
@@ -393,38 +473,8 @@ export function TerminFormFelder({
         {bestehendeAnhaenge.length > 0 && (
           <ul className="mt-1.5 flex flex-col gap-1">
             {bestehendeAnhaenge.map((anhang) => (
-              <li key={anhang.id} className="flex items-center gap-2 rounded-lg border border-rand px-2.5 py-1.5 text-sm">
-                <a
-                  href={`/api/termine/${terminId}/anhaenge/${anhang.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex min-w-0 flex-1 items-center gap-2"
-                >
-                  {anhang.mimetyp.startsWith("image/") ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- interne Datei aus der Ablage, kein optimierbares Next-Image-Ziel
-                    <img
-                      src={`/api/termine/${terminId}/anhaenge/${anhang.id}`}
-                      alt=""
-                      className="h-8 w-8 shrink-0 rounded object-cover"
-                    />
-                  ) : (
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-flaeche-100 text-tertiaer">
-                      📄
-                    </span>
-                  )}
-                  <span className="truncate text-marke-gruen-dunkel hover:underline">{anhang.dateiname}</span>
-                </a>
-                <label className="flex shrink-0 items-center gap-1.5 text-xs text-sekundaer">
-                  <input
-                    type="checkbox"
-                    name="anhaengeLoeschen"
-                    value={anhang.id}
-                    className="h-4 w-4 rounded border-flaeche-300 text-red-600 focus:ring-red-600"
-                  />
-                  entfernen
-                </label>
-                <span className="shrink-0 text-xs text-tertiaer">{dateigroesseAnzeige(anhang.groesseBytes)}</span>
-              </li>
+              // terminId ist hier immer gesetzt — bestehendeAnhaenge gibt es nur beim Bearbeiten eines existierenden Termins.
+              <BestehenderAnhangZeile key={anhang.id} terminId={terminId!} anhang={anhang} />
             ))}
           </ul>
         )}

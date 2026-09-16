@@ -1,5 +1,7 @@
 "use client"
 
+import { useRef, useState } from "react"
+
 function formatiereGroesse(bytes: number): string {
   return bytes < 1_000_000 ? `${Math.round(bytes / 1024)} KB` : `${(bytes / 1_000_000).toFixed(1)} MB`
 }
@@ -12,6 +14,30 @@ export type ProjektDokumentAnzeige = {
   hochgeladenAm: Date
   hochgeladenVon: { vorname: string; nachname: string }
   darfLoeschen: boolean
+}
+
+/**
+ * Bild-Klick öffnet eine In-App-Lightbox statt `target="_blank"`
+ * (Rückmeldung 2026-09-16, dasselbe Muster wie bei Info-/Chat-Anhängen,
+ * siehe AnhaengeListe in info-anzeigen-dialog.tsx): `target="_blank"`
+ * navigierte in der installierten Web-App (Standalone-Modus, keine
+ * Tab-Leiste) einfach die ganze App zum rohen Bild, ohne Weg zurück.
+ */
+function BildLightbox({ url, offenerName, onSchliessen }: { url: string; offenerName: string; onSchliessen: () => void }) {
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-label="Schließen"
+        onClick={onSchliessen}
+        className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900/60 text-white transition hover:bg-neutral-900/80"
+      >
+        ✕
+      </button>
+      {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
+      <img src={url} alt={offenerName} className="max-h-[85vh] max-w-[92vw] rounded-xl object-contain" />
+    </div>
+  )
 }
 
 /** Dokumentenbereich eines Projekts: Liste + Upload — Regel 7, nur der Pfad steht in der DB, die Datei kommt über die Download-Route. */
@@ -28,6 +54,9 @@ export function ProjektDokumente({
   hochladenAktion: (projektId: string, formData: FormData) => void
   loeschenAktion: (projektId: string, dokumentId: string) => void
 }) {
+  const lightboxRef = useRef<HTMLDialogElement>(null)
+  const [geoeffnetesDokument, setGeoeffnetesDokument] = useState<ProjektDokumentAnzeige | null>(null)
+
   return (
     <div className="flex flex-col gap-3">
       {dokumente.length === 0 ? (
@@ -37,14 +66,8 @@ export function ProjektDokumente({
           {dokumente.map((dokument) => {
             const url = `/api/projekte/${projektId}/dokumente/${dokument.id}`
             const istBild = dokument.mimetyp.startsWith("image/")
-            return (
-            <li key={dokument.id} className="flex items-center justify-between gap-2 py-2">
-              <a
-                href={url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex min-w-0 flex-1 items-center gap-2 truncate text-sm text-marke-gruen-dunkel hover:underline"
-              >
+            const inhalt = (
+              <>
                 {istBild ? (
                   // eslint-disable-next-line @next/next/no-img-element -- interne Datei aus der Ablage, kein optimierbares Next-Image-Ziel
                   <img src={url} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
@@ -54,7 +77,31 @@ export function ProjektDokumente({
                   </span>
                 )}
                 <span className="truncate">{dokument.dateiname}</span>
-              </a>
+              </>
+            )
+            return (
+            <li key={dokument.id} className="flex items-center justify-between gap-2 py-2">
+              {istBild ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGeoeffnetesDokument(dokument)
+                    lightboxRef.current?.showModal()
+                  }}
+                  className="flex min-w-0 flex-1 items-center gap-2 truncate text-sm text-marke-gruen-dunkel hover:underline"
+                >
+                  {inhalt}
+                </button>
+              ) : (
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-w-0 flex-1 items-center gap-2 truncate text-sm text-marke-gruen-dunkel hover:underline"
+                >
+                  {inhalt}
+                </a>
+              )}
               <span className="shrink-0 text-xs text-tertiaer">
                 {formatiereGroesse(dokument.groesseBytes)} · {dokument.hochgeladenVon.vorname} {dokument.hochgeladenVon.nachname}
               </span>
@@ -74,6 +121,22 @@ export function ProjektDokumente({
           })}
         </ul>
       )}
+
+      <dialog
+        ref={lightboxRef}
+        onClick={(ereignis) => {
+          if (ereignis.target === lightboxRef.current) lightboxRef.current?.close()
+        }}
+        className="fixed top-1/2 left-1/2 max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-transparent p-0 backdrop:bg-neutral-900/70"
+      >
+        {geoeffnetesDokument && (
+          <BildLightbox
+            url={`/api/projekte/${projektId}/dokumente/${geoeffnetesDokument.id}`}
+            offenerName={geoeffnetesDokument.dateiname}
+            onSchliessen={() => lightboxRef.current?.close()}
+          />
+        )}
+      </dialog>
 
       {!schreibgeschuetzt && (
         <form action={hochladenAktion.bind(null, projektId)} className="flex items-end gap-2 border-t border-flaeche-100 pt-3">
