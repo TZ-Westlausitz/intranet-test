@@ -3,6 +3,7 @@ import Image from "next/image"
 import { AuthError } from "next-auth"
 
 import { signIn } from "@/lib/auth/auth"
+import { kontextOderNull } from "@/lib/auth/berechtigung"
 import { Hinweis } from "@/components/hinweis"
 
 /**
@@ -40,6 +41,19 @@ export default async function Anmeldeseite({
   searchParams: Promise<{ fehler?: string }>
 }) {
   const { fehler } = await searchParams
+
+  // Rückmeldung 2026-09-16: Mit gültiger Sitzung zeigte diese Seite bisher
+  // trotzdem die volle App-Oberfläche (Kopfzeile/Bausteine-Leiste, mobile
+  // Fußleiste) hinter dem Anmeldeformular — jetzt einfach zur Startseite
+  // weiterleiten. `kontextOderNull()` statt `auth()`, weil `auth()` nur das
+  // JWT prüft: bei einem deaktivierten/gelöschten Konto mit noch gültigem
+  // Token würde eine Weiterleitung allein danach eine Endlosschleife mit
+  // der Umleitung aus `berechtigung()` auslösen (siehe Memory
+  // redirect-schleife-root-layout) — `kontextOderNull()` behandelt genau
+  // diesen Fall bereits korrekt als "kein Kontext".
+  if (await kontextOderNull()) {
+    redirect("/")
+  }
 
   return (
     <main className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 py-10">

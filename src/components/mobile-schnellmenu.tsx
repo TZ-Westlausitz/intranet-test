@@ -2,8 +2,23 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 type Schnellaktion = { name: string; href: string; icon: React.ReactNode }
+
+// Nur auf den Seiten zeigen, zu denen mindestens eine der fünf
+// Schnellerstellen-Optionen wirklich passt (Rückmeldung 2026-09-16: auf
+// Seiten wie Profil/Abrechnung/Kontakte/Fahrzeuge ergab keine der Optionen
+// Sinn, und das schwebende "+" verdeckte dort teils echten Inhalt, z. B.
+// das "Gemeldet am"-Datum auf /abrechnung oder Kalendertage). Dasselbe
+// Präfix-Muster wie MobileTabBar/istAktiv, deshalb gilt "/aufgaben" auch
+// für /aufgaben/todos und /aufgaben/projekte.
+const RELEVANTE_PFADE = ["/newsfeed", "/aufgaben", "/kalender", "/chat"]
+
+function schnellmenuRelevant(pathname: string): boolean {
+  if (pathname === "/") return true
+  return RELEVANTE_PFADE.some((praefix) => pathname === praefix || pathname.startsWith(praefix + "/"))
+}
 
 const ICON_KLASSE = "h-4.5 w-4.5"
 
@@ -56,6 +71,7 @@ const TERMIN_ICON = (
  * Formulare vorlagenbasiert sind — es gibt dort kein "leeres" Anlegen.
  */
 export function MobileSchnellmenu({ darfInfo }: { darfInfo: boolean }) {
+  const pathname = usePathname()
   const [offen, setOffen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -82,6 +98,8 @@ export function MobileSchnellmenu({ darfInfo }: { darfInfo: boolean }) {
     { name: "Termin", href: "/kalender?neu=1", icon: TERMIN_ICON },
     { name: "Chat", href: "/chat?neu=1", icon: CHAT_ICON },
   ]
+
+  if (!schnellmenuRelevant(pathname)) return null
 
   return (
     <div

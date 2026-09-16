@@ -207,15 +207,14 @@ export function InfoFormFelder({
                   📎 {anhang.dateiname}
                 </a>
                 {anhangLoeschenAktion && (
-                  <form action={anhangLoeschenAktion.bind(null, anhang.id)}>
-                    <button
-                      type="submit"
-                      aria-label={`${anhang.dateiname} entfernen`}
-                      className="shrink-0 rounded p-1 text-xs text-tertiaer hover:bg-red-50 hover:text-red-600"
-                    >
-                      entfernen
-                    </button>
-                  </form>
+                  <button
+                    type="button"
+                    onClick={() => anhangLoeschenAktion(anhang.id)}
+                    aria-label={`${anhang.dateiname} entfernen`}
+                    className="shrink-0 rounded p-1 text-xs text-tertiaer hover:bg-red-50 hover:text-red-600"
+                  >
+                    entfernen
+                  </button>
                 )}
               </li>
             ))}
