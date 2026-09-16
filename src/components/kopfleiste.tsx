@@ -29,7 +29,7 @@ export function Kopfleiste() {
     // beim Scrollen der jetzt längeren Handy-Startseite oben sichtbar.
     // Leicht transparent + backdrop-blur statt voll deckend, damit beim
     // Scrollen kein harter Schnitt entsteht.
-    <header className="sticky top-0 z-10 -mx-5 mb-6 flex items-center border-b border-rand bg-flaeche/90 px-5 py-3 backdrop-blur-sm md:hidden">
+    <header className="sticky top-0 z-10 -mx-5 mb-6 flex items-center justify-center border-b border-rand bg-flaeche/90 px-5 py-3 backdrop-blur-sm md:hidden">
       <Link
         href="/"
         aria-label="Zur Startseite"

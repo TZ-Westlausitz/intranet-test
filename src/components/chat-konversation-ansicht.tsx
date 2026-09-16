@@ -50,38 +50,92 @@ const DATEIENDUNG_NACH_MIMETYP: Record<string, string> = {
  */
 const AUFNAHME_MIMETYP_KANDIDATEN = ["audio/mp4", "audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/ogg"]
 
-/** Anhänge einer Nachricht — Bilder als anklickbare Vorschau, Audio (Sprachnachrichten) als abspielbarer Player, alles andere als Datei-Link (Muster: Anhang-Listen bei Info/Termin, hier mit Bild-/Audio-Vorschau, weil das im Chat-Kontext erwartbar ist). */
+/**
+ * Anhänge einer Nachricht — Bilder als anklickbare Vorschau, Audio
+ * (Sprachnachrichten) als abspielbarer Player, alles andere als Datei-Link
+ * (Muster: Anhang-Listen bei Info/Termin, hier mit Bild-/Audio-Vorschau,
+ * weil das im Chat-Kontext erwartbar ist).
+ *
+ * Bild-Klick öffnet eine eigene Lightbox (natives `<dialog>`) statt bisher
+ * `target="_blank"` (Rückmeldung 2026-09-16, dieselbe wie bei den
+ * Info-Anhängen, siehe AnhaengeListe in info-anzeigen-dialog.tsx):
+ * `target="_blank"` navigierte in der installierten Web-App
+ * (Standalone-Modus, keine Tab-Leiste) einfach die ganze App zum rohen
+ * Bild, ohne Weg zurück außer Geste/Neustart. Audio/Datei-Anhänge bleiben
+ * unverändert, dort ist das unproblematisch.
+ */
 function NachrichtAnhaenge({ nachrichtId, anhaenge }: { nachrichtId: string; anhaenge: Nachricht["anhaenge"] }) {
+  const lightboxRef = useRef<HTMLDialogElement>(null)
+  const [geoeffnetesBild, setGeoeffnetesBild] = useState<{ id: string; dateiname: string } | null>(null)
+
   if (anhaenge.length === 0) return null
+
   return (
-    <div className="mt-1 flex flex-col gap-1.5">
-      {anhaenge.map((anhang) => {
-        const url = `/api/chat/nachrichten/${nachrichtId}/anhaenge/${anhang.id}`
-        if (anhang.mimetyp.startsWith("image/")) {
+    <>
+      <div className="mt-1 flex flex-col gap-1.5">
+        {anhaenge.map((anhang) => {
+          const url = `/api/chat/nachrichten/${nachrichtId}/anhaenge/${anhang.id}`
+          if (anhang.mimetyp.startsWith("image/")) {
+            return (
+              <button
+                key={anhang.id}
+                type="button"
+                onClick={() => {
+                  setGeoeffnetesBild(anhang)
+                  lightboxRef.current?.showModal()
+                }}
+                className="w-fit overflow-hidden rounded-lg border border-rand transition hover:border-marke-gruen"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
+                <img src={url} alt={anhang.dateiname} className="max-h-56 max-w-full" />
+              </button>
+            )
+          }
+          if (anhang.mimetyp.startsWith("audio/")) {
+            return <audio key={anhang.id} controls src={url} className="h-9 max-w-full" />
+          }
           return (
-            <a key={anhang.id} href={url} target="_blank" rel="noopener noreferrer">
-              {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
-              <img src={url} alt={anhang.dateiname} className="max-h-56 max-w-full rounded-lg border border-rand" />
+            <a
+              key={anhang.id}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg border border-rand bg-flaeche px-2.5 py-1.5 text-sm text-marke-gruen-dunkel hover:underline"
+            >
+              📎 {anhang.dateiname}
+              <span className="text-xs text-tertiaer">({dateigroesseAnzeige(anhang.groesseBytes)})</span>
             </a>
           )
-        }
-        if (anhang.mimetyp.startsWith("audio/")) {
-          return <audio key={anhang.id} controls src={url} className="h-9 max-w-full" />
-        }
-        return (
-          <a
-            key={anhang.id}
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-lg border border-rand bg-flaeche px-2.5 py-1.5 text-sm text-marke-gruen-dunkel hover:underline"
-          >
-            📎 {anhang.dateiname}
-            <span className="text-xs text-tertiaer">({dateigroesseAnzeige(anhang.groesseBytes)})</span>
-          </a>
-        )
-      })}
-    </div>
+        })}
+      </div>
+
+      <dialog
+        ref={lightboxRef}
+        onClick={(ereignis) => {
+          if (ereignis.target === lightboxRef.current) lightboxRef.current?.close()
+        }}
+        className="fixed top-1/2 left-1/2 max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-transparent p-0 backdrop:bg-neutral-900/70"
+      >
+        {geoeffnetesBild && (
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="Schließen"
+              onClick={() => lightboxRef.current?.close()}
+              className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900/60 text-white transition hover:bg-neutral-900/80"
+            >
+              ✕
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
+            <img
+              src={`/api/chat/nachrichten/${nachrichtId}/anhaenge/${geoeffnetesBild.id}`}
+              alt={geoeffnetesBild.dateiname}
+              className="max-h-[85vh] max-w-[92vw] rounded-xl object-contain"
+            />
+          </div>
+        )}
+      </dialog>
+    </>
   )
 }
 

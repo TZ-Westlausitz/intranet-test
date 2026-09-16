@@ -72,12 +72,15 @@ export function MobileSchnellmenu({ darfInfo }: { darfInfo: boolean }) {
     return () => document.removeEventListener("mousedown", beiKlickAussen)
   }, [offen])
 
+  // Reihenfolge = Reihenfolge im aufgeklappten Stapel, von oben nach unten
+  // (Rückmeldung 2026-09-15) — der Stapel wächst optisch nach oben über dem
+  // "+"-Knopf, das erste Array-Element landet dadurch ganz oben.
   const aktionen: Schnellaktion[] = [
+    ...(darfInfo ? [{ name: "Info", href: "/newsfeed?neu=1", icon: INFO_ICON }] : []),
+    { name: "Formular", href: "/formulare", icon: FORMULAR_ICON },
+    { name: "Aufgabe", href: "/aufgaben?neu=1", icon: AUFGABE_ICON },
     { name: "Termin", href: "/kalender?neu=1", icon: TERMIN_ICON },
     { name: "Chat", href: "/chat?neu=1", icon: CHAT_ICON },
-    { name: "Formular", href: "/formulare", icon: FORMULAR_ICON },
-    ...(darfInfo ? [{ name: "Info", href: "/newsfeed?neu=1", icon: INFO_ICON }] : []),
-    { name: "Aufgabe", href: "/aufgaben?neu=1", icon: AUFGABE_ICON },
   ]
 
   return (

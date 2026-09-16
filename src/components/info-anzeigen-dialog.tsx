@@ -331,21 +331,91 @@ function UmfrageAnzeige({
   )
 }
 
-function AnhaengeListe({ infoId, anhaenge }: { infoId: string; anhaenge: { id: string; dateiname: string }[] }) {
+/**
+ * Bild-Anhänge (mimetyp `image/*`) als anklickbare Vorschau-Kachel statt als
+ * Datei-Chip (Rückmeldung 2026-09-16: Fotos tauchten bisher gar nicht als
+ * Bild auf, nur als "📎 Dateiname"). Klick öffnet eine eigene Lightbox
+ * (natives `<dialog>`, verschachtelt im schon offenen InfoAnzeigenDialog —
+ * das trägt der Browser problemlos) statt `target="_blank"`: Letzteres
+ * navigierte in der installierten Web-App (Standalone-Modus, keine
+ * Tab-Leiste) einfach die ganze App zum rohen Bild, ohne Weg zurück außer
+ * Geste/Neustart — dieselbe Rückmeldung. Alles andere (PDF etc.) bleibt der
+ * bisherige Chip-Link, dort ist ein neuer Tab mit Browser-eigenem
+ * PDF-Viewer unproblematisch.
+ */
+function AnhaengeListe({
+  infoId,
+  anhaenge,
+}: {
+  infoId: string
+  anhaenge: { id: string; dateiname: string; mimetyp: string }[]
+}) {
+  const lightboxRef = useRef<HTMLDialogElement>(null)
+  const [geoeffnetesBild, setGeoeffnetesBild] = useState<{ id: string; dateiname: string } | null>(null)
+
   if (anhaenge.length === 0) return null
+
   return (
-    <div className="mt-2 flex flex-wrap gap-1.5">
-      {anhaenge.map((anhang) => (
-        <a
-          key={anhang.id}
-          href={`/api/infos/${infoId}/anhaenge/${anhang.id}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex max-w-[12rem] items-center gap-1 truncate rounded-full bg-flaeche-100 px-2 py-0.5 text-xs text-primaer hover:underline"
-        >
-          📎 {anhang.dateiname}
-        </a>
-      ))}
-    </div>
+    <>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {anhaenge.map((anhang) =>
+          anhang.mimetyp.startsWith("image/") ? (
+            <button
+              key={anhang.id}
+              type="button"
+              onClick={() => {
+                setGeoeffnetesBild(anhang)
+                lightboxRef.current?.showModal()
+              }}
+              className="overflow-hidden rounded-lg border border-rand transition hover:border-marke-gruen"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
+              <img
+                src={`/api/infos/${infoId}/anhaenge/${anhang.id}`}
+                alt={anhang.dateiname}
+                className="h-20 w-20 object-cover"
+              />
+            </button>
+          ) : (
+            <a
+              key={anhang.id}
+              href={`/api/infos/${infoId}/anhaenge/${anhang.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex max-w-[12rem] items-center gap-1 truncate rounded-full bg-flaeche-100 px-2 py-0.5 text-xs text-primaer hover:underline"
+            >
+              📎 {anhang.dateiname}
+            </a>
+          ),
+        )}
+      </div>
+
+      <dialog
+        ref={lightboxRef}
+        onClick={(ereignis) => {
+          if (ereignis.target === lightboxRef.current) lightboxRef.current?.close()
+        }}
+        className="fixed top-1/2 left-1/2 max-w-[92vw] -translate-x-1/2 -translate-y-1/2 rounded-xl bg-transparent p-0 backdrop:bg-neutral-900/70"
+      >
+        {geoeffnetesBild && (
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="Schließen"
+              onClick={() => lightboxRef.current?.close()}
+              className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900/60 text-white transition hover:bg-neutral-900/80"
+            >
+              ✕
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
+            <img
+              src={`/api/infos/${infoId}/anhaenge/${geoeffnetesBild.id}`}
+              alt={geoeffnetesBild.dateiname}
+              className="max-h-[85vh] max-w-[92vw] rounded-xl object-contain"
+            />
+          </div>
+        )}
+      </dialog>
+    </>
   )
 }
