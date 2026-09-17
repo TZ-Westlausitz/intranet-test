@@ -1,3 +1,5 @@
+import { berlinerTagesbeginn } from "@/lib/datum"
+
 /**
  * Geldwerter Vorteil bei privater Fahrzeugüberlassung "von Fall zu Fall"
  * (BMF-Schreiben vom 3.3.2022, Rz. 16): 0,001 % des inländischen
@@ -23,13 +25,15 @@ export function geldwerterVorteilCentBerechnen(
 /**
  * Kalendertage einer Ausleihe, beide Tage eingeschlossen (Ausgabe- und
  * Rücknahmetag zählen jeweils voll) — Grundlage für die Fünf-Tage-Grenze.
- * Rechnet mit reinen Kalendertagen (Mitternacht), nicht mit vollen 24h, damit
- * eine Ausgabe um 23:50 Uhr und eine Rücknahme am Folgetag um 00:10 Uhr
- * trotzdem als zwei Kalendertage zählt, wie es im Alltag gemeint ist.
+ * Rechnet mit reinen Kalendertagen (Mitternacht IN EUROPE/BERLIN, nicht der
+ * Zeitzone der ausführenden Umgebung — sonst zählt eine auf Vercel (UTC)
+ * ausgeführte Berechnung nahe Mitternacht im Zweifel den falschen Tag,
+ * siehe berlinerTagesbeginn in src/lib/datum.ts), nicht mit vollen 24h,
+ * damit eine Ausgabe um 23:50 Uhr und eine Rücknahme am Folgetag um
+ * 00:10 Uhr trotzdem als zwei Kalendertage zählt, wie es im Alltag gemeint
+ * ist.
  */
 export function kalendertageBerechnen(ausgabeZeitpunkt: Date, ruecknahmeZeitpunkt: Date): number {
-  const mitternacht = (datum: Date) =>
-    new Date(datum.getFullYear(), datum.getMonth(), datum.getDate()).getTime()
-  const tageMs = mitternacht(ruecknahmeZeitpunkt) - mitternacht(ausgabeZeitpunkt)
+  const tageMs = berlinerTagesbeginn(ruecknahmeZeitpunkt).getTime() - berlinerTagesbeginn(ausgabeZeitpunkt).getTime()
   return Math.round(tageMs / 86_400_000) + 1
 }

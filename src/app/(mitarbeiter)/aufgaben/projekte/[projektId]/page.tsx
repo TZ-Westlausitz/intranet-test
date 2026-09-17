@@ -40,7 +40,7 @@ import {
 import { projektDokumentHochladen, projektDokumentLoeschen } from "@/lib/projekte/dokumente-aktionen"
 import { projektNachrichtErstellen } from "@/lib/projekte/nachrichten-aktionen"
 import { PROJEKT_STATUS_KLASSEN, PROJEKT_STATUS_NAMEN } from "@/lib/projekte-optionen"
-import { datumIsoAusDate } from "@/lib/datum"
+import { datumIsoAusDate, berlinerTagesbeginn } from "@/lib/datum"
 import { richTextZuText } from "@/lib/rich-text"
 
 const FEHLER_TEXTE: Record<string, string> = {
@@ -86,7 +86,7 @@ export default async function ProjektDetailSeite({
 
   const istLeitung = eigeneMitgliedschaft?.rolle === ProjektmitgliedRolle.LEITUNG
   const schreibgeschuetzt = istProjektSchreibgeschuetzt(projekt) || !istMitglied
-  const heute = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
+  const heute = berlinerTagesbeginn()
 
   const [aufgaben, dokumenteRoh, nachrichten, kandidatenRoh] = await Promise.all([
     projektAufgaben(projektId),

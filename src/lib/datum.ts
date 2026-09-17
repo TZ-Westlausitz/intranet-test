@@ -15,7 +15,7 @@
  * ergaben. `Intl.DateTimeFormat` mit explizitem `timeZone` liefert
  * dagegen überall dasselbe Ergebnis, unabhängig davon, wo der Code läuft.
  */
-function teileInBerlinerZeit(datum: Date) {
+export function teileInBerlinerZeit(datum: Date) {
   const formatierer = new Intl.DateTimeFormat("de-DE", {
     timeZone: "Europe/Berlin",
     year: "numeric",
@@ -99,6 +99,41 @@ export function zeitAusDate(datum: Date): string {
 export function datumUhrzeitFuerDatumUhrzeitFeld(datum: Date): string {
   const { jahr, monat, tag, stunde, minute } = teileInBerlinerZeit(datum)
   return `${jahr}-${monat}-${tag}T${stunde}:${minute}`
+}
+
+/**
+ * Ein beliebiger Zeitpunkt → Mitternacht DESSELBEN KALENDERTAGS IN
+ * EUROPE/BERLIN, verlässlich vergleichbar per `.getTime()` — unabhängig
+ * davon, in welcher Zeitzone der Code gerade läuft. Ohne `datum` = "heute".
+ *
+ * Wichtig: das Ergebnis ist NICHT die tatsächliche Instant-Mitternacht in
+ * Berlin (die läge, je nach Sommer-/Winterzeit, 1–2 Stunden vor UTC-
+ * Mitternacht) — sondern UTC-Mitternacht DESSELBEN Kalendertags. Für
+ * Tagesvergleiche (überfällig? derselbe Tag? wie viele Tage dazwischen?)
+ * ist genau das der richtige, stabile Bezugspunkt: Datumsfelder wie
+ * `faelligAm` werden serverseitig aus `"<iso>T00:00:00"` geparst (siehe
+ * z. B. auftraege/aktionen.ts) — ohne Zeitzonen-Suffix übernimmt `Date`
+ * dafür die Zeitzone der AUSFÜHRENDEN Umgebung (auf Vercel: UTC), das
+ * Ergebnis landet also ebenfalls auf UTC-Mitternacht dieses Kalendertags.
+ * `berlinerTagesbeginn` trifft damit denselben Bezugspunkt, ohne dass
+ * jede einzelne Vergleichsstelle das Umgebungs-Detail selbst kennen muss.
+ *
+ * Vorher benutzten mehrere Stellen dafür `new Date(x.getFullYear(),
+ * x.getMonth(), x.getDate())` — das erzeugt Mitternacht in der Zeitzone
+ * der AUSFÜHRENDEN Umgebung, nicht in Berlin. Auf Vercel (UTC) hieß das:
+ * "heute" kippte bis zu zwei Stunden zu früh auf den nächsten Tag (z. B.
+ * schon um 22:00 Berliner Zeit) — mit Folgefehlern bei "überfällig"-
+ * Prüfungen, der Fünf-Tage-Regel beim geldwerten Vorteil und der
+ * Tage-Zuordnung im Kalender (Rückmeldung 2026-09-17).
+ */
+export function berlinerTagesbeginn(datum: Date = new Date()): Date {
+  const { jahr, monat, tag } = teileInBerlinerZeit(datum)
+  return new Date(Date.UTC(Number(jahr), Number(monat) - 1, Number(tag)))
+}
+
+/** Wie `berlinerTagesbeginn`, aber das letzte Millisekunde desselben Kalendertags (23:59:59.999) — für "bis Ende des Tages"-Vergleiche. */
+export function berlinerTagesende(datum: Date = new Date()): Date {
+  return new Date(berlinerTagesbeginn(datum).getTime() + 24 * 60 * 60 * 1000 - 1)
 }
 
 /**

@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { naechsteVorgangsnummer } from "@/lib/vorgangsnummer"
+import { berlinerTagesbeginn } from "@/lib/datum"
 import { AusleiheStatus, Rolle } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -92,16 +93,14 @@ export default async function AusleiheAnlegenSeite({
   }
 
   // Nur der jeweils angezeigte Monat, nicht "alles ab heute" — der Kalender
-  // blättert jetzt beliebig weit in die Zukunft.
-  const heute = new Date()
-  const angezeigterMonat = new Date(heute.getFullYear(), heute.getMonth() + monatsversatz, 1)
+  // blättert jetzt beliebig weit in die Zukunft. berlinerTagesbeginn()/
+  // Date.UTC() statt new Date(y, m, d): Letzteres baut Mitternacht in der
+  // Zeitzone der ausführenden Umgebung (auf Vercel UTC), nicht in Berlin —
+  // siehe Kommentar an berlinerTagesbeginn in src/lib/datum.ts.
+  const heute = berlinerTagesbeginn()
+  const angezeigterMonat = new Date(Date.UTC(heute.getUTCFullYear(), heute.getUTCMonth() + monatsversatz, 1))
   const monatsAnfang = angezeigterMonat
-  const monatsEnde = new Date(
-    angezeigterMonat.getFullYear(),
-    angezeigterMonat.getMonth() + 1,
-    0,
-    23, 59, 59,
-  )
+  const monatsEnde = new Date(Date.UTC(angezeigterMonat.getUTCFullYear(), angezeigterMonat.getUTCMonth() + 1, 1) - 1)
 
   const [entleiherOptionen, geplanteAusleihen] = await Promise.all([
     prisma.person.findMany({

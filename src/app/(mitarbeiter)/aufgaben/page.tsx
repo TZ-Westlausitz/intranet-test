@@ -27,7 +27,7 @@ import {
 import { AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAET_NAMEN } from "@/lib/aufgaben-optionen"
 import { AUFGABE_STATUS_KLASSEN, AUFGABE_STATUS_NAMEN } from "@/lib/projekte-optionen"
 import { richTextZuText } from "@/lib/rich-text"
-import { datumIsoAusDate } from "@/lib/datum"
+import { datumIsoAusDate, berlinerTagesbeginn } from "@/lib/datum"
 
 const FEHLER_TEXTE: Record<string, string> = {
   pflichtfeld: "Bitte einen Titel eintragen und eine Person auswählen.",
@@ -171,7 +171,7 @@ export default async function AufgabenSeite({
   const kontext = await berechtigung()
   const { fehler, neu } = await searchParams
 
-  const heute = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
+  const heute = berlinerTagesbeginn()
 
   const [
     eigeneAuftraege,

@@ -15,6 +15,8 @@ export const MONATSNAMEN = [
 
 export const WOCHENTAGE_KURZ = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"] as const
 
+import { teileInBerlinerZeit } from "@/lib/datum"
+
 export type Kalendertag = {
   datum: Date
   tag: number
@@ -58,8 +60,18 @@ export function monatVerschieben(jahr: number, monatIndex0: number, delta: numbe
   return { jahr: Math.floor(gesamt / 12), monatIndex0: ((gesamt % 12) + 12) % 12 }
 }
 
+/**
+ * Vergleicht zwei Zeitpunkte auf denselben Kalendertag IN EUROPE/BERLIN —
+ * per `teileInBerlinerZeit` statt `getFullYear()/getMonth()/getDate()`
+ * (Zeitzone der ausführenden Umgebung), weil `a`/`b` hier zweierlei sein
+ * können: reine Tages-Marker wie ein `Kalendertag.datum` oder `heute`
+ * (siehe `berlinerTagesbeginn`), ODER ein echter Zeitpunkt mit Uhrzeit
+ * wie `Termin.beginn` — nur `teileInBerlinerZeit` liefert für BEIDE Fälle
+ * zuverlässig den echten Berliner Kalendertag, unabhängig davon, in
+ * welcher Zeitzone der Server gerade läuft.
+ */
 export function istGleicherTag(a: Date, b: Date): boolean {
-  return (
-    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-  )
+  const teileA = teileInBerlinerZeit(a)
+  const teileB = teileInBerlinerZeit(b)
+  return teileA.jahr === teileB.jahr && teileA.monat === teileB.monat && teileA.tag === teileB.tag
 }

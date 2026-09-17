@@ -9,7 +9,7 @@ import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { TerminFarbe, TerminTeilnahmeStatus } from "@/generated/prisma/enums"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
-import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
+import { formatiereDatumAusDate, zeitAusDate, berlinerTagesbeginn } from "@/lib/datum"
 import { richTextSanitisieren } from "@/lib/rich-text"
 import { terminAnhaengePruefen, terminAnhaengeSpeichern, terminAnhaengeLoeschen } from "@/lib/termine/anhaenge"
 import { naechsteWiederholung, type WiederholenTyp, type WiederholenEinheit } from "@/lib/termine/wiederholung"
@@ -25,11 +25,6 @@ function anhaengeAusFormData(formData: FormData): File[] {
 function naechsteViertelstundeAb(datum: Date): Date {
   const VIERTELSTUNDE_MS = 15 * 60 * 1000
   return new Date(Math.ceil(datum.getTime() / VIERTELSTUNDE_MS) * VIERTELSTUNDE_MS)
-}
-
-/** Mitternacht desselben Tages — für den Tagesvergleich bei ganztägigen Terminen. */
-function tagesanfang(datum: Date): Date {
-  return new Date(datum.getFullYear(), datum.getMonth(), datum.getDate())
 }
 
 /**
@@ -106,7 +101,7 @@ function terminEingabenLesen(
 
   if (pruefeVergangenheit) {
     const jetzt = new Date()
-    const zuFrueh = ganztaegig ? beginn < tagesanfang(jetzt) : beginn < naechsteViertelstundeAb(jetzt)
+    const zuFrueh = ganztaegig ? beginn < berlinerTagesbeginn(jetzt) : beginn < naechsteViertelstundeAb(jetzt)
     if (zuFrueh) {
       redirect(`${rueckkehrPfad}&fehler=vergangenheit`)
     }

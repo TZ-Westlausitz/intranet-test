@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { berlinerTagesbeginn } from "@/lib/datum"
+
 /**
  * Zeigt die Verfügbarkeit eines Fahrzeugs als Kalender: belegte Tage grau,
  * freie Tage grün (Firmenfarbe) hinterlegt. Ersetzt eine reine Auflistung
@@ -31,14 +33,10 @@ export function monatsversatzAusSuchparameter(wert: string | undefined): number 
   return Math.min(Math.max(zahl, 0), MAX_MONATSVERSATZ)
 }
 
-function ohneUhrzeit(datum: Date): Date {
-  return new Date(datum.getFullYear(), datum.getMonth(), datum.getDate())
-}
-
 function istBelegt(tag: Date, zeitraeume: Zeitraum[]): boolean {
   return zeitraeume.some((z) => {
-    const von = ohneUhrzeit(z.von)
-    const bis = ohneUhrzeit(z.bis)
+    const von = berlinerTagesbeginn(z.von)
+    const bis = berlinerTagesbeginn(z.bis)
     return tag >= von && tag <= bis
   })
 }
@@ -52,19 +50,19 @@ export function Verfuegbarkeitskalender({
   monatsversatz: number
   basePfad: string
 }) {
-  const heute = ohneUhrzeit(new Date())
-  const angezeigterMonat = new Date(heute.getFullYear(), heute.getMonth() + monatsversatz, 1)
-  const jahr = angezeigterMonat.getFullYear()
-  const monat = angezeigterMonat.getMonth()
+  const heute = berlinerTagesbeginn()
+  const angezeigterMonat = new Date(Date.UTC(heute.getUTCFullYear(), heute.getUTCMonth() + monatsversatz, 1))
+  const jahr = angezeigterMonat.getUTCFullYear()
+  const monat = angezeigterMonat.getUTCMonth()
 
-  const ersterTag = new Date(jahr, monat, 1)
-  const letzterTag = new Date(jahr, monat + 1, 0)
+  const ersterTag = new Date(Date.UTC(jahr, monat, 1))
+  const letzterTag = new Date(Date.UTC(jahr, monat + 1, 0))
   // Kalenderwoche beginnt Montag: Sonntag (0) ans Ende schieben.
-  const startOffset = (ersterTag.getDay() + 6) % 7
+  const startOffset = (ersterTag.getUTCDay() + 6) % 7
 
   const zellen: (Date | null)[] = [
     ...Array<null>(startOffset).fill(null),
-    ...Array.from({ length: letzterTag.getDate() }, (_, i) => new Date(jahr, monat, i + 1)),
+    ...Array.from({ length: letzterTag.getUTCDate() }, (_, i) => new Date(Date.UTC(jahr, monat, i + 1))),
   ]
   while (zellen.length % 7 !== 0) zellen.push(null)
 
@@ -131,7 +129,7 @@ export function Verfuegbarkeitskalender({
                     : "bg-marke-gruen/15 text-ueberschrift")
               }
             >
-              {tag.getDate()}
+              {tag.getUTCDate()}
             </div>
           )
         })}

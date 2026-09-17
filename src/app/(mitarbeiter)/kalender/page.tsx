@@ -22,7 +22,7 @@ import { termineFuerZeitraum, termineSuchen } from "@/lib/termine/abfragen"
 import { MONATSNAMEN, istGleicherTag, monatVerschieben, monatsraster } from "@/lib/kalender"
 import { feiertagFuer } from "@/lib/feiertage-sachsen"
 import { schulferienFuer } from "@/lib/schulferien-sachsen"
-import { datumIsoAusDate, zeitAusDate, formatiereDatumAusDate } from "@/lib/datum"
+import { datumIsoAusDate, zeitAusDate, formatiereDatumAusDate, berlinerTagesbeginn } from "@/lib/datum"
 import { richTextZuText } from "@/lib/rich-text"
 import type { Prisma } from "@/generated/prisma/client"
 
@@ -113,14 +113,18 @@ function zuTerminAnzeige(termin: TerminMitBeziehungen, eigenePersonId: string): 
   }
 }
 
-/** Alle Kalendertage von `von` bis `bis`, jeweils auf Mitternacht genormt. */
+/** Alle Kalendertage von `von` bis `bis`, jeweils auf Mitternacht (Europe/Berlin) genormt. */
 function tageZwischen(von: Date, bis: Date): Date[] {
   const tage: Date[] = []
-  const cursor = new Date(von.getFullYear(), von.getMonth(), von.getDate())
-  const letzterTag = new Date(bis.getFullYear(), bis.getMonth(), bis.getDate())
+  const cursor = berlinerTagesbeginn(von)
+  const letzterTag = berlinerTagesbeginn(bis)
   while (cursor <= letzterTag) {
     tage.push(new Date(cursor))
-    cursor.setDate(cursor.getDate() + 1)
+    // setUTCDate statt setDate: cursor ist über Date.UTC gebaut (siehe
+    // berlinerTagesbeginn) — ein lokales setDate würde in der Zeitzone
+    // der ausführenden Umgebung weiterzählen und das Ergebnis wieder
+    // verzerren.
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
   }
   return tage
 }
@@ -155,15 +159,19 @@ export default async function KalenderSeite({
   const { jahr: jahrParam, monat: monatParam, fehler, suche, neu } = await searchParams
   const suchtext = (suche ?? "").trim()
 
-  const heute = new Date()
+  // berlinerTagesbeginn() statt new Date(): über Date.UTC gebaut, deshalb
+  // liefern die UTC-Getter (getUTCFullYear/-Month/-Day) direkt die Berliner
+  // Kalenderwerte zurück, unabhängig von der Zeitzone der ausführenden
+  // Umgebung (auf Vercel UTC) — siehe Kommentar an berlinerTagesbeginn.
+  const heute = berlinerTagesbeginn()
   const jahrGeparst = jahrParam ? Number.parseInt(jahrParam, 10) : NaN
   const monatGeparst = monatParam ? Number.parseInt(monatParam, 10) - 1 : NaN
 
-  const jahr = Number.isInteger(jahrGeparst) ? jahrGeparst : heute.getFullYear()
+  const jahr = Number.isInteger(jahrGeparst) ? jahrGeparst : heute.getUTCFullYear()
   const monatIndex0 =
     Number.isInteger(monatGeparst) && monatGeparst >= 0 && monatGeparst <= 11
       ? monatGeparst
-      : heute.getMonth()
+      : heute.getUTCMonth()
 
   const rasterProMonat = [0, 1, 2].map((versatz) => {
     const anker = monatVerschieben(jahr, monatIndex0, versatz)
@@ -178,16 +186,15 @@ export default async function KalenderSeite({
   // durchblätterten Monat, deshalb eine eigene Zeitspanne ab dem echten
   // "heute" statt der drei angezeigten Kalenderblätter. Obere Grenze ist
   // das Monatsende, außer die aktuelle Woche reicht darüber hinaus (dann
-  // hätte der "Diese Woche"-Filter sonst unvollständige Daten).
-  const heuteEnde = new Date(heute.getFullYear(), heute.getMonth(), heute.getDate(), 23, 59, 59, 999)
-  const wochentagHeute = (heute.getDay() + 6) % 7 // Montag = 0
-  const wocheEnde = new Date(
-    heute.getFullYear(),
-    heute.getMonth(),
-    heute.getDate() + (6 - wochentagHeute),
-    23, 59, 59, 999,
-  )
-  const monatEnde = new Date(heute.getFullYear(), heute.getMonth() + 1, 0, 23, 59, 59, 999)
+  // hätte der "Diese Woche"-Filter sonst unvollständige Daten). Alle drei
+  // Werte per Millisekunden-Arithmetik auf `heute` statt mit einem neuen
+  // lokalen `new Date(...)`-Konstruktor, damit sie in der Zeitzone
+  // konsistent bleiben, in der `heute` schon berechnet wurde.
+  const TAG_MS = 24 * 60 * 60 * 1000
+  const heuteEnde = new Date(heute.getTime() + TAG_MS - 1)
+  const wochentagHeute = (heute.getUTCDay() + 6) % 7 // Montag = 0
+  const wocheEnde = new Date(heute.getTime() + (7 - wochentagHeute) * TAG_MS - 1)
+  const monatEnde = new Date(Date.UTC(heute.getUTCFullYear(), heute.getUTCMonth() + 1, 1) - 1)
   const uebersichtBis = wocheEnde > monatEnde ? wocheEnde : monatEnde
 
   const [termine, personen, kommendeTermineRoh, sucheErgebnisRoh] = await Promise.all([

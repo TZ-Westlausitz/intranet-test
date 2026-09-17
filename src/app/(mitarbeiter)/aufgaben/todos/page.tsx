@@ -13,7 +13,7 @@ import {
 } from "@/lib/aufgaben/aktionen"
 import { AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAET_NAMEN } from "@/lib/aufgaben-optionen"
 import { richTextZuText } from "@/lib/rich-text"
-import { datumIsoAusDate } from "@/lib/datum"
+import { datumIsoAusDate, berlinerTagesbeginn } from "@/lib/datum"
 import type { Aufgabe } from "@/generated/prisma/client"
 
 const FEHLER_TEXTE: Record<string, string> = {
@@ -83,7 +83,7 @@ export default async function ToDosSeite({
   const kontext = await berechtigung()
   const { fehler } = await searchParams
 
-  const heute = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
+  const heute = berlinerTagesbeginn()
   const { offen, erledigt } = await aufgabenFuerPerson(kontext.personId)
 
   return (
