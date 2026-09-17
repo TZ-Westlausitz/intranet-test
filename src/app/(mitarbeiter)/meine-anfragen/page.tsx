@@ -45,8 +45,8 @@ export default async function MeineAnfragenSeite() {
                   <StatusBadge status={a.status} />
                 </p>
                 <p className="mt-1 text-sm text-primaer">
-                  {a.geplantVon.toLocaleDateString("de-DE")}–
-                  {a.geplantBis.toLocaleDateString("de-DE")} · {a.zweck}
+                  {a.geplantVon.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}–
+                  {a.geplantBis.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} · {a.zweck}
                 </p>
               </Link>
             </li>

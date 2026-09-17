@@ -1,3 +1,36 @@
+/**
+ * Zerlegt ein Date in seine Kalender-/Uhrzeit-Bestandteile IN
+ * EUROPE/BERLIN — nie in der Zeitzone der ausführenden Umgebung.
+ *
+ * Der Grund, warum es diese Funktion überhaupt braucht: `Date.getDate()`,
+ * `getHours()` & Co. liefern die Bestandteile in der Zeitzone des
+ * JS-RUNTIME, nicht in einer festen Zeitzone — auf dem eigenen Mac (meist
+ * Europe/Berlin) unauffällig richtig, auf Vercel (Node-Runtime läuft in
+ * UTC) plötzlich bis zu zwei Stunden daneben. Genau das ist am 2026-09-17
+ * so aufgefallen: derselbe Newsfeed-Beitrag zeigte auf der Live-Seite eine
+ * andere Uhrzeit als lokal, UND in `NewsfeedHomeKachel` (Client Component,
+ * formatiert dieselbe Uhrzeit ein zweites Mal beim Hydrieren im Browser —
+ * der dort in Europe/Berlin läuft) zusätzlich einen React-Hydration-Fehler
+ * (#418), weil Server- und Client-Rendering unterschiedlichen Text
+ * ergaben. `Intl.DateTimeFormat` mit explizitem `timeZone` liefert
+ * dagegen überall dasselbe Ergebnis, unabhängig davon, wo der Code läuft.
+ */
+function teileInBerlinerZeit(datum: Date) {
+  const formatierer = new Intl.DateTimeFormat("de-DE", {
+    timeZone: "Europe/Berlin",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  })
+  const teile = Object.fromEntries(formatierer.formatToParts(datum).map((teil) => [teil.type, teil.value]))
+  // Mitternacht liefert bei manchen ICU-Implementierungen "24" statt "00" für hour12:false.
+  const stunde = teile.hour === "24" ? "00" : teile.hour
+  return { jahr: teile.year, monat: teile.month, tag: teile.day, stunde, minute: teile.minute }
+}
+
 /** "2026-11-20" → "20.11.2026". Für Datumsfelder aus `<input type="date">`. */
 export function formatiereDatum(iso: string): string {
   if (!iso) return ""
@@ -13,9 +46,8 @@ export function formatiereDatum(iso: string): string {
  * aussieht, als stünde schon ein Datum drin.
  */
 export function heutigesDatumIso(): string {
-  const heute = new Date()
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${heute.getFullYear()}-${pad(heute.getMonth() + 1)}-${pad(heute.getDate())}`
+  const { jahr, monat, tag } = teileInBerlinerZeit(new Date())
+  return `${jahr}-${monat}-${tag}`
 }
 
 /**
@@ -25,8 +57,8 @@ export function heutigesDatumIso(): string {
  * Übergabeprotokolls.
  */
 export function datumUmMitternachtFuerDatumUhrzeitFeld(datum: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${datum.getFullYear()}-${pad(datum.getMonth() + 1)}-${pad(datum.getDate())}T00:00`
+  const { jahr, monat, tag } = teileInBerlinerZeit(datum)
+  return `${jahr}-${monat}-${tag}T00:00`
 }
 
 /** "2026-08-27T14:30" → "27.08.2026, 14:30 Uhr". Für die Anzeige im PDF-Text. */
@@ -42,20 +74,20 @@ export function formatiereDatumUhrzeit(eingabe: string): string {
  * beim Zusammenbauen von "Ort, Datum" für eine Unterschrift).
  */
 export function formatiereDatumAusDate(datum: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${pad(datum.getDate())}.${pad(datum.getMonth() + 1)}.${datum.getFullYear()}`
+  const { jahr, monat, tag } = teileInBerlinerZeit(datum)
+  return `${tag}.${monat}.${jahr}`
 }
 
 /** Date-Objekt → "2026-09-03" — wie heutigesDatumIso, aber für ein beliebiges Date. */
 export function datumIsoAusDate(datum: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${datum.getFullYear()}-${pad(datum.getMonth() + 1)}-${pad(datum.getDate())}`
+  const { jahr, monat, tag } = teileInBerlinerZeit(datum)
+  return `${jahr}-${monat}-${tag}`
 }
 
 /** Date-Objekt → "14:05" — für <input type="time">-Defaultwerte aus einem vorhandenen Date. */
 export function zeitAusDate(datum: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${pad(datum.getHours())}:${pad(datum.getMinutes())}`
+  const { stunde, minute } = teileInBerlinerZeit(datum)
+  return `${stunde}:${minute}`
 }
 
 /**
@@ -65,8 +97,8 @@ export function zeitAusDate(datum: Date): string {
  * Bearbeiten-Dialog eines noch nicht veröffentlichten Entwurfs).
  */
 export function datumUhrzeitFuerDatumUhrzeitFeld(datum: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0")
-  return `${datum.getFullYear()}-${pad(datum.getMonth() + 1)}-${pad(datum.getDate())}T${pad(datum.getHours())}:${pad(datum.getMinutes())}`
+  const { jahr, monat, tag, stunde, minute } = teileInBerlinerZeit(datum)
+  return `${jahr}-${monat}-${tag}T${stunde}:${minute}`
 }
 
 /**

@@ -114,7 +114,7 @@ export default async function AbrechnungSeite() {
             <div className="flex justify-between">
               <dt className="text-sekundaer">Gemeldet am</dt>
               <dd className="font-medium">
-                {a.anLohnbuchhaltungGemeldetAm.toLocaleDateString("de-DE")}
+                {a.anLohnbuchhaltungGemeldetAm.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}
               </dd>
             </div>
           )}
@@ -123,7 +123,7 @@ export default async function AbrechnungSeite() {
         {ueberschritten && (
           <p className="mt-3 rounded-lg border border-marke-orange/40 bg-marke-orange/10 px-3 py-2 text-sm text-ueberschrift">
             ⚠ {a.entleiher.vorname} {a.entleiher.nachname} kommt in{" "}
-            {a.geplantVon.toLocaleDateString("de-DE", { month: "long", year: "numeric" })} auf{" "}
+            {a.geplantVon.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", month: "long", year: "numeric" })} auf{" "}
             {tageImMonat} Kalendertage — über der Fünf-Tage-Grenze. Statt der
             0,001-%-Regel greift dann vermutlich die 1-%-Regelung für den
             ganzen Monat. Bitte mit dem Steuerberater klären.

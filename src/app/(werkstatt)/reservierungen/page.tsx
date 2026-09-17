@@ -103,8 +103,8 @@ export default async function ReservierungenSeite() {
                     )}
                   </p>
                   <p className="mt-1 text-sm text-primaer">
-                    {r.fahrzeug.bezeichnung} · {r.geplantVon.toLocaleDateString("de-DE")}–
-                    {r.geplantBis.toLocaleDateString("de-DE")} · {r.zweck}
+                    {r.fahrzeug.bezeichnung} · {r.geplantVon.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}–
+                    {r.geplantBis.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} · {r.zweck}
                   </p>
                 </Link>
 

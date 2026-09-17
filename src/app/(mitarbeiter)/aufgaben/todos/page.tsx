@@ -29,7 +29,7 @@ function faelligAnzeige(aufgabe: Aufgabe, heute: Date): { text: string; ueberfae
   if (!aufgabe.faelligAm) return null
   const ueberfaellig = !aufgabe.erledigtAm && aufgabe.faelligAm < heute
   return {
-    text: aufgabe.faelligAm.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" }),
+    text: aufgabe.faelligAm.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit" }),
     ueberfaellig,
   }
 }

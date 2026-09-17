@@ -43,7 +43,7 @@ export function wiederholenOptionen(datumIso: string): { wert: WiederholenTyp | 
   const tag = gueltig ? datum.getDate() : null
   const nteOccurrence = gueltig ? Math.ceil(datum.getDate() / 7) : null
   const ordinal = nteOccurrence ? (ORDINALZAHLEN[Math.min(nteOccurrence, 5) - 1] ?? "letzten") : null
-  const monatUndTag = gueltig ? datum.toLocaleDateString("de-DE", { day: "2-digit", month: "long" }) : null
+  const monatUndTag = gueltig ? datum.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "long" }) : null
 
   return [
     { wert: "nein", label: "Nicht wiederholen" },

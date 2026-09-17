@@ -12,7 +12,7 @@ type GelesenStand = LadeErgebnis["gelesenStand"]
 const POLL_INTERVALL_MS = 10_000
 
 function zeitAnzeige(datum: Date): string {
-  return datum.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+  return datum.toLocaleString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
 }
 
 function dateigroesseAnzeige(bytes: number): string {

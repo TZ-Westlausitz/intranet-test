@@ -66,7 +66,7 @@ function AufgabeZeile({
         <p className="mt-0.5 text-xs text-tertiaer">
           {aufgabe.zugewiesenAn ? `${aufgabe.zugewiesenAn.vorname} ${aufgabe.zugewiesenAn.nachname}` : "niemand übernommen"}
           {aufgabe.faelligAm &&
-            ` · fällig ${aufgabe.faelligAm.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}`}
+            ` · fällig ${aufgabe.faelligAm.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" })}`}
         </p>
         {aufgabe.anhaenge.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-1.5">

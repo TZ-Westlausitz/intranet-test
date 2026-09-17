@@ -68,7 +68,7 @@ function zuTerminAnzeige(termin: TerminMitBeziehungen, eigenePersonId: string): 
   ]
 
   const datumAnzeigeLang = (datum: Date) =>
-    datum.toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" })
+    datum.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" })
 
   return {
     id: termin.id,
@@ -102,7 +102,7 @@ function zuTerminAnzeige(termin: TerminMitBeziehungen, eigenePersonId: string): 
       id: k.id,
       autorName: `${k.person.vorname} ${k.person.nachname}`,
       text: k.text,
-      erstelltAmAnzeige: k.erstelltAm.toLocaleString("de-DE", {
+      erstelltAmAnzeige: k.erstelltAm.toLocaleString("de-DE", { timeZone: "Europe/Berlin",
         day: "2-digit",
         month: "2-digit",
         hour: "2-digit",
@@ -203,7 +203,7 @@ export default async function KalenderSeite({
 
   // Kompakteres Datum als im Info-Pop-Up — die Zeile hat nur begrenzt Platz.
   const kurzesDatum = (datum: Date) =>
-    datum.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" })
+    datum.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit" })
 
   function zuListenEintrag(termin: TerminMitBeziehungen): TerminListenEintrag {
     return {

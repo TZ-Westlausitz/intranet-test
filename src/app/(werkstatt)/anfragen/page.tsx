@@ -77,8 +77,8 @@ export default async function AnfragenSeite() {
                 {a.entleiher.vorname} {a.entleiher.nachname}
               </p>
               <p className="mt-1 text-sm text-primaer">
-                {a.fahrzeug.bezeichnung} · {a.geplantVon.toLocaleDateString("de-DE")}–
-                {a.geplantBis.toLocaleDateString("de-DE")} · {a.zweck}
+                {a.fahrzeug.bezeichnung} · {a.geplantVon.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}–
+                {a.geplantBis.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} · {a.zweck}
               </p>
 
               <div className="mt-3 flex flex-wrap items-center gap-2">

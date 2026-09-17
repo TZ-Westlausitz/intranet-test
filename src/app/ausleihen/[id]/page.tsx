@@ -120,8 +120,8 @@ export default async function AusleiheSeite({
         <div className="flex justify-between border-b border-flaeche-100 pb-2">
           <dt className="text-sekundaer">Zeitraum</dt>
           <dd className="font-medium">
-            {ausleihe.geplantVon.toLocaleDateString("de-DE")}–
-            {ausleihe.geplantBis.toLocaleDateString("de-DE")}
+            {ausleihe.geplantVon.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}–
+            {ausleihe.geplantBis.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })}
           </dd>
         </div>
         <div className="flex justify-between border-b border-flaeche-100 pb-2">

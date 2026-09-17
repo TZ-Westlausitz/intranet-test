@@ -186,8 +186,8 @@ export default async function Startseite() {
   const terminVorschau = termin
     ? `${
         istGleicherTag(termin.beginn, heute)
-          ? termin.beginn.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) + " Uhr"
-          : termin.beginn.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" })
+          ? termin.beginn.toLocaleTimeString("de-DE", { timeZone: "Europe/Berlin", hour: "2-digit", minute: "2-digit" }) + " Uhr"
+          : termin.beginn.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit" })
       } · ${termin.titel}`
     : null
 
@@ -450,7 +450,7 @@ export default async function Startseite() {
                         <ul className="mt-2 flex flex-col gap-1 text-xs text-sekundaer">
                           {naechsteReservierungen.map((r) => (
                             <li key={r.id}>
-                              {r.geplantVon.toLocaleDateString("de-DE")} · {r.fahrzeug.bezeichnung}
+                              {r.geplantVon.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin" })} · {r.fahrzeug.bezeichnung}
                             </li>
                           ))}
                         </ul>
@@ -536,7 +536,7 @@ export default async function Startseite() {
                         </span>
                         <span className="truncate text-primaer">{eintrag.titel}</span>
                         <span className="ml-auto shrink-0 text-tertiaer">
-                          {eintrag.datum.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })}
+                          {eintrag.datum.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit" })}
                         </span>
                       </li>
                     ))}

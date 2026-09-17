@@ -54,7 +54,7 @@ export function AuftragKommentare({
               <li key={kommentar.id} className="rounded-lg bg-flaeche-schwach px-2.5 py-1.5">
                 <p className="text-xs font-medium text-sekundaer">
                   {kommentar.person.vorname} {kommentar.person.nachname} ·{" "}
-                  {kommentar.erstelltAm.toLocaleString("de-DE", {
+                  {kommentar.erstelltAm.toLocaleString("de-DE", { timeZone: "Europe/Berlin",
                     day: "2-digit",
                     month: "2-digit",
                     hour: "2-digit",

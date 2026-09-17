@@ -54,7 +54,7 @@ function faelligAnzeige(auftrag: { faelligAm: Date | null; erledigtAm: Date | nu
   if (!auftrag.faelligAm) return null
   const ueberfaellig = !auftrag.erledigtAm && auftrag.faelligAm < heute
   return {
-    text: auftrag.faelligAm.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit" }),
+    text: auftrag.faelligAm.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit" }),
     ueberfaellig,
   }
 }
