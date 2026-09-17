@@ -20,6 +20,7 @@ export function Unterschriftfeld({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const hiddenRef = useRef<HTMLInputElement>(null)
   const zeichnetRef = useRef(false)
+  const bewegtRef = useRef(false)
   const [leer, setLeer] = useState(true)
 
   useEffect(() => {
@@ -45,6 +46,7 @@ export function Unterschriftfeld({
   function zeichnenStart(ev: React.PointerEvent<HTMLCanvasElement>) {
     ev.currentTarget.setPointerCapture(ev.pointerId)
     zeichnetRef.current = true
+    bewegtRef.current = false
     const { x, y } = position(ev)
     const ctx = canvasRef.current?.getContext("2d")
     ctx?.beginPath()
@@ -53,15 +55,21 @@ export function Unterschriftfeld({
 
   function zeichnenWeiter(ev: React.PointerEvent<HTMLCanvasElement>) {
     if (!zeichnetRef.current) return
+    bewegtRef.current = true
     const { x, y } = position(ev)
     const ctx = canvasRef.current?.getContext("2d")
     ctx?.lineTo(x, y)
     ctx?.stroke()
   }
 
+  // Ein bloßes Antippen ohne Bewegung (z. B. beim Gerät weiterreichen,
+  // siehe Hinweistext auf der unterschreibenden Seite) zeichnet nichts
+  // sichtbar, würde aber ohne diese Prüfung trotzdem als "erfasst" gelten
+  // und ein LEERES PNG als rechtsverbindliche Unterschrift speichern.
   function zeichnenEnde() {
     if (!zeichnetRef.current) return
     zeichnetRef.current = false
+    if (!bewegtRef.current) return
     const canvas = canvasRef.current
     if (!canvas || !hiddenRef.current) return
     hiddenRef.current.value = canvas.toDataURL("image/png")

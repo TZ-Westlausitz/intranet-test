@@ -194,7 +194,9 @@ export default async function AusleiheSeite({
       {ausleihe.ausgabeprotokollEntwurfPfad && (
         <div className="mt-4 rounded-lg border border-rand p-4">
           <p className="text-sm text-primaer">
-            Der vorbereitete Entwurf des Übergabeprotokolls liegt bereit.
+            {ausleihe.status === AusleiheStatus.UEBERGEBEN
+              ? "Der vorbereitete Entwurf des Rücknahmeprotokolls liegt bereit."
+              : "Der vorbereitete Entwurf des Übergabeprotokolls liegt bereit."}{" "}
             Über den Link kannst du ihn ansehen oder herunterladen.
           </p>
           <Link
@@ -202,7 +204,8 @@ export default async function AusleiheSeite({
             target="_blank"
             className="mt-2 inline-block text-sm font-semibold text-marke-gruen-dunkel underline hover:text-ueberschrift"
           >
-            Übergabeprotokoll (PDF) ansehen
+            {ausleihe.status === AusleiheStatus.UEBERGEBEN ? "Rücknahmeprotokoll" : "Übergabeprotokoll"} (PDF)
+            ansehen
           </Link>
         </div>
       )}

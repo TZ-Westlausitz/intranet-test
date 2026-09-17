@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation"
-import { headers } from "next/headers"
 import { createHash } from "node:crypto"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
@@ -32,13 +31,6 @@ import { ZweiUnterschriften } from "@/components/zwei-unterschriften"
 function dataUrlZuBytes(dataUrl: string): Uint8Array {
   const base64Teil = dataUrl.split(",")[1] ?? ""
   return new Uint8Array(Buffer.from(base64Teil, "base64"))
-}
-
-/** Hinter Caddy steht die echte Absenderadresse in `x-forwarded-for`. */
-function clientIpAusHeaders(headerListe: Headers): string {
-  const weitergeleitet = headerListe.get("x-forwarded-for")
-  if (weitergeleitet) return weitergeleitet.split(",")[0]!.trim()
-  return headerListe.get("x-real-ip") ?? ""
 }
 
 async function uebergabeprotokollUnterschreiben(formData: FormData) {
@@ -97,8 +89,6 @@ async function uebergabeprotokollUnterschreiben(formData: FormData) {
   await dateiAblegen(mieterPngPfad, mieterPng)
   await dateiAblegen(firmaPngPfad, firmaPng)
   await dateiAblegen(pdfPfad, pdfBytes)
-
-  const headerListe = await headers()
 
   await prisma.$transaction([
     prisma.uebergabeprotokoll.create({

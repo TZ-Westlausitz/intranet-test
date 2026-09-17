@@ -3,7 +3,9 @@ import { notFound, redirect } from "next/navigation"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { naechsteVorgangsnummer } from "@/lib/vorgangsnummer"
-import { berlinerTagesbeginn } from "@/lib/datum"
+import { berlinerTagesbeginn, formatiereDatum } from "@/lib/datum"
+import { dateiAblegen } from "@/lib/ablage"
+import { nutzungsvereinbarungPdfErzeugen } from "@/lib/pdf/nutzungsvereinbarung"
 import { AusleiheStatus, Rolle } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -53,6 +55,11 @@ async function ausleiheAnlegen(formData: FormData) {
 
   const jahr = geplantVon.getFullYear()
 
+  const [fahrzeug, entleiher] = await Promise.all([
+    prisma.fahrzeug.findUniqueOrThrow({ where: { id: fahrzeugId } }),
+    prisma.person.findUniqueOrThrow({ where: { benutzername: entleiherId } }),
+  ])
+
   const ausleihe = await prisma.$transaction(async (tx) => {
     const vorgangsnummer = await naechsteVorgangsnummer(tx, jahr)
 
@@ -69,6 +76,23 @@ async function ausleiheAnlegen(formData: FormData) {
         entschiedenVonId: kontext.personId,
       },
     })
+  })
+
+  // Entwurf sofort miterzeugen — sonst gibt es auf der Ausleihe-Seite keinen
+  // Weg zur Unterschrift (siehe nutzungsvereinbarung-unterschreiben/page.tsx,
+  // die genau diesen Pfad voraussetzt). Gleiches Muster wie beim
+  // Selbstbedienungs-Anfrageweg in fahrzeug-mieten/[fahrzeugId]/page.tsx.
+  const pdfBytes = await nutzungsvereinbarungPdfErzeugen({
+    mieterName: `${entleiher.vorname} ${entleiher.nachname}`,
+    fahrerAbweichend: "",
+    fahrzeugText: `${fahrzeug.bezeichnung} (${fahrzeug.kennzeichen})`,
+    zeitraumText: `${formatiereDatum(geplantVonEingabe)} – ${formatiereDatum(geplantBisEingabe)}`,
+  })
+  const relativerPfad = `vereinbarungsentwuerfe/${ausleihe.id}.pdf`
+  await dateiAblegen(relativerPfad, pdfBytes)
+  await prisma.ausleihe.update({
+    where: { id: ausleihe.id },
+    data: { vereinbarungsentwurfPfad: relativerPfad },
   })
 
   redirect(`/ausleihen/${ausleihe.id}`)
