@@ -2,7 +2,6 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { abmelden } from "@/lib/auth/aktionen"
-import { Rolle } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { neuesteBenachrichtigungen, ungeleseneAnzahl } from "@/lib/benachrichtigungen/abfragen"
 import { benachrichtigungenAlsGelesenMarkieren } from "@/lib/benachrichtigungen/aktionen"
@@ -11,13 +10,17 @@ import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
 /**
  * Vollseiten-Menü für das Handy (Rückmeldung 2026-09-15, mobile
  * Fußleiste): fasst zusammen, was auf dem Desktop auf BenutzerMenu
- * (Profil/Admin/Einstellungen/Kontaktstelle/Ausloggen) und die
+ * (Profil/Einstellungen/Kontaktstelle/Ausloggen) und die
  * Benachrichtigungsglocke verteilt ist, ergänzt um Kontakte und
  * Wissensbereich — auf dem Handy gibt es dafür keinen Platz in einer
  * Kopfzeile, deshalb eine eigene Seite statt eines Ausklapp-Menüs, erreicht
  * über den "Menü"-Punkt der MobileTabBar. Auf Desktop-Breite ungenutzt
  * (dort bleiben BenutzerMenu + Glocke), aber unter derselben Route
  * trotzdem erreichbar, falls jemand den Link direkt öffnet.
+ *
+ * Der Adminbereich fehlt hier bewusst (Rückmeldung 2026-09-18): die
+ * wenigen Berechtigten kommen über die Desktop-Variante des
+ * BenutzerMenu dorthin, ein mobiler Einstieg ist nicht nötig.
  */
 export default async function MenuSeite() {
   const kontext = await berechtigung()
@@ -89,11 +92,6 @@ export default async function MenuSeite() {
         <Link href="/wissen" className="border-b border-rand px-4 py-3 text-sm text-primaer transition hover:bg-marke-gruen/5">
           Wissen
         </Link>
-        {kontext.rollen.includes(Rolle.ADMINISTRATION) && (
-          <Link href="/admin" className="border-b border-rand px-4 py-3 text-sm text-primaer transition hover:bg-marke-gruen/5">
-            Admin
-          </Link>
-        )}
         <Link
           href="/einstellungen"
           className="border-b border-rand px-4 py-3 text-sm text-primaer transition hover:bg-marke-gruen/5"
