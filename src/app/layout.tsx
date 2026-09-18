@@ -8,6 +8,7 @@ import { Rolle } from "@/generated/prisma/enums";
 import { BenutzerMenu } from "@/components/benutzer-menu";
 import { BenachrichtigungsGlocke } from "@/components/benachrichtigungs-glocke";
 import { ChatWidget } from "@/components/chat-widget";
+import { DesktopSchnellmenu } from "@/components/desktop-schnellmenu";
 import { AdminModusSchalter } from "@/components/admin-modus-schalter";
 import { BausteineLeiste } from "@/components/bausteine-leiste";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
@@ -177,6 +178,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </div>
 
         {kontext && <ChatWidget konversationen={chatKonversationen} ungeleseneAnzahl={chatUngeleseneAnzahl} />}
+        {kontext && <DesktopSchnellmenu darfInfo={kontext.berechtigungen.includes("Infos")} />}
 
         {kontext && (
           <>
