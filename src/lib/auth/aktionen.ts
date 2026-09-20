@@ -32,7 +32,7 @@ export async function eigenesPasswortFestlegen(formData: FormData) {
   const neuesPasswort = String(formData.get("neuesPasswort") ?? "")
   const wiederholung = String(formData.get("passwortWiederholung") ?? "")
 
-  if (neuesPasswort.length < 8) {
+  if (neuesPasswort.length < 10) {
     redirect("/passwort-aendern?fehler=kurz")
   }
   if (neuesPasswort !== wiederholung) {

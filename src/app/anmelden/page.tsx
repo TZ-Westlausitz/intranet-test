@@ -5,6 +5,7 @@ import { AuthError } from "next-auth"
 import { signIn } from "@/lib/auth/auth"
 import { kontextOderNull } from "@/lib/auth/berechtigung"
 import { Hinweis } from "@/components/hinweis"
+import { Passwortfeld } from "@/components/passwortfeld"
 
 /**
  * Anmeldung mit Benutzername und Passwort.
@@ -102,16 +103,7 @@ export default async function Anmeldeseite({
             />
           </label>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-primaer">Passwort</span>
-            <input
-              name="passwort"
-              type="password"
-              required
-              autoComplete="current-password"
-              className="rounded-lg border border-rand bg-flaeche px-3 py-2.5 text-base text-primaer focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
-            />
-          </label>
+          <Passwortfeld name="passwort" label="Passwort" required autoComplete="current-password" />
 
           {fehler && <Hinweis>Benutzername oder Passwort stimmen nicht.</Hinweis>}
 

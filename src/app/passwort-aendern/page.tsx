@@ -1,10 +1,10 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { eigenesPasswortFestlegen } from "@/lib/auth/aktionen"
 import { Logoleiste } from "@/components/logoleiste"
-import { Hinweis } from "@/components/hinweis"
+import { PasswortAendernFormular } from "@/components/passwort-aendern-formular"
 
 const FEHLER_TEXTE: Record<string, string> = {
-  kurz: "Das Passwort muss mindestens 8 Zeichen lang sein.",
+  kurz: "Das Passwort muss mindestens 10 Zeichen lang sein.",
   ungleich: "Die beiden Passwörter stimmen nicht überein.",
 }
 
@@ -34,40 +34,10 @@ export default async function PasswortAendernSeite({
         Hallo {kontext.name}, bitte leg jetzt dein eigenes Passwort fest, bevor es weitergeht.
       </p>
 
-      <form action={eigenesPasswortFestlegen} className="mt-8 flex flex-col gap-4">
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">Neues Passwort</span>
-          <input
-            name="neuesPasswort"
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
-          />
-        </label>
-
-        <label className="flex flex-col gap-1">
-          <span className="text-sm font-medium">Passwort wiederholen</span>
-          <input
-            name="passwortWiederholung"
-            type="password"
-            required
-            minLength={8}
-            autoComplete="new-password"
-            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
-          />
-        </label>
-
-        {fehler && <Hinweis>{FEHLER_TEXTE[fehler] ?? "Das hat nicht geklappt."}</Hinweis>}
-
-        <button
-          type="submit"
-          className="mt-2 rounded-lg bg-marke-gruen px-4 py-2.5 font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2"
-        >
-          Passwort speichern
-        </button>
-      </form>
+      <PasswortAendernFormular
+        aktion={eigenesPasswortFestlegen}
+        fehlerText={fehler ? (FEHLER_TEXTE[fehler] ?? "Das hat nicht geklappt.") : undefined}
+      />
     </main>
   )
 }
