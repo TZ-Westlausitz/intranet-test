@@ -21,7 +21,7 @@ import { Kopfleiste } from "@/components/kopfleiste"
  * (Rückmeldung 2026-09-18) — dieselbe Behandlung wie not-found.tsx, aus
  * demselben Grund: Logo fehlte auf Mobile, Inhalt klebte oben links.
  */
-export default function FehlerSeite({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function FehlerSeite({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
   return (
     <main className="mx-auto max-w-2xl px-5 py-6">
       <Kopfleiste />
@@ -41,7 +41,7 @@ export default function FehlerSeite({ reset }: { error: Error & { digest?: strin
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <button
             type="button"
-            onClick={reset}
+            onClick={retry}
             className="rounded-lg bg-marke-gruen px-4 py-2.5 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
           >
             Erneut versuchen
