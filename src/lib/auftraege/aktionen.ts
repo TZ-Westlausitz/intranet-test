@@ -107,7 +107,7 @@ async function auftragSpeichern(
     await benachrichtigungErstellen({
       personId: felder.zugewiesenAnId,
       text: `${kontext.name} hat dir eine Aufgabe zugewiesen: "${felder.titel}"`,
-      link: "/aufgaben",
+      link: `/aufgaben?auftrag=${auftrag.id}`,
     })
   }
 
@@ -204,7 +204,7 @@ export async function auftragAnnehmen(auftragId: string) {
   await benachrichtigungErstellen({
     personId: auftrag.erstelltVonId,
     text: `${kontext.name} hat "${auftrag.titel}" angenommen`,
-    link: "/aufgaben",
+    link: `/aufgaben?auftrag=${auftragId}`,
   })
 
   revalidatePath("/aufgaben")
@@ -243,7 +243,7 @@ export async function auftragErledigtSetzen(auftragId: string, erledigt: boolean
     await benachrichtigungErstellen({
       personId: auftrag.erstelltVonId,
       text: `${kontext.name} hat "${auftrag.titel}" erledigt`,
-      link: "/aufgaben",
+      link: `/aufgaben?auftrag=${auftragId}`,
     })
   }
 
@@ -336,7 +336,7 @@ export async function auftragKommentarErstellen(auftragId: string, formData: For
   await benachrichtigungErstellen({
     personId: empfaengerId,
     text: `${kontext.name} hat zu "${auftrag.titel}" kommentiert`,
-    link: "/aufgaben",
+    link: `/aufgaben?auftrag=${auftragId}`,
   })
 
   revalidatePath("/aufgaben")

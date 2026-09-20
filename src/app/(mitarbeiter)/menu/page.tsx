@@ -3,6 +3,7 @@ import Link from "next/link"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { abmelden } from "@/lib/auth/aktionen"
 import { Kopfleiste } from "@/components/kopfleiste"
+import { BenachrichtigungenListe } from "@/components/benachrichtigungen-liste"
 import { neuesteBenachrichtigungen, ungeleseneAnzahl } from "@/lib/benachrichtigungen/abfragen"
 import { benachrichtigungenAlsGelesenMarkieren } from "@/lib/benachrichtigungen/aktionen"
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
@@ -55,31 +56,7 @@ export default async function MenuSeite() {
           )}
         </div>
 
-        {benachrichtigungen.length === 0 ? (
-          <p className="mt-3 text-sm text-sekundaer">Noch keine Benachrichtigungen.</p>
-        ) : (
-          <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
-            {benachrichtigungen.map((b) => {
-              const inhalt = (
-                <>
-                  <p className={"text-sm " + (b.gelesen ? "text-primaer" : "font-medium text-ueberschrift")}>{b.text}</p>
-                  <p className="mt-0.5 text-xs text-tertiaer">{b.zeitpunktAnzeige}</p>
-                </>
-              )
-              return (
-                <li key={b.id} className="py-2.5">
-                  {b.link ? (
-                    <Link href={b.link} className="block">
-                      {inhalt}
-                    </Link>
-                  ) : (
-                    inhalt
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        )}
+        <BenachrichtigungenListe eintraege={benachrichtigungen} />
       </section>
 
       <nav className="mt-4 flex flex-col overflow-hidden rounded-xl border border-rand bg-flaeche">

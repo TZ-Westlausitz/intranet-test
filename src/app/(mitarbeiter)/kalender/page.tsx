@@ -4,6 +4,7 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { ZielHervorheben } from "@/components/ziel-hervorheben"
 import { KalenderMonate, type MonatAnzeige } from "@/components/kalender-monate"
 import { TerminDialog } from "@/components/termin-dialog"
 import { TerminUebersicht, type TerminUebersichtEintrag } from "@/components/termin-uebersicht"
@@ -153,10 +154,10 @@ const FEHLER_TEXTE: Record<string, string> = {
 export default async function KalenderSeite({
   searchParams,
 }: {
-  searchParams: Promise<{ jahr?: string; monat?: string; fehler?: string; suche?: string; neu?: string }>
+  searchParams: Promise<{ jahr?: string; monat?: string; fehler?: string; suche?: string; neu?: string; termin?: string }>
 }) {
   const kontext = await berechtigung()
-  const { jahr: jahrParam, monat: monatParam, fehler, suche, neu } = await searchParams
+  const { jahr: jahrParam, monat: monatParam, fehler, suche, neu, termin: zielTerminId } = await searchParams
   const suchtext = (suche ?? "").trim()
 
   // berlinerTagesbeginn() statt new Date(): über Date.UTC gebaut, deshalb
@@ -276,6 +277,7 @@ export default async function KalenderSeite({
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
       <Kopfleiste />
+      <ZielHervorheben zielId={zielTerminId} oeffnen />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Kalender</h1>
 
       {fehler && (

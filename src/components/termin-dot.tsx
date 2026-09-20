@@ -57,6 +57,7 @@ export const TerminDot = forwardRef<TerminDotHandle, {
     <>
       <button
         type="button"
+        data-ziel={termin.id}
         title={`${termin.titel}, ${termin.zeitraumAnzeige}`}
         onClick={() => infoRef.current?.oeffnen()}
         className={"h-1.5 w-1.5 rounded-full " + (TERMIN_FARBE_KLASSEN[termin.farbe] ?? "bg-neutral-400")}

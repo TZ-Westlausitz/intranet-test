@@ -5,6 +5,7 @@ import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { AuftragKommentare, type AuftragKommentarAnzeige } from "@/components/auftrag-kommentare"
 import { AuftragErstellenDialog } from "@/components/auftrag-erstellen-dialog"
+import { ZielHervorheben } from "@/components/ziel-hervorheben"
 import { auftragZuStandardwerte } from "@/components/auftrag-form-felder"
 import { auftraegeFuerPerson, alleOffenenAuftraege, eigeneAuftragEntwuerfe } from "@/lib/auftraege/abfragen"
 import {
@@ -166,10 +167,10 @@ function AuftragInhalt({ auftrag, heute, name }: { auftrag: AuftragMitBeziehung;
 export default async function AufgabenSeite({
   searchParams,
 }: {
-  searchParams: Promise<{ fehler?: string; neu?: string }>
+  searchParams: Promise<{ fehler?: string; neu?: string; auftrag?: string }>
 }) {
   const kontext = await berechtigung()
-  const { fehler, neu } = await searchParams
+  const { fehler, neu, auftrag: zielAuftragId } = await searchParams
 
   const heute = berlinerTagesbeginn()
 
@@ -207,6 +208,7 @@ export default async function AufgabenSeite({
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste />
+      <ZielHervorheben zielId={zielAuftragId} />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Aufgaben</h1>
 
       {zeigeProjekteKachel && (
@@ -247,7 +249,7 @@ export default async function AufgabenSeite({
         ) : (
           <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
             {zugewiesenOffen.map((auftrag) => (
-              <li key={auftrag.id} className="flex items-start gap-3 py-2.5">
+              <li key={auftrag.id} data-ziel={auftrag.id} className="flex items-start gap-3 py-2.5">
                 {auftrag.status === "OFFEN" ? (
                   <form action={auftragAnnehmen.bind(null, auftrag.id)}>
                     <button
@@ -292,7 +294,7 @@ export default async function AufgabenSeite({
           </summary>
           <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
             {zugewiesenErledigt.map((auftrag) => (
-              <li key={auftrag.id} className="flex items-start gap-3 py-2.5">
+              <li key={auftrag.id} data-ziel={auftrag.id} className="flex items-start gap-3 py-2.5">
                 <form action={auftragErledigtSetzen.bind(null, auftrag.id, false)}>
                   <button
                     type="submit"
@@ -422,7 +424,7 @@ export default async function AufgabenSeite({
         ) : (
           <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
             {vergebenOffen.map((auftrag) => (
-              <li key={auftrag.id} className="flex items-start gap-3 py-2.5">
+              <li key={auftrag.id} data-ziel={auftrag.id} className="flex items-start gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   {/* auftraegeFuerPerson schließt Entwürfe aus (istEntwurf: false) — zugewiesenAn ist hier immer gesetzt. */}
                   <AuftragInhalt
@@ -459,7 +461,7 @@ export default async function AufgabenSeite({
           </summary>
           <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
             {vergebenErledigt.map((auftrag) => (
-              <li key={auftrag.id} className="flex items-start gap-3 py-2.5">
+              <li key={auftrag.id} data-ziel={auftrag.id} className="flex items-start gap-3 py-2.5">
                 <div className="min-w-0 flex-1">
                   <AuftragInhalt
                     auftrag={auftrag}
@@ -504,7 +506,7 @@ export default async function AufgabenSeite({
             ) : (
               <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
                 {firmenweiteAuftraege.map((auftrag) => (
-                  <li key={auftrag.id} className="flex items-start gap-3 py-2.5">
+                  <li key={auftrag.id} data-ziel={auftrag.id} className="flex items-start gap-3 py-2.5">
                     <div className="min-w-0 flex-1">
                       <AuftragInhalt
                         auftrag={auftrag}

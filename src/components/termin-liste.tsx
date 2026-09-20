@@ -62,7 +62,7 @@ export function TerminZeile({ eintrag, aktionen }: { eintrag: TerminListenEintra
   }
 
   return (
-    <li className="grid grid-cols-1 gap-1 py-2.5 sm:grid-cols-[8rem_11rem_1fr_10rem_auto] sm:items-center sm:gap-3">
+    <li data-ziel={eintrag.id} className="grid grid-cols-1 gap-1 py-2.5 sm:grid-cols-[8rem_11rem_1fr_10rem_auto] sm:items-center sm:gap-3">
       {/* `contents` nimmt den Wrapper selbst aus dem Grid-Layout raus, ohne
           seine Kind-Spalten zu verschieben — so lässt sich der ganze
           Info-Bereich in EINEM Klickziel öffnen, ohne die 4 Spalten in

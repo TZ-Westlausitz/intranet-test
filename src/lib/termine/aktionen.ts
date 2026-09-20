@@ -9,7 +9,7 @@ import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { TerminFarbe, TerminTeilnahmeStatus } from "@/generated/prisma/enums"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
-import { formatiereDatumAusDate, zeitAusDate, berlinerTagesbeginn } from "@/lib/datum"
+import { formatiereDatumAusDate, zeitAusDate, berlinerTagesbeginn, teileInBerlinerZeit } from "@/lib/datum"
 import { richTextSanitisieren } from "@/lib/rich-text"
 import { terminAnhaengePruefen, terminAnhaengeSpeichern, terminAnhaengeLoeschen } from "@/lib/termine/anhaenge"
 import { naechsteWiederholung, type WiederholenTyp, type WiederholenEinheit } from "@/lib/termine/wiederholung"
@@ -131,6 +131,16 @@ function terminEingabenLesen(
     teilnehmerIds,
     erinnerungenMinuten,
   }
+}
+
+/**
+ * Ziel für Benachrichtigungen zu einem einzelnen Termin: Kalender im richtigen
+ * Monat (`monat` ist 1-basiert, siehe kalender/page.tsx) mit `?termin=`,
+ * wodurch ZielHervorheben das Info-Pop-Up des Termins automatisch öffnet.
+ */
+function terminLink(terminId: string, beginn: Date): string {
+  const { jahr, monat } = teileInBerlinerZeit(beginn)
+  return `/kalender?jahr=${jahr}&monat=${Number(monat)}&termin=${terminId}`
 }
 
 function rueckkehrPfadAus(formData: FormData): string {
@@ -311,7 +321,7 @@ export async function terminAktualisieren(terminId: string, formData: FormData) 
       await benachrichtigungErstellen({
         personId,
         text: `${kontext.name} hat "${felder.titel}" auf ${neueZeit} verschoben`,
-        link: "/kalender",
+        link: terminLink(terminId, felder.beginn),
       })
     }
   }
@@ -456,7 +466,7 @@ export async function terminTeilnahmeAntworten(terminId: string, status: TerminT
   await benachrichtigungErstellen({
     personId: teilnahme.termin.erstelltVonId,
     text: `${kontext.name} hat "${teilnahme.termin.titel}" ${status === TerminTeilnahmeStatus.ZUGESAGT ? "zugesagt" : "abgesagt"}`,
-    link: "/kalender",
+    link: terminLink(terminId, teilnahme.termin.beginn),
   })
 
   revalidatePath("/kalender")
@@ -507,7 +517,7 @@ export async function terminKommentarErstellen(terminId: string, formData: FormD
     await benachrichtigungErstellen({
       personId,
       text: `${kontext.name} hat zu "${termin.titel}" kommentiert`,
-      link: "/kalender",
+      link: terminLink(terminId, termin.beginn),
     })
   }
 
