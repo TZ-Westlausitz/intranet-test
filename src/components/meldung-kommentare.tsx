@@ -1,19 +1,20 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 import { MELDUNG_STATUS_LABEL } from "@/lib/kontaktstelle/status"
+import type { meldungVerlaufLaden, meldungAlsGelesenMarkieren, meldungKommentarErstellen } from "@/lib/kontaktstelle/aktionen"
 
-export type MeldungKommentarAnhangAnzeige = { id: string; dateiname: string; groesseBytes: number; mimetyp: string }
-export type MeldungVerlaufEintragAnzeige =
-  | { art: "kommentar"; id: string; erstelltAm: Date; text: string; autorLabel: string; anhaenge: MeldungKommentarAnhangAnzeige[] }
-  | { art: "status"; id: string; erstelltAm: Date; status: string }
+type LadeErgebnis = Awaited<ReturnType<typeof meldungVerlaufLaden>>
+type MeldungVerlaufEintragAnzeige = LadeErgebnis["eintraege"][number]
+
+const POLL_INTERVALL_MS = 10_000
 
 function zeitpunkt(datum: Date): string {
   return datum.toLocaleString("de-DE", { timeZone: "Europe/Berlin", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
 }
 
-function AnhangZeile({ meldungId, anhang }: { meldungId: string; anhang: MeldungKommentarAnhangAnzeige }) {
+function AnhangZeile({ meldungId, anhang }: { meldungId: string; anhang: { id: string; dateiname: string } }) {
   return (
     <a
       href={`/api/kontaktstelle/${meldungId}/anhaenge/${anhang.id}`}
@@ -27,35 +28,105 @@ function AnhangZeile({ meldungId, anhang }: { meldungId: string; anhang: Meldung
 }
 
 /**
- * Verlauf/Rückkanal zu einer Meldung — Muster AuftragKommentare, hier aber
- * als immer offene Liste statt <details>, weil das hier der
- * Hauptseiteninhalt der Detailseite ist, keine eingeklappte
- * Rückfragen-Sektion. `autorLabel` kommt bereits fertig aus
+ * Verlauf/Rückkanal zu einer Meldung — leichtes Hintergrund-Polling statt
+ * WebSocket, exaktes Muster ChatKonversationAnsicht (Chat-Baustein,
+ * Rückmeldung 2026-09-10: "bewusst so entschieden"): alle 10s wird per
+ * Server Action direkt (kein `<form action>`) nach Einträgen NEUER als
+ * der zuletzt gesehene gefragt. `autorLabel` kommt bereits fertig aus
  * meldungVerlaufFuerAnsicht (siehe dort) — zeigt "Anonym" statt eines
  * Namens, wenn die Kontaktstelle eine anonyme Meldung liest, sonst den
  * echten Namen. Statuswechsel (`art: "status"`) sind Systemzeilen ohne
  * Personenbezug, mittig statt als Sprechblase.
  *
- * `chatAktiv` (Rückmeldung 2026-09-22): das Eingabeformular erscheint erst
- * ab Status "In Bearbeitung" — vorher ein reiner Hinweistext. Serverseitig
- * nochmal geprüft in meldungKommentarErstellen (Regel 5).
+ * `ungeleseneAnzahl` (Rückmeldung 2026-09-22: der vorherige Gesamt-Zähler
+ * neben "Verlauf" war nutzlos) kommt aus dem Server-Component-Elternteil,
+ * berechnet aus dem Gelesen-Stand VOR dem jeweils letzten Rendern dieser
+ * Seite — zeigt "das war neu, als du zuletzt (neu) geladen wurdest". Das
+ * Markieren als gelesen passiert client-seitig beim Einhängen (Muster
+ * Chat) und nach jeder eigenen Nachricht; Next.js rendert die Server
+ * Component wegen `revalidatePath` in beiden Fällen neu, wodurch die Zahl
+ * i. d. R. auf 0 fällt — das reine Hintergrund-Polling (neue Einträge
+ * ANDERER Personen, siehe `neueLaden`) löst dagegen KEIN Neurendern der
+ * Server Component aus, die Zahl bleibt bis zur nächsten eigenen Aktion
+ * oder einem echten Neuladen stehen.
+ *
+ * `chatAktiv` kommt aus dem Server-Component-Elternteil UND wird bei
+ * jedem Poll aktualisiert — ändert die Kontaktstelle den Status auf "In
+ * Bearbeitung", während die meldende Person die Seite offen hat, schaltet
+ * sich das Antwortformular ohne Neuladen frei.
  */
 export function MeldungKommentare({
   meldungId,
-  eintraege,
-  chatAktiv,
+  anfangsEintraege,
+  anfangsChatAktiv,
+  ungeleseneAnzahl,
+  verlaufLadenAktion,
+  alsGelesenMarkierenAktion,
   kommentarAktion,
 }: {
   meldungId: string
-  eintraege: MeldungVerlaufEintragAnzeige[]
-  chatAktiv: boolean
-  kommentarAktion: (meldungId: string, formData: FormData) => void
+  anfangsEintraege: MeldungVerlaufEintragAnzeige[]
+  anfangsChatAktiv: boolean
+  ungeleseneAnzahl: number
+  verlaufLadenAktion: typeof meldungVerlaufLaden
+  alsGelesenMarkierenAktion: typeof meldungAlsGelesenMarkieren
+  kommentarAktion: typeof meldungKommentarErstellen
 }) {
+  const [eintraege, setEintraege] = useState(anfangsEintraege)
+  const [chatAktiv, setChatAktiv] = useState(anfangsChatAktiv)
   const [anhaenge, setAnhaenge] = useState<string[]>([])
+  const [sendet, setSendet] = useState(false)
+  const letzteZeitRef = useRef(anfangsEintraege.at(-1)?.erstelltAm ?? null)
+  const formRef = useRef<HTMLFormElement>(null)
+
+  useEffect(() => {
+    alsGelesenMarkierenAktion(meldungId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- alsGelesenMarkierenAktion ist eine Server Action, die bei jedem Router-Refresh eine neue Funktionsreferenz bekommt (Muster ChatKonversationAnsicht, siehe dort für die Endlosschleifen-Begründung).
+  }, [meldungId])
+
+  async function neueLaden() {
+    const ergebnis = await verlaufLadenAktion(meldungId, letzteZeitRef.current?.toISOString())
+    setChatAktiv(ergebnis.chatAktiv)
+    if (ergebnis.eintraege.length === 0) return
+    letzteZeitRef.current = ergebnis.eintraege.at(-1)!.erstelltAm
+    setEintraege((bisher) => [...bisher, ...ergebnis.eintraege])
+    alsGelesenMarkierenAktion(meldungId)
+  }
+
+  useEffect(() => {
+    const intervall = window.setInterval(neueLaden, POLL_INTERVALL_MS)
+    return () => window.clearInterval(intervall)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- neueLaden liest meldungId/Aktionen aus Props, die sich hier nicht ändern
+  }, [meldungId])
+
+  async function beiSenden(ereignis: React.FormEvent<HTMLFormElement>) {
+    ereignis.preventDefault()
+    if (sendet) return
+    const formData = new FormData(ereignis.currentTarget)
+    setSendet(true)
+    try {
+      await kommentarAktion(meldungId, formData)
+      formRef.current?.reset()
+      setAnhaenge([])
+      await neueLaden()
+    } finally {
+      setSendet(false)
+    }
+  }
 
   return (
     <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
-      <h2 className="text-sm font-semibold text-ueberschrift">Verlauf{eintraege.length > 0 ? ` (${eintraege.length})` : ""}</h2>
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-ueberschrift">
+        Verlauf
+        {ungeleseneAnzahl > 0 && (
+          <span
+            aria-label={`${ungeleseneAnzahl} neue Nachrichten`}
+            className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-marke-orange px-1 text-[9px] font-bold text-neutral-900"
+          >
+            {ungeleseneAnzahl}
+          </span>
+        )}
+      </h2>
 
       {eintraege.length > 0 && (
         <ul className="mt-3 flex flex-col gap-2">
@@ -84,14 +155,7 @@ export function MeldungKommentare({
       )}
 
       {chatAktiv ? (
-        <form
-          action={kommentarAktion.bind(null, meldungId)}
-          onSubmit={(ereignis) => {
-            setAnhaenge([])
-            window.setTimeout(() => (ereignis.target as HTMLFormElement).reset(), 0)
-          }}
-          className="mt-3 flex flex-col gap-1"
-        >
+        <form ref={formRef} onSubmit={beiSenden} className="mt-3 flex flex-col gap-1">
           <div className="flex gap-2">
             <input
               type="text"
@@ -116,7 +180,8 @@ export function MeldungKommentare({
             </label>
             <button
               type="submit"
-              className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200"
+              disabled={sendet}
+              className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200 disabled:opacity-50"
             >
               Senden
             </button>

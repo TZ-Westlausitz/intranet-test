@@ -9,6 +9,7 @@ import { MeldungStatus } from "@/generated/prisma/enums"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
 import { istKontaktstelle } from "@/lib/kontaktstelle/sichtbarkeit"
 import { meldungAnhangPruefen, meldungAnhangSpeichern } from "@/lib/kontaktstelle/anhaenge"
+import { meldungVerlaufFuerAnsicht } from "@/lib/kontaktstelle/abfragen"
 import { MELDUNG_STATUS_LABEL } from "@/lib/kontaktstelle/status"
 
 /** Alle Personen mit der Berechtigung "Meldestelle" — Empfänger für neue Meldungen/Nachrichten. */
@@ -22,6 +23,19 @@ async function meldestellenPersonen(ausgenommenId?: string) {
     select: { benutzername: true },
   })
   return personen.map((p) => p.benutzername)
+}
+
+/** Zugriff nur für die meldende Person selbst oder die Kontaktstelle — Muster für meldungKommentarErstellen/meldungVerlaufLaden/meldungAlsGelesenMarkieren. */
+async function meldungZugriffPruefen(meldungId: string, kontext: { personId: string; berechtigungen: string[] }) {
+  const meldung = await prisma.meldung.findUnique({
+    where: { id: meldungId },
+    select: { id: true, titel: true, status: true, erstelltVonId: true },
+  })
+  if (!meldung) throw new NichtBerechtigt("Meldung nicht gefunden")
+  if (meldung.erstelltVonId !== kontext.personId && !istKontaktstelle(kontext)) {
+    throw new NichtBerechtigt("kein Zugriff auf diese Meldung")
+  }
+  return meldung
 }
 
 /**
@@ -84,17 +98,9 @@ export async function meldungErstellen(formData: FormData) {
  */
 export async function meldungKommentarErstellen(meldungId: string, formData: FormData) {
   const kontext = await berechtigung()
-
-  const meldung = await prisma.meldung.findUnique({
-    where: { id: meldungId },
-    select: { id: true, titel: true, status: true, erstelltVonId: true },
-  })
-  if (!meldung) throw new NichtBerechtigt("Meldung nicht gefunden")
-
+  const meldung = await meldungZugriffPruefen(meldungId, kontext)
   const istMelderSelbst = meldung.erstelltVonId === kontext.personId
-  if (!istMelderSelbst && !istKontaktstelle(kontext)) {
-    throw new NichtBerechtigt("kein Zugriff auf diese Meldung")
-  }
+
   if (meldung.status === MeldungStatus.EINGEGANGEN) {
     throw new NichtBerechtigt("Chat ist erst ab \"In Bearbeitung\" verfügbar")
   }
@@ -116,6 +122,13 @@ export async function meldungKommentarErstellen(meldungId: string, formData: For
   for (const datei of dateien) {
     await meldungAnhangSpeichern(meldungId, datei, kommentar.id)
   }
+
+  // Eigene Nachricht zählt nicht als "ungelesen" für sich selbst — Muster nachrichtSenden (Chat).
+  await prisma.meldungGelesen.upsert({
+    where: { meldungId_personId: { meldungId, personId: kontext.personId } },
+    create: { meldungId, personId: kontext.personId },
+    update: { zuletztGelesenAm: new Date() },
+  })
 
   if (istMelderSelbst) {
     for (const personId of await meldestellenPersonen()) {
@@ -174,4 +187,32 @@ export async function meldungStatusAktualisieren(meldungId: string, formData: Fo
 
   revalidatePath(`/kontaktstelle/${meldungId}`)
   revalidatePath("/kontaktstelle")
+}
+
+/**
+ * Für das Erstladen UND das Hintergrund-Polling (Rückmeldung 2026-09-22:
+ * "Chat sollte sich selbst aktualisieren") — Muster
+ * `konversationNachrichtenLaden` im Chat-Baustein: als Server Action
+ * direkt aus MeldungKommentare aufrufbar, kein `<form>` nötig. `seitIso`
+ * gesetzt: nur neuere Einträge (Polling), sonst der ganze Verlauf.
+ * Liefert `chatAktiv` mit, damit eine Statusänderung durch die
+ * Kontaktstelle das Antwortformular bei der meldenden Person auch ohne
+ * Neuladen freischaltet.
+ */
+export async function meldungVerlaufLaden(meldungId: string, seitIso?: string) {
+  const kontext = await berechtigung()
+  const meldung = await meldungZugriffPruefen(meldungId, kontext)
+  const eintraege = await meldungVerlaufFuerAnsicht(meldungId, kontext, seitIso ? new Date(seitIso) : undefined)
+  return { eintraege, chatAktiv: meldung.status !== MeldungStatus.EINGEGANGEN }
+}
+
+/** Markiert eine Meldung als (bis jetzt) gelesen — für den "neue Nachrichten"-Zähler, Muster konversationAlsGelesenMarkieren. */
+export async function meldungAlsGelesenMarkieren(meldungId: string) {
+  const kontext = await berechtigung()
+  await meldungZugriffPruefen(meldungId, kontext)
+  await prisma.meldungGelesen.upsert({
+    where: { meldungId_personId: { meldungId, personId: kontext.personId } },
+    create: { meldungId, personId: kontext.personId },
+    update: { zuletztGelesenAm: new Date() },
+  })
 }

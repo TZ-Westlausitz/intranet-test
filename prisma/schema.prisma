@@ -281,6 +281,7 @@ model Person {
   // --- Kontaktstelle (Meldestelle) ----------------------------------------
   meldungenErstellt Meldung[]          @relation("MeldungErsteller")
   meldungKommentare MeldungKommentar[] @relation("MeldungKommentarAutor")
+  meldungGelesen    MeldungGelesen[]
 
   @@index([aktiv])
   @@index([nachname, vorname])
@@ -2093,9 +2094,25 @@ model Meldung {
   kommentare    MeldungKommentar[]
   anhaenge      MeldungAnhang[]
   statusVerlauf MeldungStatusEintrag[]
+  gelesen       MeldungGelesen[]
 
   @@index([erstelltVonId])
   @@index([status])
+}
+
+/// Gelesen-Stand pro Person und Meldung — Muster ChatKonversationGelesen:
+/// ein Zeitstempel statt einer Zeile pro gelesenem Eintrag reicht für den
+/// "neue Nachrichten"-Zähler im Verlauf (Rückmeldung 2026-09-22: der
+/// bisherige Gesamt-Zähler war nutzlos, ein Ungelesen-Zähler ist es nicht).
+model MeldungGelesen {
+  meldungId        String
+  personId         String
+  zuletztGelesenAm DateTime @default(now())
+
+  meldung Meldung @relation(fields: [meldungId], references: [id], onDelete: Cascade)
+  person  Person  @relation(fields: [personId], references: [benutzername])
+
+  @@id([meldungId, personId])
 }
 
 /// Protokolliert jede Statusänderung als eigenen, append-only

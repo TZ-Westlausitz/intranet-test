@@ -8,9 +8,15 @@ import {
   meldungDetailFuerMelder,
   meldungDetailFuerKontaktstelle,
   meldungVerlaufFuerAnsicht,
+  meldungUngeleseneAnzahl,
 } from "@/lib/kontaktstelle/abfragen"
 import { istKontaktstelle } from "@/lib/kontaktstelle/sichtbarkeit"
-import { meldungStatusAktualisieren, meldungKommentarErstellen } from "@/lib/kontaktstelle/aktionen"
+import {
+  meldungStatusAktualisieren,
+  meldungKommentarErstellen,
+  meldungVerlaufLaden,
+  meldungAlsGelesenMarkieren,
+} from "@/lib/kontaktstelle/aktionen"
 import { MeldungKommentare } from "@/components/meldung-kommentare"
 import { MeldungStatusChip } from "@/components/meldung-status-chip"
 import { MeldungStatusSchieberegler } from "@/components/meldung-status-schieberegler"
@@ -31,7 +37,14 @@ export default async function MeldungDetailSeite({ params }: { params: Promise<{
       ? `${kontaktstelleMeldung.melder.vorname} ${kontaktstelleMeldung.melder.nachname}`
       : "Anonym"
     : null
-  const verlauf = await meldungVerlaufFuerAnsicht(meldungId, kontext)
+  // ungeleseneAnzahl MUSS vor dem Rendern gelesen werden, mit dem Gelesen-
+  // Stand von VOR diesem Besuch — MeldungKommentare markiert client-seitig
+  // erst beim Einhängen als gelesen (siehe dort), die hier berechnete Zahl
+  // bleibt für die Dauer des Besuchs unverändert stehen.
+  const [verlauf, ungeleseneAnzahl] = await Promise.all([
+    meldungVerlaufFuerAnsicht(meldungId, kontext),
+    meldungUngeleseneAnzahl(meldungId, kontext.personId),
+  ])
   // Chat erst ab "In Bearbeitung" nutzbar (Rückmeldung 2026-09-22) — auch
   // serverseitig in meldungKommentarErstellen geprüft (Regel 5).
   const chatAktiv = meldung.status !== MeldungStatus.EINGEGANGEN
@@ -64,8 +77,11 @@ export default async function MeldungDetailSeite({ params }: { params: Promise<{
 
       <MeldungKommentare
         meldungId={meldungId}
-        eintraege={verlauf}
-        chatAktiv={chatAktiv}
+        anfangsEintraege={verlauf}
+        anfangsChatAktiv={chatAktiv}
+        ungeleseneAnzahl={ungeleseneAnzahl}
+        verlaufLadenAktion={meldungVerlaufLaden}
+        alsGelesenMarkierenAktion={meldungAlsGelesenMarkieren}
         kommentarAktion={meldungKommentarErstellen}
       />
 

@@ -122,6 +122,7 @@ export async function meldungDetailFuerKontaktstelle(meldungId: string): Promise
 export async function meldungVerlaufFuerAnsicht(
   meldungId: string,
   kontext: { personId: string; berechtigungen: string[] },
+  seitDatum?: Date,
 ): Promise<MeldungVerlaufEintrag[]> {
   const meldung = await prisma.meldung.findUnique({
     where: { id: meldungId },
@@ -129,8 +130,10 @@ export async function meldungVerlaufFuerAnsicht(
   })
   if (!meldung) return []
 
+  const seitFilter = seitDatum ? { erstelltAm: { gt: seitDatum } } : {}
+
   const statusEintraege = await prisma.meldungStatusEintrag.findMany({
-    where: { meldungId },
+    where: { meldungId, ...seitFilter },
     select: { id: true, status: true, erstelltAm: true },
   })
   const statusAlsVerlauf: MeldungVerlaufEintrag[] = statusEintraege.map((s) => ({
@@ -147,7 +150,7 @@ export async function meldungVerlaufFuerAnsicht(
 
   if (!brauchtAnonymisierung) {
     const kommentare = await prisma.meldungKommentar.findMany({
-      where: { meldungId },
+      where: { meldungId, ...seitFilter },
       select: {
         id: true,
         text: true,
@@ -167,7 +170,7 @@ export async function meldungVerlaufFuerAnsicht(
   } else {
     const [vonKontaktstelle, vomMelder] = await Promise.all([
       prisma.meldungKommentar.findMany({
-        where: { meldungId, personId: { not: meldung.erstelltVonId } },
+        where: { meldungId, personId: { not: meldung.erstelltVonId }, ...seitFilter },
         select: {
           id: true,
           text: true,
@@ -179,7 +182,7 @@ export async function meldungVerlaufFuerAnsicht(
       // Bewusst KEIN personId/person in dieser Selektion — der technische
       // Kern der Anonymitäts-Garantie für Kommentare der meldenden Person.
       prisma.meldungKommentar.findMany({
-        where: { meldungId, personId: meldung.erstelltVonId },
+        where: { meldungId, personId: meldung.erstelltVonId, ...seitFilter },
         select: { id: true, text: true, erstelltAm: true, anhaenge: { select: ANHANG_SELECT } },
       }),
     ])
@@ -209,6 +212,30 @@ export async function meldungVerlaufFuerAnsicht(
   }
 
   return [...statusAlsVerlauf, ...kommentareAlsVerlauf].sort((a, b) => a.erstelltAm.getTime() - b.erstelltAm.getTime())
+}
+
+/** Gelesen-Stand einer Person für eine Meldung — Muster ChatKonversationGelesen. `null` heißt "noch nie besucht". */
+export async function meldungGelesenStand(meldungId: string, personId: string): Promise<Date | null> {
+  const zeile = await prisma.meldungGelesen.findUnique({ where: { meldungId_personId: { meldungId, personId } } })
+  return zeile?.zuletztGelesenAm ?? null
+}
+
+/**
+ * Anzahl der Verlaufseinträge (Kommentare + Statuswechsel), die NEUER
+ * sind als der zuletzt bekannte Gelesen-Stand — für die Badge neben
+ * "Verlauf" (Rückmeldung 2026-09-22: ersetzt den vorherigen, nutzlosen
+ * Gesamt-Zähler). Reine Zählung, keine Anonymisierung nötig — eine Zahl
+ * verrät keine Identität.
+ */
+export async function meldungUngeleseneAnzahl(meldungId: string, personId: string): Promise<number> {
+  const seit = await meldungGelesenStand(meldungId, personId)
+  const seitFilter = seit ? { erstelltAm: { gt: seit } } : {}
+
+  const [kommentare, statusEintraege] = await Promise.all([
+    prisma.meldungKommentar.count({ where: { meldungId, ...seitFilter } }),
+    prisma.meldungStatusEintrag.count({ where: { meldungId, ...seitFilter } }),
+  ])
+  return kommentare + statusEintraege
 }
 
 /** Zugriff auf einen Anhang — nur die meldende Person selbst oder die Kontaktstelle, sonst false (Aufrufer liefert 404). */
