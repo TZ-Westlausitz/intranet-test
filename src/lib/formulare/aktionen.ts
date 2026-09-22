@@ -20,6 +20,7 @@ import { formularVorlageBilderPruefen, formularVorlageBilderSpeichern } from "@/
 import { formularPdfErzeugen, titelOhneEmoji } from "@/lib/formulare/pdf"
 import { dateiAblegen } from "@/lib/ablage"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
+import { FORMULAR_STATUS_LABEL } from "@/lib/formulare/status"
 
 const GUELTIGE_TYPEN = new Set<string>(Object.values(FormularElementTyp))
 const AUSWAHL_TYPEN = new Set<string>([FormularElementTyp.AUSWAHL_EINZEL, FormularElementTyp.AUSWAHL_MEHRFACH])
@@ -665,20 +666,38 @@ export async function formularEinreichen(vorlageId: string, formData: FormData) 
   redirect(`/formulare/einreichungen/${einreichung.id}`)
 }
 
-/** Nur ein hinterlegter Empfänger (Person, Gruppen- oder Abteilungsmitglied) darf den Status setzen. */
+/**
+ * Nur ein hinterlegter Empfänger (Person, Gruppen- oder Abteilungsmitglied)
+ * darf den Status setzen. Benachrichtigt bei einer tatsächlichen Änderung
+ * die einreichende Person (Rückmeldung 2026-09-22) — Muster
+ * meldungStatusAktualisieren im Kontaktstelle-Baustein: kein doppeltes
+ * Benachrichtigen, wenn derselbe Status erneut gesetzt wird, und keine
+ * Benachrichtigung an sich selbst, falls Empfänger und Einreichende
+ * dieselbe Person sind.
+ */
 export async function einreichungStatusSetzen(einreichungId: string, status: FormularEinreichungStatus) {
   const kontext = await berechtigung()
 
   const einreichung = await prisma.formularEinreichung.findUnique({
     where: { id: einreichungId },
-    select: { id: true, vorlageId: true },
+    select: { id: true, vorlageId: true, status: true, eingereichtVonId: true, vorlage: { select: { titel: true } } },
   })
   if (!einreichung) throw new NichtBerechtigt("Einreichung nicht gefunden")
   if (!(await istFormularEmpfaenger(einreichung.vorlageId, kontext.personId))) {
     throw new NichtBerechtigt("nur der Empfänger darf den Status ändern")
   }
+  if (einreichung.status === status) return
 
   await prisma.formularEinreichung.update({ where: { id: einreichungId }, data: { status } })
+
+  if (einreichung.eingereichtVonId !== kontext.personId) {
+    await benachrichtigungErstellen({
+      personId: einreichung.eingereichtVonId,
+      text: `Status deiner Einreichung "${einreichung.vorlage.titel}" wurde auf "${FORMULAR_STATUS_LABEL[status]}" geändert`,
+      link: `/formulare/einreichungen/${einreichungId}`,
+    })
+  }
+
   revalidatePath(`/formulare/einreichungen/${einreichungId}`)
   revalidatePath("/formulare")
 }
