@@ -75,9 +75,9 @@ export default async function MenuSeite() {
         >
           Einstellungen
         </Link>
-        <span aria-disabled="true" title="Noch nicht verfügbar" className="border-b border-rand px-4 py-3 text-sm text-tertiaer">
+        <Link href="/kontaktstelle" className="border-b border-rand px-4 py-3 text-sm text-primaer transition hover:bg-marke-gruen/5">
           Kontaktstelle
-        </span>
+        </Link>
         <form action={abmelden}>
           <button type="submit" className="block w-full px-4 py-3 text-left text-sm text-primaer transition hover:bg-marke-gruen/5">
             Ausloggen

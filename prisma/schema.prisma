@@ -278,6 +278,10 @@ model Person {
   chatNachrichten    ChatNachricht[]              @relation("ChatNachrichtAbsender")
   chatGelesen        ChatKonversationGelesen[]
 
+  // --- Kontaktstelle (Meldestelle) ----------------------------------------
+  meldungenErstellt Meldung[]          @relation("MeldungErsteller")
+  meldungKommentare MeldungKommentar[] @relation("MeldungKommentarAutor")
+
   @@index([aktiv])
   @@index([nachname, vorname])
 }
@@ -2055,4 +2059,82 @@ model ChatKonversationGelesen {
   person       Person           @relation(fields: [personId], references: [benutzername])
 
   @@id([konversationId, personId])
+}
+
+// =============================================================================
+//  MODUL — Kontaktstelle (Meldestelle nach Hinweisgeberschutzgesetz)
+// =============================================================================
+
+enum MeldungStatus {
+  EINGEGANGEN
+  IN_BEARBEITUNG
+  ABGESCHLOSSEN
+}
+
+/// Eine Meldung an die interne Meldestelle (HinSchG) — append-only wie
+/// Vereinbarung/Uebergabeprotokoll/FormularEinreichung: nach dem Absenden
+/// ändert sich nur noch `status`, nie `titel`/`beschreibung`/`istAnonym`.
+/// `erstelltVonId` ist IMMER gesetzt, auch bei `istAnonym` — dient
+/// ausschließlich der eigenen "Meine Meldungen"-Sicht der meldenden Person
+/// und internen Benachrichtigungen. Keine Abfrage für die
+/// Kontaktstelle-Sicht darf dieses Feld auflösen, wenn `istAnonym` gesetzt
+/// ist (technisch erzwungen in src/lib/kontaktstelle/abfragen.ts, nicht nur
+/// in der UI verborgen). Bewusst keine Kategorie im ersten Wurf.
+model Meldung {
+  id            String        @id @default(cuid())
+  titel         String
+  beschreibung  String
+  istAnonym     Boolean       @default(false)
+  status        MeldungStatus @default(EINGEGANGEN)
+  erstelltVonId String
+  erstelltAm    DateTime      @default(now())
+
+  erstelltVon Person             @relation("MeldungErsteller", fields: [erstelltVonId], references: [benutzername])
+  kommentare  MeldungKommentar[]
+  anhaenge    MeldungAnhang[]
+
+  @@index([erstelltVonId])
+  @@index([status])
+}
+
+/// Rückkanal zwischen Kontaktstelle und meldender Person — append-only wie
+/// AuftragKommentar. `personId` ist immer die echte Autorschaft, auch bei
+/// `istAnonym` — die Anonymität wird nicht im Schema erzwungen, sondern
+/// beim Lesen (siehe abfragen.ts): für Kommentare der meldenden Person
+/// wird bei `istAnonym` eine zweite, eingeschränkte Abfrage ohne
+/// `person`/`personId`-Selektion verwendet.
+model MeldungKommentar {
+  id         String   @id @default(cuid())
+  meldungId  String
+  personId   String
+  text       String
+  erstelltAm DateTime @default(now())
+
+  meldung  Meldung         @relation(fields: [meldungId], references: [id], onDelete: Cascade)
+  person   Person          @relation("MeldungKommentarAutor", fields: [personId], references: [benutzername])
+  anhaenge MeldungAnhang[]
+
+  @@index([meldungId, erstelltAm])
+}
+
+/// Dateipfad wie überall (Regel 7). `kommentarId` nur bei einem Anhang zu
+/// einer Rückfrage gesetzt, sonst null (Anhang zur Erstmeldung). Bewusst
+/// kein eigenes Identitätsfeld — Autorschaft ergibt sich aus `meldung`
+/// bzw. `kommentar.personId`, damit gibt es hier strukturell nichts zu
+/// anonymisieren.
+model MeldungAnhang {
+  id            String   @id @default(cuid())
+  meldungId     String
+  kommentarId   String?
+  dateiname     String
+  pfad          String
+  mimetyp       String
+  groesseBytes  Int
+  hochgeladenAm DateTime @default(now())
+
+  meldung   Meldung           @relation(fields: [meldungId], references: [id], onDelete: Cascade)
+  kommentar MeldungKommentar? @relation(fields: [kommentarId], references: [id], onDelete: Cascade)
+
+  @@index([meldungId])
+  @@index([kommentarId])
 }

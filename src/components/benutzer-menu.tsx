@@ -108,14 +108,14 @@ export function BenutzerMenu({
             Einstellungen
           </Link>
 
-          <span
+          <Link
+            href="/kontaktstelle"
             role="menuitem"
-            aria-disabled="true"
-            title="Noch nicht verfügbar"
-            className="block cursor-default px-4 py-2.5 text-sm text-tertiaer"
+            onClick={() => setOffen(false)}
+            className={"block px-4 py-2.5 text-sm text-primaer transition " + hoverAkzent}
           >
             Kontaktstelle
-          </span>
+          </Link>
 
           <form action={abmelden}>
             <button
