@@ -8,9 +8,8 @@ import { einreichungDetail } from "@/lib/formulare/abfragen"
 import { istFormularEmpfaenger } from "@/lib/formulare/sichtbarkeit"
 import { einreichungStatusSetzen } from "@/lib/formulare/aktionen"
 import { FormularFeld, RICH_TEXT_ANZEIGE_KLASSE } from "@/components/formular-feld"
-import { FormularElementTyp, FormularEinreichungStatus } from "@/generated/prisma/enums"
-
-const STATUS_LABEL: Record<string, string> = { OFFEN: "Offen", IN_BEARBEITUNG: "In Bearbeitung", ERLEDIGT: "Erledigt" }
+import { FormularStatusSchieberegler } from "@/components/formular-status-schieberegler"
+import { FormularElementTyp } from "@/generated/prisma/enums"
 
 function antwortAnzeige(
   element: { typ: FormularElementTyp; optionen: { wert: string }[] },
@@ -67,6 +66,15 @@ export default async function EinreichungDetailSeite({ params }: { params: Promi
         </a>
       )}
 
+      {darfStatusSetzen && (
+        <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
+          <h2 className="text-sm font-semibold text-ueberschrift">Status</h2>
+          <div className="mt-2">
+            <FormularStatusSchieberegler einreichungId={einreichung.id} status={einreichung.status} aktion={einreichungStatusSetzen} />
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 flex flex-col gap-4 rounded-xl border border-rand bg-flaeche p-4">
         {einreichung.vorlage.elemente.map((element) => {
           if (element.typ === FormularElementTyp.TEXTBLOCK || element.typ === FormularElementTyp.TRENNZEICHEN) {
@@ -96,35 +104,6 @@ export default async function EinreichungDetailSeite({ params }: { params: Promi
           )
         })}
       </div>
-
-      {darfStatusSetzen && (
-        <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
-          <h2 className="text-sm font-semibold text-ueberschrift">Status</h2>
-          <form action={async (formData) => {
-            "use server"
-            await einreichungStatusSetzen(einreichung.id, formData.get("status") as FormularEinreichungStatus)
-          }} className="mt-2 flex items-center gap-2">
-            <select
-              key={einreichung.status}
-              name="status"
-              defaultValue={einreichung.status}
-              className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
-            >
-              {Object.values(FormularEinreichungStatus).map((status) => (
-                <option key={status} value={status}>
-                  {STATUS_LABEL[status]}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              className="h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
-            >
-              Speichern
-            </button>
-          </form>
-        </div>
-      )}
 
       <ZurueckButton />
     </main>
