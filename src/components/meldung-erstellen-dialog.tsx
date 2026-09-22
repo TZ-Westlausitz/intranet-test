@@ -89,18 +89,21 @@ export function MeldungErstellenDialog({
               </span>
             </label>
 
-            <label className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-primaer">Anhänge (optional)</span>
-              <input
-                type="file"
-                name="anhaenge"
-                multiple
-                accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
-                onChange={(ereignis) => setAnhaenge([...(ereignis.target.files ?? [])].map((datei) => datei.name))}
-                className="text-sm"
-              />
+            <div className="flex flex-col gap-1">
+              <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-flaeche-300 px-3 py-2 text-sm font-medium text-primaer transition hover:bg-flaeche-100">
+                📎 Anhänge hinzufügen
+                <span className="text-xs font-normal text-tertiaer">optional</span>
+                <input
+                  type="file"
+                  name="anhaenge"
+                  multiple
+                  accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
+                  onChange={(ereignis) => setAnhaenge([...(ereignis.target.files ?? [])].map((datei) => datei.name))}
+                  className="hidden"
+                />
+              </label>
               {anhaenge.length > 0 && <p className="text-xs text-sekundaer">{anhaenge.join(", ")}</p>}
-            </label>
+            </div>
           </div>
 
           <div className="flex justify-end gap-2 border-t border-rand px-5 py-4">

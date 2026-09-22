@@ -9,12 +9,7 @@ import { MeldungStatus } from "@/generated/prisma/enums"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
 import { istKontaktstelle } from "@/lib/kontaktstelle/sichtbarkeit"
 import { meldungAnhangPruefen, meldungAnhangSpeichern } from "@/lib/kontaktstelle/anhaenge"
-
-const STATUS_LABEL: Record<string, string> = {
-  EINGEGANGEN: "Eingegangen",
-  IN_BEARBEITUNG: "In Bearbeitung",
-  ABGESCHLOSSEN: "Abgeschlossen",
-}
+import { MELDUNG_STATUS_LABEL } from "@/lib/kontaktstelle/status"
 
 /** Alle Personen mit der Berechtigung "Meldestelle" — Empfänger für neue Meldungen/Nachrichten. */
 async function meldestellenPersonen(ausgenommenId?: string) {
@@ -82,19 +77,26 @@ export async function meldungErstellen(formData: FormData) {
  * die meldende Person (Antwort der Kontaktstelle) oder alle
  * Meldestellen-Personen (Nachricht der meldenden Person) — nie mit Namen
  * im Text.
+ *
+ * Chat erst ab "In Bearbeitung" nutzbar (Rückmeldung 2026-09-22) — geprüft
+ * hier serverseitig, nicht nur durch ein ausgeblendetes Formular in
+ * MeldungKommentare (Regel 5).
  */
 export async function meldungKommentarErstellen(meldungId: string, formData: FormData) {
   const kontext = await berechtigung()
 
   const meldung = await prisma.meldung.findUnique({
     where: { id: meldungId },
-    select: { id: true, titel: true, erstelltVonId: true },
+    select: { id: true, titel: true, status: true, erstelltVonId: true },
   })
   if (!meldung) throw new NichtBerechtigt("Meldung nicht gefunden")
 
   const istMelderSelbst = meldung.erstelltVonId === kontext.personId
   if (!istMelderSelbst && !istKontaktstelle(kontext)) {
     throw new NichtBerechtigt("kein Zugriff auf diese Meldung")
+  }
+  if (meldung.status === MeldungStatus.EINGEGANGEN) {
+    throw new NichtBerechtigt("Chat ist erst ab \"In Bearbeitung\" verfügbar")
   }
 
   const text = String(formData.get("text") ?? "").trim()
@@ -137,7 +139,13 @@ export async function meldungKommentarErstellen(meldungId: string, formData: For
 /**
  * Status ändern — dediziertes Berechtigungs-Gate (Muster
  * `projektErstellen`), nicht nur die pro-Meldung-Zugriffsprüfung wie beim
- * Kommentar oben.
+ * Kommentar oben. Legt bei einer tatsächlichen Änderung zusätzlich einen
+ * MeldungStatusEintrag an (Rückmeldung 2026-09-22) — erscheint als
+ * Systemzeile "Status auf ... geändert" im Verlauf (siehe
+ * meldungVerlaufFuerAnsicht). Klickt die Kontaktstelle den bereits
+ * aktiven Status erneut (Schieberegler verhindert das schon clientseitig),
+ * passiert serverseitig bewusst nichts — kein doppelter Verlaufseintrag,
+ * keine doppelte Benachrichtigung.
  */
 export async function meldungStatusAktualisieren(meldungId: string, formData: FormData) {
   await berechtigung(undefined, { benoetigteBerechtigung: "Meldestelle" })
@@ -145,15 +153,22 @@ export async function meldungStatusAktualisieren(meldungId: string, formData: Fo
   const statusEingabe = String(formData.get("status") ?? "")
   if (!Object.values(MeldungStatus).includes(statusEingabe as MeldungStatus)) return
 
+  const bisherigeMeldung = await prisma.meldung.findUnique({ where: { id: meldungId }, select: { status: true } })
+  if (!bisherigeMeldung || bisherigeMeldung.status === statusEingabe) return
+
   const meldung = await prisma.meldung.update({
     where: { id: meldungId },
     data: { status: statusEingabe as MeldungStatus },
     select: { titel: true, erstelltVonId: true },
   })
 
+  await prisma.meldungStatusEintrag.create({
+    data: { meldungId, status: statusEingabe as MeldungStatus },
+  })
+
   await benachrichtigungErstellen({
     personId: meldung.erstelltVonId,
-    text: `Status deiner Meldung "${meldung.titel}" wurde auf "${STATUS_LABEL[statusEingabe]}" geändert`,
+    text: `Status deiner Meldung "${meldung.titel}" wurde auf "${MELDUNG_STATUS_LABEL[statusEingabe]}" geändert`,
     link: `/kontaktstelle/${meldungId}`,
   })
 

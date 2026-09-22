@@ -7,18 +7,14 @@ import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
 import {
   meldungDetailFuerMelder,
   meldungDetailFuerKontaktstelle,
-  meldungKommentareFuerAnsicht,
+  meldungVerlaufFuerAnsicht,
 } from "@/lib/kontaktstelle/abfragen"
 import { istKontaktstelle } from "@/lib/kontaktstelle/sichtbarkeit"
 import { meldungStatusAktualisieren, meldungKommentarErstellen } from "@/lib/kontaktstelle/aktionen"
 import { MeldungKommentare } from "@/components/meldung-kommentare"
+import { MeldungStatusChip } from "@/components/meldung-status-chip"
+import { MeldungStatusSchieberegler } from "@/components/meldung-status-schieberegler"
 import { MeldungStatus } from "@/generated/prisma/enums"
-
-const STATUS_LABEL: Record<string, string> = {
-  EINGEGANGEN: "Eingegangen",
-  IN_BEARBEITUNG: "In Bearbeitung",
-  ABGESCHLOSSEN: "Abgeschlossen",
-}
 
 export default async function MeldungDetailSeite({ params }: { params: Promise<{ meldungId: string }> }) {
   const kontext = await berechtigung()
@@ -35,12 +31,20 @@ export default async function MeldungDetailSeite({ params }: { params: Promise<{
       ? `${kontaktstelleMeldung.melder.vorname} ${kontaktstelleMeldung.melder.nachname}`
       : "Anonym"
     : null
-  const kommentare = await meldungKommentareFuerAnsicht(meldungId, kontext)
+  const verlauf = await meldungVerlaufFuerAnsicht(meldungId, kontext)
+  // Chat erst ab "In Bearbeitung" nutzbar (Rückmeldung 2026-09-22) — auch
+  // serverseitig in meldungKommentarErstellen geprüft (Regel 5).
+  const chatAktiv = meldung.status !== MeldungStatus.EINGEGANGEN
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste />
-      <h1 className="text-2xl font-semibold text-ueberschrift">{meldung.titel}</h1>
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-2xl font-semibold text-ueberschrift">{meldung.titel}</h1>
+        {/* Der Melder sieht nur den Status (Rückmeldung 2026-09-22) — die
+            editierbare Variante steht weiter unten nur für die Kontaktstelle. */}
+        {!darfAlleSehen && <MeldungStatusChip status={meldung.status} />}
+      </div>
       <p className="mt-1 text-sm text-sekundaer">
         {melderName ? `Gemeldet von ${melderName} am ` : "Von dir gemeldet am "}
         {formatiereDatumAusDate(meldung.erstelltAm)}, {zeitAusDate(meldung.erstelltAm)} Uhr
@@ -52,30 +56,18 @@ export default async function MeldungDetailSeite({ params }: { params: Promise<{
       {darfAlleSehen && (
         <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
           <h2 className="text-sm font-semibold text-ueberschrift">Status</h2>
-          <form action={meldungStatusAktualisieren.bind(null, meldungId)} className="mt-2 flex items-center gap-2">
-            <select
-              key={meldung.status}
-              name="status"
-              defaultValue={meldung.status}
-              className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
-            >
-              {Object.values(MeldungStatus).map((status) => (
-                <option key={status} value={status}>
-                  {STATUS_LABEL[status]}
-                </option>
-              ))}
-            </select>
-            <button
-              type="submit"
-              className="h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
-            >
-              Speichern
-            </button>
-          </form>
+          <div className="mt-2">
+            <MeldungStatusSchieberegler meldungId={meldungId} status={meldung.status} aktion={meldungStatusAktualisieren} />
+          </div>
         </div>
       )}
 
-      <MeldungKommentare meldungId={meldungId} kommentare={kommentare} kommentarAktion={meldungKommentarErstellen} />
+      <MeldungKommentare
+        meldungId={meldungId}
+        eintraege={verlauf}
+        chatAktiv={chatAktiv}
+        kommentarAktion={meldungKommentarErstellen}
+      />
 
       <ZurueckButton />
     </main>

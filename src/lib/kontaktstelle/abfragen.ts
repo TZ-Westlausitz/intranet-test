@@ -25,13 +25,12 @@ export type MeldungListenEintragKontaktstelle = MeldungListenEintrag & {
   melder: { vorname: string; nachname: string } | null
 }
 
-export type MeldungKommentarAnzeige = {
-  id: string
-  text: string
-  erstelltAm: Date
-  autorLabel: string
-  anhaenge: { id: string; dateiname: string; groesseBytes: number; mimetyp: string }[]
-}
+type MeldungAnhangAnzeige = { id: string; dateiname: string; groesseBytes: number; mimetyp: string }
+
+/** Ein Eintrag im Verlauf — entweder eine Nachricht oder ein automatisch protokollierter Statuswechsel (siehe meldungVerlaufFuerAnsicht). */
+export type MeldungVerlaufEintrag =
+  | { art: "kommentar"; id: string; erstelltAm: Date; text: string; autorLabel: string; anhaenge: MeldungAnhangAnzeige[] }
+  | { art: "status"; id: string; erstelltAm: Date; status: string }
 
 const ANHANG_SELECT = { id: true, dateiname: true, groesseBytes: true, mimetyp: true } as const
 
@@ -106,7 +105,10 @@ export async function meldungDetailFuerKontaktstelle(meldungId: string): Promise
 }
 
 /**
- * Kommentare für die Detailansicht — verzweigt je nach Blickwinkel:
+ * Verlauf für die Detailansicht — Kommentare UND automatisch protokollierte
+ * Statuswechsel (MeldungStatusEintrag, siehe meldungStatusAktualisieren),
+ * chronologisch zusammengeführt. Statuswechsel haben keinen Personenbezug,
+ * brauchen also keine Anonymisierung; für Kommentare gilt weiterhin:
  * - Die meldende Person selbst sieht alles inkl. Namen (kein
  *   Anonymitätsbedarf gegenüber sich selbst).
  * - Die Kontaktstelle sieht bei einer NICHT-anonymen Meldung ebenfalls
@@ -117,18 +119,31 @@ export async function meldungDetailFuerKontaktstelle(meldungId: string): Promise
  *   Abfrage OHNE `person`/`personId`-Selektion geladen werden — der Name
  *   wird dafür gar nicht erst aus der Datenbank gezogen.
  */
-export async function meldungKommentareFuerAnsicht(
+export async function meldungVerlaufFuerAnsicht(
   meldungId: string,
   kontext: { personId: string; berechtigungen: string[] },
-): Promise<MeldungKommentarAnzeige[]> {
+): Promise<MeldungVerlaufEintrag[]> {
   const meldung = await prisma.meldung.findUnique({
     where: { id: meldungId },
     select: { istAnonym: true, erstelltVonId: true },
   })
   if (!meldung) return []
 
+  const statusEintraege = await prisma.meldungStatusEintrag.findMany({
+    where: { meldungId },
+    select: { id: true, status: true, erstelltAm: true },
+  })
+  const statusAlsVerlauf: MeldungVerlaufEintrag[] = statusEintraege.map((s) => ({
+    art: "status",
+    id: s.id,
+    erstelltAm: s.erstelltAm,
+    status: s.status,
+  }))
+
   const istMelderSelbst = meldung.erstelltVonId === kontext.personId
   const brauchtAnonymisierung = !istMelderSelbst && istKontaktstelle(kontext) && meldung.istAnonym
+
+  let kommentareAlsVerlauf: MeldungVerlaufEintrag[]
 
   if (!brauchtAnonymisierung) {
     const kommentare = await prisma.meldungKommentar.findMany({
@@ -140,47 +155,60 @@ export async function meldungKommentareFuerAnsicht(
         person: { select: { vorname: true, nachname: true } },
         anhaenge: { select: ANHANG_SELECT },
       },
-      orderBy: { erstelltAm: "asc" },
     })
-    return kommentare.map((k) => ({
+    kommentareAlsVerlauf = kommentare.map((k) => ({
+      art: "kommentar",
       id: k.id,
       text: k.text,
       erstelltAm: k.erstelltAm,
       autorLabel: `${k.person.vorname} ${k.person.nachname}`,
       anhaenge: k.anhaenge,
     }))
+  } else {
+    const [vonKontaktstelle, vomMelder] = await Promise.all([
+      prisma.meldungKommentar.findMany({
+        where: { meldungId, personId: { not: meldung.erstelltVonId } },
+        select: {
+          id: true,
+          text: true,
+          erstelltAm: true,
+          person: { select: { vorname: true, nachname: true } },
+          anhaenge: { select: ANHANG_SELECT },
+        },
+      }),
+      // Bewusst KEIN personId/person in dieser Selektion — der technische
+      // Kern der Anonymitäts-Garantie für Kommentare der meldenden Person.
+      prisma.meldungKommentar.findMany({
+        where: { meldungId, personId: meldung.erstelltVonId },
+        select: { id: true, text: true, erstelltAm: true, anhaenge: { select: ANHANG_SELECT } },
+      }),
+    ])
+
+    kommentareAlsVerlauf = [
+      ...vonKontaktstelle.map(
+        (k): MeldungVerlaufEintrag => ({
+          art: "kommentar",
+          id: k.id,
+          text: k.text,
+          erstelltAm: k.erstelltAm,
+          autorLabel: `${k.person.vorname} ${k.person.nachname}`,
+          anhaenge: k.anhaenge,
+        }),
+      ),
+      ...vomMelder.map(
+        (k): MeldungVerlaufEintrag => ({
+          art: "kommentar",
+          id: k.id,
+          text: k.text,
+          erstelltAm: k.erstelltAm,
+          autorLabel: "Anonym",
+          anhaenge: k.anhaenge,
+        }),
+      ),
+    ]
   }
 
-  const [vonKontaktstelle, vomMelder] = await Promise.all([
-    prisma.meldungKommentar.findMany({
-      where: { meldungId, personId: { not: meldung.erstelltVonId } },
-      select: {
-        id: true,
-        text: true,
-        erstelltAm: true,
-        person: { select: { vorname: true, nachname: true } },
-        anhaenge: { select: ANHANG_SELECT },
-      },
-    }),
-    // Bewusst KEIN personId/person in dieser Selektion — der technische
-    // Kern der Anonymitäts-Garantie für Kommentare der meldenden Person.
-    prisma.meldungKommentar.findMany({
-      where: { meldungId, personId: meldung.erstelltVonId },
-      select: { id: true, text: true, erstelltAm: true, anhaenge: { select: ANHANG_SELECT } },
-    }),
-  ])
-
-  const zusammengefuehrt: MeldungKommentarAnzeige[] = [
-    ...vonKontaktstelle.map((k) => ({
-      id: k.id,
-      text: k.text,
-      erstelltAm: k.erstelltAm,
-      autorLabel: `${k.person.vorname} ${k.person.nachname}`,
-      anhaenge: k.anhaenge,
-    })),
-    ...vomMelder.map((k) => ({ id: k.id, text: k.text, erstelltAm: k.erstelltAm, autorLabel: "Anonym", anhaenge: k.anhaenge })),
-  ]
-  return zusammengefuehrt.sort((a, b) => a.erstelltAm.getTime() - b.erstelltAm.getTime())
+  return [...statusAlsVerlauf, ...kommentareAlsVerlauf].sort((a, b) => a.erstelltAm.getTime() - b.erstelltAm.getTime())
 }
 
 /** Zugriff auf einen Anhang — nur die meldende Person selbst oder die Kontaktstelle, sonst false (Aufrufer liefert 404). */

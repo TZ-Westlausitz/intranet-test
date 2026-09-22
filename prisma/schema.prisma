@@ -1826,12 +1826,12 @@ model FormularElement {
   bedingungElementId String?
   bedingungWert      String?
 
-  vorlage          FormularVorlage             @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
-  optionen         FormularElementOption[]
-  antworten        FormularAntwort[]
-  anhaenge         FormularEinreichungAnhang[]
-  bedingungElement FormularElement?           @relation("FormularElementBedingung", fields: [bedingungElementId], references: [id], onDelete: SetNull)
-  abhaengigeElemente FormularElement[]        @relation("FormularElementBedingung")
+  vorlage            FormularVorlage             @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  optionen           FormularElementOption[]
+  antworten          FormularAntwort[]
+  anhaenge           FormularEinreichungAnhang[]
+  bedingungElement   FormularElement?            @relation("FormularElementBedingung", fields: [bedingungElementId], references: [id], onDelete: SetNull)
+  abhaengigeElemente FormularElement[]           @relation("FormularElementBedingung")
 
   @@index([vorlageId])
   @@index([bedingungElementId])
@@ -2089,12 +2089,32 @@ model Meldung {
   erstelltVonId String
   erstelltAm    DateTime      @default(now())
 
-  erstelltVon Person             @relation("MeldungErsteller", fields: [erstelltVonId], references: [benutzername])
-  kommentare  MeldungKommentar[]
-  anhaenge    MeldungAnhang[]
+  erstelltVon   Person                 @relation("MeldungErsteller", fields: [erstelltVonId], references: [benutzername])
+  kommentare    MeldungKommentar[]
+  anhaenge      MeldungAnhang[]
+  statusVerlauf MeldungStatusEintrag[]
 
   @@index([erstelltVonId])
   @@index([status])
+}
+
+/// Protokolliert jede Statusänderung als eigenen, append-only
+/// Verlaufseintrag (Rückmeldung 2026-09-22) — erscheint chronologisch
+/// zusammen mit den Kommentaren im Verlauf ("Status auf ... geändert").
+/// Bewusst KEIN Personenbezug (kein personId): wer genau innerhalb der
+/// Kontaktstelle geändert hat, ist für die Anzeige nicht vorgesehen, nur
+/// dass und wann. Der Ersteher-Zustand (EINGEGANGEN) bei Anlage der
+/// Meldung bekommt keinen eigenen Eintrag — das steht schon in der
+/// Meldung selbst (erstelltAm), nur tatsächliche Wechsel werden geloggt.
+model MeldungStatusEintrag {
+  id         String        @id @default(cuid())
+  meldungId  String
+  status     MeldungStatus
+  erstelltAm DateTime      @default(now())
+
+  meldung Meldung @relation(fields: [meldungId], references: [id], onDelete: Cascade)
+
+  @@index([meldungId, erstelltAm])
 }
 
 /// Rückkanal zwischen Kontaktstelle und meldender Person — append-only wie

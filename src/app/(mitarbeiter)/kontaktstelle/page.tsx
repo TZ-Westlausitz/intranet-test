@@ -5,31 +5,14 @@ import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { Hinweis } from "@/components/hinweis"
 import { MeldungErstellenDialog } from "@/components/meldung-erstellen-dialog"
+import { MeldungStatusChip } from "@/components/meldung-status-chip"
 import { meineMeldungen, meldungenFuerKontaktstelle } from "@/lib/kontaktstelle/abfragen"
 import { meldungErstellen } from "@/lib/kontaktstelle/aktionen"
 import { istKontaktstelle } from "@/lib/kontaktstelle/sichtbarkeit"
 
-const STATUS_LABEL: Record<string, string> = {
-  EINGEGANGEN: "Eingegangen",
-  IN_BEARBEITUNG: "In Bearbeitung",
-  ABGESCHLOSSEN: "Abgeschlossen",
-}
-const STATUS_FARBE: Record<string, string> = {
-  EINGEGANGEN: "bg-marke-orange/15 text-ueberschrift",
-  IN_BEARBEITUNG: "bg-marke-gruen/15 text-ueberschrift",
-  ABGESCHLOSSEN: "bg-flaeche-200 text-primaer",
-}
 const FEHLER_TEXTE: Record<string, string> = {
   pflichtfeld: "Bitte Titel und Beschreibung ausfüllen.",
   anhang: "Ein Anhang ist zu groß oder hat einen nicht unterstützten Dateityp.",
-}
-
-function StatusChip({ status }: { status: string }) {
-  return (
-    <span className={"shrink-0 rounded-full px-2 py-0.5 text-xs font-medium " + STATUS_FARBE[status]}>
-      {STATUS_LABEL[status] ?? status}
-    </span>
-  )
 }
 
 /**
@@ -56,19 +39,29 @@ export default async function KontaktstelleSeite({
     darfAlleSehen ? meldungenFuerKontaktstelle() : Promise.resolve([]),
   ])
 
-  const kopfzeile = (
-    <div className="flex shrink-0 items-center justify-between gap-3">
-      <h1 className="text-2xl font-semibold text-ueberschrift">Kontaktstelle</h1>
-      <MeldungErstellenDialog erstellenAktion={meldungErstellen} autoOeffnen={neu === "1"} />
-    </div>
-  )
+  // Funktion statt vorberechnetem JSX, weil dieselbe Kopfzeile unten für
+  // Handy UND Desktop gerendert wird (beide <main>-Bäume liegen gleichzeitig
+  // im DOM, nur per CSS ausgeblendet) — ein natives <dialog> durchbricht
+  // `display:none` beim Eltern-Element (Top-Layer-Rendering), zwei
+  // MeldungErstellenDialog-Instanzen mit `autoOeffnen` würden also BEIDE
+  // gleichzeitig aufgehen. Deshalb bekommt nur eine der beiden Stellen
+  // `autoOeffnen` übergeben (welche, ist egal — die Positionierung des
+  // Dialogs ist `fixed`, unabhängig vom umgebenden, ausgeblendeten Baum).
+  function kopfzeile(autoOeffnen: boolean) {
+    return (
+      <div className="flex shrink-0 items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold text-ueberschrift">Kontaktstelle</h1>
+        <MeldungErstellenDialog erstellenAktion={meldungErstellen} autoOeffnen={autoOeffnen} />
+      </div>
+    )
+  }
 
   return (
     <>
       {/* Handy: einfache, seitenweit scrollende Liste. */}
       <main className="mx-auto max-w-2xl px-5 py-10 md:hidden">
         <Kopfleiste />
-        {kopfzeile}
+        {kopfzeile(neu === "1")}
 
         {fehler && (
           <div className="mt-4">
@@ -90,7 +83,7 @@ export default async function KontaktstelleSeite({
                       className="flex items-center justify-between gap-2 rounded-lg border border-rand px-3 py-2 text-sm text-primaer transition hover:border-marke-gruen hover:text-ueberschrift"
                     >
                       {meldung.titel}
-                      <StatusChip status={meldung.status} />
+                      <MeldungStatusChip status={meldung.status} />
                     </Link>
                   </li>
                 ))}
@@ -117,7 +110,7 @@ export default async function KontaktstelleSeite({
                             {meldung.melder ? `${meldung.melder.vorname} ${meldung.melder.nachname}` : "Anonym"}
                           </span>
                         </span>
-                        <StatusChip status={meldung.status} />
+                        <MeldungStatusChip status={meldung.status} />
                       </Link>
                     </li>
                   ))}
@@ -134,7 +127,7 @@ export default async function KontaktstelleSeite({
       <main className="hidden h-full flex-col md:flex">
         <div className="flex flex-1 flex-col overflow-auto bg-gradient-to-br from-marke-gruen/5 via-background to-marke-orange/5 p-6">
           <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col">
-            {kopfzeile}
+            {kopfzeile(false)}
 
             {fehler && (
               <div className="mt-4">
@@ -156,7 +149,7 @@ export default async function KontaktstelleSeite({
                           className="flex items-center justify-between gap-2 rounded-xl border border-rand px-3 py-2.5 text-sm text-primaer transition hover:border-marke-gruen-dunkel hover:text-ueberschrift"
                         >
                           <span className="truncate">{meldung.titel}</span>
-                          <StatusChip status={meldung.status} />
+                          <MeldungStatusChip status={meldung.status} />
                         </Link>
                       </li>
                     ))}
@@ -183,7 +176,7 @@ export default async function KontaktstelleSeite({
                                 {meldung.melder ? `${meldung.melder.vorname} ${meldung.melder.nachname}` : "Anonym"}
                               </span>
                             </span>
-                            <StatusChip status={meldung.status} />
+                            <MeldungStatusChip status={meldung.status} />
                           </Link>
                         </li>
                       ))}
