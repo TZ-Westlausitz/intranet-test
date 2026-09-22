@@ -7,11 +7,12 @@ import { usePathname } from "next/navigation"
 type Schnellaktion = { name: string; href: string; icon: React.ReactNode }
 
 // Dieselbe Seitenliste und -begründung wie im mobilen Schnellmenü (siehe
-// MobileSchnellmenu, Rückmeldung 2026-09-16): Auf Profil/Abrechnung/
-// Kontakte/Fahrzeuge passt keine der Optionen, ein schwebendes Element
-// verdeckt dort nur echten Inhalt statt zu helfen — auf dem Desktop gilt
-// dieselbe Abwägung, deshalb dieselbe Liste statt einer eigenen.
-const RELEVANTE_PFADE = ["/newsfeed", "/aufgaben", "/kalender", "/chat"]
+// MobileSchnellmenu, Rückmeldung 2026-09-16, "/formulare" ergänzt
+// 2026-09-22): Auf Profil/Abrechnung/Kontakte/Fahrzeuge passt keine der
+// Optionen, ein schwebendes Element verdeckt dort nur echten Inhalt statt
+// zu helfen — auf dem Desktop gilt dieselbe Abwägung, deshalb dieselbe
+// Liste statt einer eigenen.
+const RELEVANTE_PFADE = ["/newsfeed", "/aufgaben", "/kalender", "/chat", "/formulare"]
 
 function schnellmenuRelevant(pathname: string): boolean {
   if (pathname === "/") return true

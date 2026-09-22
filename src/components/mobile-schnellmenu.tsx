@@ -12,8 +12,10 @@ type Schnellaktion = { name: string; href: string; icon: React.ReactNode }
 // Sinn, und das schwebende "+" verdeckte dort teils echten Inhalt, z. B.
 // das "Gemeldet am"-Datum auf /abrechnung oder Kalendertage). Dasselbe
 // Präfix-Muster wie MobileTabBar/istAktiv, deshalb gilt "/aufgaben" auch
-// für /aufgaben/todos und /aufgaben/projekte.
-const RELEVANTE_PFADE = ["/newsfeed", "/aufgaben", "/kalender", "/chat"]
+// für /aufgaben/todos und /aufgaben/projekte. "/formulare" ergänzt
+// (Rückmeldung 2026-09-22) — auf der Formularübersicht selbst macht das
+// Schnellmenü genauso Sinn wie auf den anderen Baustein-Seiten.
+const RELEVANTE_PFADE = ["/newsfeed", "/aufgaben", "/kalender", "/chat", "/formulare"]
 
 function schnellmenuRelevant(pathname: string): boolean {
   if (pathname === "/") return true
