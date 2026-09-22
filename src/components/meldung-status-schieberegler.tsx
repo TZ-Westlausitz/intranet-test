@@ -42,7 +42,7 @@ export function MeldungStatusSchieberegler({
         <span
           aria-hidden
           className={
-            "absolute inset-y-1 left-1 w-[calc(33.333%-0.1667rem)] rounded-full bg-marke-gruen shadow transition-transform " +
+            "absolute inset-y-1 left-1 w-[calc(33.333%-0.1667rem)] rounded-full bg-marke-orange shadow transition-transform " +
             POSITION_KLASSE[aktiverIndex]
           }
         />
