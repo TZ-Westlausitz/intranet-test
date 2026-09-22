@@ -2090,6 +2090,19 @@ model Meldung {
   erstelltVonId String
   erstelltAm    DateTime      @default(now())
 
+  /// Gesetzt, sobald die meldende Person die Rückfrage "Konnte dein
+  /// Anliegen geklärt werden?" nach einem Abschluss durch die
+  /// Kontaktstelle mit Ja beantwortet hat (Rückmeldung 2026-09-22).
+  /// `null` UND `status = ABGESCHLOSSEN` heißt: die Kontaktstelle hat
+  /// abgeschlossen, aber die Rückfrage steht noch aus — der Chat bleibt in
+  /// diesem Zwischenzustand bewusst noch offen. Gesetzt heißt: dauerhaft
+  /// abgeschlossen/archiviert, Status und Chat sind ab dann für immer
+  /// gesperrt (siehe meldungStatusAktualisieren/meldungKommentarErstellen).
+  /// Bei "Nein" wird stattdessen der Status auf IN_BEARBEITUNG
+  /// zurückgesetzt (eigener MeldungStatusEintrag) und dieses Feld bleibt
+  /// null — kein Extra-Feld für die Nein-Antwort nötig.
+  abschlussBestaetigtAm DateTime?
+
   erstelltVon   Person                 @relation("MeldungErsteller", fields: [erstelltVonId], references: [benutzername])
   kommentare    MeldungKommentar[]
   anhaenge      MeldungAnhang[]

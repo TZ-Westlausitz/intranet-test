@@ -59,6 +59,7 @@ export function MeldungKommentare({
   meldungId,
   anfangsEintraege,
   anfangsChatAktiv,
+  chatInaktivHinweis,
   ungeleseneAnzahl,
   verlaufLadenAktion,
   alsGelesenMarkierenAktion,
@@ -67,6 +68,8 @@ export function MeldungKommentare({
   meldungId: string
   anfangsEintraege: MeldungVerlaufEintragAnzeige[]
   anfangsChatAktiv: boolean
+  /** Text, wenn `chatAktiv` false ist — unterscheidet sich zwischen "noch nicht in Bearbeitung" und "dauerhaft archiviert" (siehe Aufrufer). */
+  chatInaktivHinweis: string
   ungeleseneAnzahl: number
   verlaufLadenAktion: typeof meldungVerlaufLaden
   alsGelesenMarkierenAktion: typeof meldungAlsGelesenMarkieren
@@ -130,12 +133,22 @@ export function MeldungKommentare({
 
       {eintraege.length > 0 && (
         <ul className="mt-3 flex flex-col gap-2">
-          {eintraege.map((eintrag) =>
-            eintrag.art === "status" ? (
-              <li key={eintrag.id} className="py-0.5 text-center text-xs text-tertiaer">
-                Status auf „{MELDUNG_STATUS_LABEL[eintrag.status] ?? eintrag.status}“ geändert · {zeitpunkt(eintrag.erstelltAm)}
-              </li>
-            ) : (
+          {eintraege.map((eintrag) => {
+            if (eintrag.art === "status") {
+              return (
+                <li key={eintrag.id} className="py-0.5 text-center text-xs text-tertiaer">
+                  Status auf „{MELDUNG_STATUS_LABEL[eintrag.status] ?? eintrag.status}“ geändert · {zeitpunkt(eintrag.erstelltAm)}
+                </li>
+              )
+            }
+            if (eintrag.art === "abschluss_bestaetigt") {
+              return (
+                <li key={eintrag.id} className="py-0.5 text-center text-xs text-tertiaer">
+                  Anliegen als geklärt bestätigt · {zeitpunkt(eintrag.erstelltAm)}
+                </li>
+              )
+            }
+            return (
               <li key={eintrag.id} className="rounded-lg bg-flaeche-schwach px-3 py-2">
                 <p className="text-xs font-medium text-sekundaer">
                   {eintrag.autorLabel} · {zeitpunkt(eintrag.erstelltAm)}
@@ -149,8 +162,8 @@ export function MeldungKommentare({
                   </div>
                 )}
               </li>
-            ),
-          )}
+            )
+          })}
         </ul>
       )}
 
@@ -189,7 +202,7 @@ export function MeldungKommentare({
           {anhaenge.length > 0 && <p className="text-xs text-sekundaer">Anhang: {anhaenge.join(", ")}</p>}
         </form>
       ) : (
-        <p className="mt-3 text-xs text-sekundaer">Der Chat wird freigeschaltet, sobald die Meldung „In Bearbeitung“ ist.</p>
+        <p className="mt-3 text-xs text-sekundaer">{chatInaktivHinweis}</p>
       )}
     </div>
   )

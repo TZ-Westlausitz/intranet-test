@@ -27,10 +27,11 @@ export type MeldungListenEintragKontaktstelle = MeldungListenEintrag & {
 
 type MeldungAnhangAnzeige = { id: string; dateiname: string; groesseBytes: number; mimetyp: string }
 
-/** Ein Eintrag im Verlauf — entweder eine Nachricht oder ein automatisch protokollierter Statuswechsel (siehe meldungVerlaufFuerAnsicht). */
+/** Ein Eintrag im Verlauf — Nachricht, automatisch protokollierter Statuswechsel oder die Antwort auf die Abschluss-Rückfrage (siehe meldungVerlaufFuerAnsicht). */
 export type MeldungVerlaufEintrag =
   | { art: "kommentar"; id: string; erstelltAm: Date; text: string; autorLabel: string; anhaenge: MeldungAnhangAnzeige[] }
   | { art: "status"; id: string; erstelltAm: Date; status: string }
+  | { art: "abschluss_bestaetigt"; id: string; erstelltAm: Date }
 
 const ANHANG_SELECT = { id: true, dateiname: true, groesseBytes: true, mimetyp: true } as const
 
@@ -47,10 +48,30 @@ export async function meineMeldungen(kontext: { personId: string }): Promise<Mel
 export async function meldungDetailFuerMelder(
   meldungId: string,
   kontext: { personId: string },
-): Promise<{ id: string; titel: string; beschreibung: string; istAnonym: boolean; status: string; erstelltAm: Date } | null> {
+): Promise<
+  | {
+      id: string
+      titel: string
+      beschreibung: string
+      istAnonym: boolean
+      status: string
+      erstelltAm: Date
+      abschlussBestaetigtAm: Date | null
+    }
+  | null
+> {
   const meldung = await prisma.meldung.findUnique({
     where: { id: meldungId },
-    select: { id: true, titel: true, beschreibung: true, istAnonym: true, status: true, erstelltAm: true, erstelltVonId: true },
+    select: {
+      id: true,
+      titel: true,
+      beschreibung: true,
+      istAnonym: true,
+      status: true,
+      erstelltAm: true,
+      erstelltVonId: true,
+      abschlussBestaetigtAm: true,
+    },
   })
   if (!meldung || meldung.erstelltVonId !== kontext.personId) return null
   return meldung
@@ -82,14 +103,30 @@ export async function meldungenFuerKontaktstelle(): Promise<MeldungListenEintrag
 
 /** Detail für die Kontaktstelle-Sicht — dieselbe zweistufige Technik wie oben. */
 export async function meldungDetailFuerKontaktstelle(meldungId: string): Promise<
-  | ({ id: string; titel: string; beschreibung: string; istAnonym: boolean; status: string; erstelltAm: Date } & {
+  | ({
+      id: string
+      titel: string
+      beschreibung: string
+      istAnonym: boolean
+      status: string
+      erstelltAm: Date
+      abschlussBestaetigtAm: Date | null
+    } & {
       melder: { vorname: string; nachname: string } | null
     })
   | null
 > {
   const meldung = await prisma.meldung.findUnique({
     where: { id: meldungId },
-    select: { id: true, titel: true, beschreibung: true, istAnonym: true, status: true, erstelltAm: true },
+    select: {
+      id: true,
+      titel: true,
+      beschreibung: true,
+      istAnonym: true,
+      status: true,
+      erstelltAm: true,
+      abschlussBestaetigtAm: true,
+    },
   })
   if (!meldung) return null
 
@@ -126,7 +163,7 @@ export async function meldungVerlaufFuerAnsicht(
 ): Promise<MeldungVerlaufEintrag[]> {
   const meldung = await prisma.meldung.findUnique({
     where: { id: meldungId },
-    select: { istAnonym: true, erstelltVonId: true },
+    select: { istAnonym: true, erstelltVonId: true, abschlussBestaetigtAm: true },
   })
   if (!meldung) return []
 
@@ -142,6 +179,14 @@ export async function meldungVerlaufFuerAnsicht(
     erstelltAm: s.erstelltAm,
     status: s.status,
   }))
+
+  // Einmaliger, synthetischer Eintrag statt einer eigenen Tabelle — es
+  // gibt pro Meldung höchstens einen solchen Moment (danach für immer
+  // gesperrt, siehe Kommentar am Modell). `seitFilter` gilt hier genauso,
+  // damit ein Polling-Aufruf ihn nicht doppelt zurückliefert.
+  if (meldung.abschlussBestaetigtAm && (!seitDatum || meldung.abschlussBestaetigtAm > seitDatum)) {
+    statusAlsVerlauf.push({ art: "abschluss_bestaetigt", id: `abschluss-${meldungId}`, erstelltAm: meldung.abschlussBestaetigtAm })
+  }
 
   const istMelderSelbst = meldung.erstelltVonId === kontext.personId
   const brauchtAnonymisierung = !istMelderSelbst && istKontaktstelle(kontext) && meldung.istAnonym
