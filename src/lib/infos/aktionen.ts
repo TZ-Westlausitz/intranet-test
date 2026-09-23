@@ -472,6 +472,16 @@ export async function infoDetailLaden(infoId: string) {
  * Löschen ist NICHT der erstellenden Person vorbehalten (anders als bei
  * Auftrag/Termin) — nur die Berechtigung "Löschen & Bearbeiten" erlaubt
  * es, bewusst unabhängig von Autorenschaft (siehe darfInfoLoeschen).
+ *
+ * Zieht dabei auch alle Benachrichtigungen zurück, die auf diese Info
+ * verlinken (Rückmeldung 2026-09-23: ein Klick auf eine solche
+ * Benachrichtigung führte sonst zu einem Pop-up, das dauerhaft bei
+ * "Lädt …" hängen blieb — InfoAnzeigenDialog zeigt für den Fall zwar
+ * inzwischen "nicht mehr verfügbar" statt endlos zu laden, aber die
+ * Benachrichtigung sollte für eine bereits gelöschte Info gar nicht erst
+ * anklickbar bleiben). `link` ist reiner Text ohne Fremdschlüssel (siehe
+ * Model Benachrichtigung), deshalb ein exakter String-Abgleich statt
+ * einer Relation.
  */
 export async function infoLoeschen(infoId: string) {
   const kontext = await berechtigung()
@@ -480,7 +490,10 @@ export async function infoLoeschen(infoId: string) {
     throw new NichtBerechtigt("nur mit der Berechtigung 'Löschen & Bearbeiten'")
   }
 
-  await prisma.info.delete({ where: { id: infoId } })
+  await prisma.$transaction([
+    prisma.benachrichtigung.deleteMany({ where: { link: `/newsfeed?info=${infoId}` } }),
+    prisma.info.delete({ where: { id: infoId } }),
+  ])
 
   revalidatePath("/newsfeed")
   revalidatePath("/")

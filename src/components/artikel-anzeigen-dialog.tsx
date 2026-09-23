@@ -69,8 +69,17 @@ export const ArtikelAnzeigenDialog = forwardRef<
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          {laedt || !detail ? (
+          {laedt ? (
             <p className="py-8 text-center text-sm text-tertiaer">Lädt …</p>
+          ) : !detail ? (
+            // Dasselbe "nicht gefunden"-Muster wie InfoAnzeigenDialog: ohne
+            // eigenen Zweig für "geladen, aber null" bliebe der Dialog bei
+            // einem gelöschten/nicht mehr sichtbaren Artikel für immer bei
+            // "Lädt …" hängen.
+            <p className="py-8 text-center text-sm text-tertiaer">
+              Dieser Artikel ist nicht mehr verfügbar — er wurde entweder gelöscht oder ist für dich nicht mehr
+              sichtbar.
+            </p>
           ) : (
             <>
               <h1 className="text-xl font-bold text-ueberschrift">{detail.titel}</h1>

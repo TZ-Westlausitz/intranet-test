@@ -151,6 +151,17 @@ async function main() {
     await prisma.gruppe.upsert({ where: { name }, update: {}, create: { name } })
   }
 
+  // "Alle" — einzige Gruppe mit `automatisch: true` (siehe Kommentar am
+  // Model Gruppe), bekommt am Ende dieses Skripts jede vorhandene Person
+  // automatisch als Mitglied zugeordnet. Bewusst NICHT Teil der GRUPPEN-
+  // Liste oben (das sind die 1:1 aus der Altsystem-PDF übernommenen
+  // Gruppen, "Alle" ist neu und hat eine andere Bedeutung).
+  await prisma.gruppe.upsert({
+    where: { name: "Alle" },
+    update: { automatisch: true },
+    create: { name: "Alle", automatisch: true },
+  })
+
   for (const name of BERECHTIGUNGEN) {
     await prisma.berechtigung.upsert({ where: { name }, update: {}, create: { name } })
   }
@@ -467,6 +478,21 @@ async function main() {
   // trotzdem einen regulären vorname.nachname@vw-Benutzernamen bekommen
   // könnten.
   await prisma.abteilung.updateMany({ where: { name: "Verwaltung" }, data: { kuerzel: "vw" } })
+
+  // Jede aktive Person der automatischen Gruppe "Alle" zuordnen — läuft
+  // hier am Ende über ALLE Personen statt nur die gerade in diesem Skript
+  // angelegten, damit auch ein erneuter Seed-Lauf gegen eine bereits
+  // bestehende Datenbank (z. B. nach manuell im Adminbereich angelegten
+  // Personen) vollständig aktuell bleibt.
+  const alleGruppe = await prisma.gruppe.findUniqueOrThrow({ where: { name: "Alle" } })
+  const aktivePersonen = await prisma.person.findMany({ where: { aktiv: true }, select: { benutzername: true } })
+  for (const person of aktivePersonen) {
+    await prisma.personGruppe.upsert({
+      where: { personId_gruppeId: { personId: person.benutzername, gruppeId: alleGruppe.id } },
+      update: {},
+      create: { personId: person.benutzername, gruppeId: alleGruppe.id },
+    })
+  }
 
   console.log(`Fertig. Anmeldung: Benutzername 1001, Passwort "${startpasswort}"`)
 }

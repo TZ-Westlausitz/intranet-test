@@ -24,11 +24,16 @@ import { abteilungErstellen, abteilungUmbenennen, abteilungAktivSetzen } from "@
  *
  * Nebeneinander statt untereinander (zwei Spalten ab `md:`) — so wie jede
  * Kachel mit zwei Inhalten ihre Unterseite aufbauen soll.
+ *
+ * `automatisch: false` filtert die eine Sonder-Gruppe "Alle" (siehe
+ * Kommentar am Model Gruppe) aus dieser Verwaltungsliste heraus — die
+ * pflegt sich selbst über personErstellen/seed.ts, hier gäbe es nichts
+ * umzubenennen oder zu deaktivieren, das nicht kaputtginge.
  */
 export default async function GruppenUndAbteilungenSeite() {
   await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
   const [gruppen, abteilungen] = await Promise.all([
-    prisma.gruppe.findMany({ orderBy: { name: "asc" } }),
+    prisma.gruppe.findMany({ where: { automatisch: false }, orderBy: { name: "asc" } }),
     prisma.abteilung.findMany({ orderBy: { name: "asc" } }),
   ])
 

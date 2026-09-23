@@ -113,6 +113,15 @@ export async function personErstellen(
     },
   })
 
+  // Jede neue Person automatisch in die Gruppe "Alle" (Gruppe.automatisch)
+  // — die läuft komplett über die normale PersonGruppe-Mitgliedschaft,
+  // taucht deshalb ohne weiteres Zutun in jeder Empfänger-/Mitglieder-Liste
+  // auf, die Gruppen einbezieht (Infos, Formulare, Wissen, Chat-Gruppen).
+  const alleGruppe = await prisma.gruppe.findFirst({ where: { automatisch: true } })
+  if (alleGruppe) {
+    await prisma.personGruppe.create({ data: { personId: person.benutzername, gruppeId: alleGruppe.id } })
+  }
+
   revalidatePath("/admin/benutzer")
   revalidatePath("/admin")
   return { personId: person.benutzername, benutzername, passwort }
@@ -216,7 +225,13 @@ export async function personGruppenAktualisieren(personId: string, formData: For
   const gruppenIds = formData.getAll("gruppen").map(String)
 
   await prisma.$transaction([
-    prisma.personGruppe.deleteMany({ where: { personId, gruppeId: { notIn: gruppenIds } } }),
+    // gruppe: { automatisch: false } lässt die Mitgliedschaft in der
+    // Sonder-Gruppe "Alle" unangetastet — die steht (bewusst) gar nicht
+    // erst als Checkbox im Formular, ein `notIn`-Löschen ohne diesen
+    // Zusatz würde sie sonst bei jedem Speichern hier entfernen.
+    prisma.personGruppe.deleteMany({
+      where: { personId, gruppeId: { notIn: gruppenIds }, gruppe: { automatisch: false } },
+    }),
     ...gruppenIds.map((gruppeId) =>
       prisma.personGruppe.upsert({
         where: { personId_gruppeId: { personId, gruppeId } },

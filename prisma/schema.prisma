@@ -343,10 +343,21 @@ model Zugehoerigkeit {
 /// (app.ueberblick.io); dient dort als Verteiler/Sichtbarkeits-Tag für
 /// Bausteine wie Wissen oder Newsfeed — seit dem Newsfeed-Baustein hier
 /// zum ersten Mal ausgewertet (siehe Info.empfaengerGruppen).
+///
+/// Genau EINE Zeile trägt `automatisch: true` ("Alle") — enthält
+/// automatisch jede aktive Person als Mitglied (siehe personErstellen)
+/// und läuft komplett über dieselbe PersonGruppe-Mechanik wie jede andere
+/// Gruppe, keine Sonderbehandlung in den Empfänger-/Mitglieder-Abfragen
+/// nötig. Bewusst NICHT im Adminbereich verwaltbar (weder in
+/// /admin/gruppen noch in der Gruppen-Zuweisung pro Person ausgewählt) —
+/// nur die normalen "aktiv: true"-Abfragen für Empfänger-Auswahlfenster
+/// (Infos, Formulare, Wissen, Chat-Gruppen) lassen sie bewusst durch, die
+/// admin-internen Abfragen filtern zusätzlich `automatisch: false`.
 model Gruppe {
-  id    String  @id @default(cuid())
-  name  String  @unique
-  aktiv Boolean @default(true)
+  id          String  @id @default(cuid())
+  name        String  @unique
+  aktiv       Boolean @default(true)
+  automatisch Boolean @default(false)
 
   mitglieder          PersonGruppe[]
   infoEmpfaenger      InfoEmpfaengerGruppe[]

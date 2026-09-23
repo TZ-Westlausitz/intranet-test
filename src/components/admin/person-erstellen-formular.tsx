@@ -2,7 +2,28 @@
 
 import { useRef, useState, useTransition } from "react"
 
-type Option = { id: string; name: string }
+type Option = { id: string; name: string; kuerzel: string | null }
+
+/**
+ * Dieselbe Normalisierung wie `nameNormalisieren` in personen-aktionen.ts
+ * — hier dupliziert statt importiert, weil sie serverseitig in einer
+ * "use server"-Datei steht und diese Komponente rein clientseitig nur
+ * eine Live-Vorschau braucht, keine echte Berechnung. Weicht die Logik
+ * dort je auseinander, betrifft das nur die Vorschau, nie den tatsächlich
+ * gespeicherten Benutzernamen (der entsteht ausschließlich in
+ * personErstellen).
+ */
+function nameNormalisieren(text: string): string {
+  return text
+    .trim()
+    .toLowerCase()
+    .replaceAll("ä", "ae")
+    .replaceAll("ö", "oe")
+    .replaceAll("ü", "ue")
+    .replaceAll("ß", "ss")
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "")
+}
 
 /**
  * Anlegen-Formular für einen neuen Benutzer — bewusst KEIN `<form
@@ -13,6 +34,11 @@ type Option = { id: string; name: string }
  * wird die Server Action hier direkt aus der Client-Komponente heraus
  * aufgerufen (das funktioniert bei Next.js Server Actions genauso wie
  * über `<form action>`, inklusive `revalidatePath`).
+ *
+ * Vorname/Nachname/Abteilung sind kontrolliert (statt nur beim Absenden
+ * über FormData gelesen), damit die Benutzername-Vorschau neben dem
+ * Button live mitläuft (Rückmeldung 2026-09-23: der bisherige
+ * Erklärungstext dazu unter dem Namen ist raus, die Vorschau ersetzt ihn).
  */
 export function PersonErstellenFormular({
   abteilungen,
@@ -26,6 +52,16 @@ export function PersonErstellenFormular({
   const [fehler, setFehler] = useState<string | null>(null)
   const [ergebnis, setErgebnis] = useState<{ name: string; benutzername: string; passwort: string } | null>(null)
 
+  const [vorname, setVorname] = useState("")
+  const [nachname, setNachname] = useState("")
+  const [abteilungId, setAbteilungId] = useState(abteilungen[0]?.id ?? "")
+
+  const abteilung = abteilungen.find((a) => a.id === abteilungId)
+  const benutzernameVorschau =
+    vorname.trim() && nachname.trim() && abteilung?.kuerzel
+      ? `${nameNormalisieren(vorname)}.${nameNormalisieren(nachname)}@${abteilung.kuerzel}`
+      : null
+
   function absenden(ereignis: React.FormEvent<HTMLFormElement>) {
     ereignis.preventDefault()
     setFehler(null)
@@ -38,6 +74,9 @@ export function PersonErstellenFormular({
         const { benutzername, passwort } = await aktion(formData)
         setErgebnis({ name, benutzername, passwort })
         formular.reset()
+        setVorname("")
+        setNachname("")
+        setAbteilungId(abteilungen[0]?.id ?? "")
       } catch (fehlerObjekt) {
         setFehler(fehlerObjekt instanceof Error ? fehlerObjekt.message : "Das hat nicht geklappt.")
       }
@@ -76,6 +115,8 @@ export function PersonErstellenFormular({
               id="pe-vorname"
               name="vorname"
               type="text"
+              value={vorname}
+              onChange={(ereignis) => setVorname(ereignis.target.value)}
               required
               className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
             />
@@ -88,19 +129,13 @@ export function PersonErstellenFormular({
               id="pe-nachname"
               name="nachname"
               type="text"
+              value={nachname}
+              onChange={(ereignis) => setNachname(ereignis.target.value)}
               required
               className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
             />
           </div>
         </div>
-
-        <p className="text-xs text-sekundaer">
-          Der Benutzername wird automatisch aus Vorname, Nachname und Abteilung gebildet
-          (vorname.nachname@kuerzel) — keine Personalnummer und keine E-Mail nötig. Ein fester Standort ist
-          hier bewusst kein Pflichtfeld: manche Personen bekommen ihren Einsatzort nur über mehrere Gruppen
-          verschiedener Standorte. Wer einen festen Standort braucht, bekommt ihn später über &quot;Bearbeiten&quot;.
-          Berechtigungen (Fuhrpark, Adminbereich, …) werden ebenfalls erst danach dort vergeben.
-        </p>
 
         <div>
           <label htmlFor="pe-abteilung" className="block text-xs font-medium text-primaer">
@@ -109,6 +144,8 @@ export function PersonErstellenFormular({
           <select
             id="pe-abteilung"
             name="abteilungId"
+            value={abteilungId}
+            onChange={(ereignis) => setAbteilungId(ereignis.target.value)}
             required
             className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
           >
@@ -120,13 +157,22 @@ export function PersonErstellenFormular({
           </select>
         </div>
 
-        <button
-          type="submit"
-          disabled={istPending}
-          className="ml-auto h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel disabled:opacity-60"
-        >
-          {istPending ? "Wird angelegt …" : "Benutzer anlegen"}
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          {benutzernameVorschau ? (
+            <p className="min-w-0 truncate text-xs text-tertiaer">
+              Benutzername: <span className="font-mono text-sekundaer">{benutzernameVorschau}</span>
+            </p>
+          ) : (
+            <span />
+          )}
+          <button
+            type="submit"
+            disabled={istPending}
+            className="ml-auto h-9 shrink-0 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel disabled:opacity-60"
+          >
+            {istPending ? "Wird angelegt …" : "Benutzer anlegen"}
+          </button>
+        </div>
       </form>
     </div>
   )

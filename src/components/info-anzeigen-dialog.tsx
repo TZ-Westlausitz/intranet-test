@@ -132,8 +132,20 @@ export const InfoAnzeigenDialog = forwardRef<
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-          {laedt || !detail ? (
+          {laedt ? (
             <p className="py-8 text-center text-sm text-tertiaer">Lädt …</p>
+          ) : !detail ? (
+            // infoDetailLadenAktion gibt null zurück statt zu werfen, wenn die
+            // Info inzwischen gelöscht wurde ODER nicht (mehr) sichtbar ist
+            // (z. B. Gruppen-Empfänger geändert) — beides landet hier in
+            // einem klaren Endzustand statt im alten Bug, bei dem `laedt ||
+            // !detail` diesen Fall nie von "lädt noch" unterschied und der
+            // Dialog für immer bei "Lädt …" hängen blieb (z. B. über einen
+            // Benachrichtigungs-Link auf eine inzwischen gelöschte Info).
+            <p className="py-8 text-center text-sm text-tertiaer">
+              Diese Info ist nicht mehr verfügbar — sie wurde entweder gelöscht oder ist für dich nicht mehr
+              sichtbar.
+            </p>
           ) : (
             <>
               {detail.kategorie && (
