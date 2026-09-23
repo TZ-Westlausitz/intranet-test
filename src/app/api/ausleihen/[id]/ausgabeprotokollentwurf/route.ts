@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/db"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { dateiLesen } from "@/lib/ablage"
-import { Rolle } from "@/generated/prisma/enums"
 
 /**
  * Liefert den vorbereiteten (noch nicht unterschriebenen) PDF-Entwurf des
@@ -20,8 +19,8 @@ export async function GET(
   const darfSehen =
     ausleihe !== null &&
     (ausleihe.entleiherId === kontext.personId ||
-      kontext.rollen.includes(Rolle.WERKSTATTLEITER) ||
-      kontext.rollen.includes(Rolle.ADMINISTRATION))
+      kontext.berechtigungen.includes("Werkstattleiter") ||
+      kontext.berechtigungen.includes("Adminbereich"))
 
   if (!ausleihe || !darfSehen || !ausleihe.ausgabeprotokollEntwurfPfad) {
     return new Response("Nicht gefunden", { status: 404 })

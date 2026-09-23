@@ -5,7 +5,7 @@ import { PrismaPg } from "@prisma/adapter-pg"
 import bcrypt from "bcryptjs"
 
 import { PrismaClient } from "../src/generated/prisma/client"
-import { Rolle, DokumentArt } from "../src/generated/prisma/enums"
+import { DokumentArt } from "../src/generated/prisma/enums"
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
@@ -165,9 +165,11 @@ async function main() {
 
   // --- Testkonto Werkstattleiter -------------------------------------------
   // Passwort aus der Umgebung, damit hier kein Geheimnis im Repository steht.
-  // Zusätzlich mit Rolle.ADMINISTRATION, damit sich derselbe Testzugang auch
-  // im neuen Adminbereich anmelden lässt, ohne einen zweiten Testnutzer zu
-  // brauchen — in der Praxis kann eine Person durchaus beide Rollen tragen.
+  // Bekommt zusätzlich die Berechtigungen "Werkstattleiter", "Adminbereich"
+  // und "Admin", damit sich derselbe Testzugang auch im Fuhrpark-Modul und
+  // im Adminbereich anmelden lässt, ohne einen zweiten Testnutzer zu
+  // brauchen — in der Praxis kann eine Person durchaus mehrere
+  // Berechtigungen gleichzeitig tragen.
 
   const startpasswort = process.env.SEED_PASSWORT ?? "start-1234"
 
@@ -186,11 +188,10 @@ async function main() {
 
   await prisma.zugehoerigkeit.upsert({
     where: {
-      personId_standortId_abteilungId_rolle: {
+      personId_standortId_abteilungId: {
         personId: werkstattleiter.benutzername,
         standortId: kamenz.id,
         abteilungId: servicezentrum.id,
-        rolle: Rolle.WERKSTATTLEITER,
       },
     },
     update: {},
@@ -198,27 +199,17 @@ async function main() {
       personId: werkstattleiter.benutzername,
       standortId: kamenz.id,
       abteilungId: servicezentrum.id,
-      rolle: Rolle.WERKSTATTLEITER,
     },
   })
 
-  await prisma.zugehoerigkeit.upsert({
-    where: {
-      personId_standortId_abteilungId_rolle: {
-        personId: werkstattleiter.benutzername,
-        standortId: kamenz.id,
-        abteilungId: servicezentrum.id,
-        rolle: Rolle.ADMINISTRATION,
-      },
-    },
-    update: {},
-    create: {
-      personId: werkstattleiter.benutzername,
-      standortId: kamenz.id,
-      abteilungId: servicezentrum.id,
-      rolle: Rolle.ADMINISTRATION,
-    },
-  })
+  for (const name of ["Werkstattleiter", "Adminbereich", "Admin"]) {
+    const testBerechtigung = await prisma.berechtigung.findUniqueOrThrow({ where: { name } })
+    await prisma.personBerechtigung.upsert({
+      where: { personId_berechtigungId: { personId: werkstattleiter.benutzername, berechtigungId: testBerechtigung.id } },
+      update: {},
+      create: { personId: werkstattleiter.benutzername, berechtigungId: testBerechtigung.id },
+    })
+  }
 
   await prisma.personGruppe.upsert({
     where: { personId_gruppeId: { personId: werkstattleiter.benutzername, gruppeId: fahrdienstGruppe.id } },
@@ -431,11 +422,10 @@ async function main() {
 
     await prisma.zugehoerigkeit.upsert({
       where: {
-        personId_standortId_abteilungId_rolle: {
+        personId_standortId_abteilungId: {
           personId: person.benutzername,
           standortId: d.standort.id,
           abteilungId: d.abteilung.id,
-          rolle: Rolle.MITARBEITENDE,
         },
       },
       update: {},
@@ -443,7 +433,6 @@ async function main() {
         personId: person.benutzername,
         standortId: d.standort.id,
         abteilungId: d.abteilung.id,
-        rolle: Rolle.MITARBEITENDE,
       },
     })
   }

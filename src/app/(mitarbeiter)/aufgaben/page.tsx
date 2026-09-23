@@ -7,7 +7,10 @@ import { AuftragKommentare, type AuftragKommentarAnzeige } from "@/components/au
 import { AuftragErstellenDialog } from "@/components/auftrag-erstellen-dialog"
 import { ZielHervorheben } from "@/components/ziel-hervorheben"
 import { auftragZuStandardwerte } from "@/components/auftrag-form-felder"
+import { AufgabeFormFelder, LEERE_AUFGABE_STANDARDWERTE, aufgabeZuStandardwerte } from "@/components/aufgabe-form-felder"
+import { AufgabeBearbeitenDialog } from "@/components/aufgabe-bearbeiten-dialog"
 import { auftraegeFuerPerson, alleOffenenAuftraege, eigeneAuftragEntwuerfe } from "@/lib/auftraege/abfragen"
+import { aufgabenFuerPerson } from "@/lib/aufgaben/abfragen"
 import {
   projektAufgabenFuerPerson,
   alleOffenenProjektAufgaben,
@@ -25,6 +28,13 @@ import {
   auftragAnhangLoeschen,
   auftragKommentarErstellen,
 } from "@/lib/auftraege/aktionen"
+import {
+  aufgabeErstellen,
+  aufgabeAktualisieren,
+  aufgabeErledigtSetzen,
+  aufgabeLoeschen,
+  aufgabeAnhangLoeschen,
+} from "@/lib/aufgaben/aktionen"
 import { AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAET_NAMEN } from "@/lib/aufgaben-optionen"
 import { AUFGABE_STATUS_KLASSEN, AUFGABE_STATUS_NAMEN } from "@/lib/projekte-optionen"
 import { richTextZuText } from "@/lib/rich-text"
@@ -32,12 +42,33 @@ import { datumIsoAusDate, berlinerTagesbeginn } from "@/lib/datum"
 
 const FEHLER_TEXTE: Record<string, string> = {
   pflichtfeld: "Bitte einen Titel eintragen und eine Person auswählen.",
+  todoPflichtfeld: "Bitte einen Titel eingeben.",
   selbstauftrag: "An dich selbst geht das nicht — dafür gibt es die To-Do-Liste.",
   zuGross: "Eine Datei ist zu groß (maximal 15 MB je Anhang).",
   typUngueltig: "Nicht unterstützter Dateityp. Erlaubt sind PDF und Fotos (JPG, PNG, WEBP, HEIC).",
 }
 
 type AnhangAnzeige = { id: string; dateiname: string; groesseBytes: number; mimetyp: string }
+
+/** Anhänge einer To-Do-Zeile — nur Ansehen, Hinzufügen/Löschen läuft über das Bearbeiten-Pop-Up (siehe AnhaengeAnzeige für Aufträge, eigene Variante wegen anderer API-Route). */
+function AufgabeAnhaengeAnzeige({ aufgabeId, anhaenge }: { aufgabeId: string; anhaenge: AnhangAnzeige[] }) {
+  if (anhaenge.length === 0) return null
+  return (
+    <div className="mt-1 flex flex-wrap gap-1.5">
+      {anhaenge.map((anhang) => (
+        <a
+          key={anhang.id}
+          href={`/api/aufgaben/${aufgabeId}/anhaenge/${anhang.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex max-w-[10rem] items-center gap-1 truncate rounded-full bg-flaeche-100 px-2 py-0.5 text-xs text-primaer hover:underline"
+        >
+          📎 {anhang.dateiname}
+        </a>
+      ))}
+    </div>
+  )
+}
 
 type AuftragMitBeziehung = {
   id: string
@@ -161,8 +192,38 @@ function AuftragInhalt({ auftrag, heute, name }: { auftrag: AuftragMitBeziehung;
  * einer gleichwertigen zweiten Kachel wie vorher — und die auch nur, wenn
  * die Person überhaupt etwas damit zu tun hat: schon Mitglied in einem
  * Projekt ist, oder mit der Berechtigung "Projektmanager" eins anlegen
- * darf. Die To-Do-Liste (rein persönlich) bleibt unverändert eine eigene
- * Kachel auf der Startseite und ein eigener Punkt im "Weiteres"-Menü.
+ * darf.
+ *
+ * Die persönliche To-Do-Liste (Model Aufgabe, `personId` gesetzt statt
+ * Projekt-Bezug) ist seit 2026-09-23 ebenfalls direkt hier als eigene
+ * Sektion eingebunden (vorher eigene Unterseite `/aufgaben/todos`,
+ * inzwischen nur noch ein Redirect dorthin) — Rückmeldung: ohne die
+ * Berechtigung "Aufgaben", ohne Projekt und ohne zugewiesenen Auftrag war
+ * die Seite sonst fast leer. Startseiten-Kachel und "Weiteres"-Menüpunkt
+ * "To-Do-Liste" zeigen jetzt ebenfalls hierher statt auf die alte
+ * Unterseite.
+ *
+ * Zwei-Spalten-Layout ab `md:` (Rückmeldung 2026-09-23: vier gestapelte
+ * Karten auf einer Seite wirkten unübersichtlich) — links "Dir
+ * zugewiesen" + "Meine To-Dos" (was man bekommt/für sich selbst), rechts
+ * "Aus Projekten zugewiesen" + "Von dir vergeben" (Delegation/Verwaltung).
+ * Auf dem Handy bleibt alles einspaltig gestapelt (`grid-cols-1`, erst ab
+ * `md:` zwei Spalten) — bewusst EIN Grid mit CSS-Breakpoints statt zwei
+ * komplett getrennter `<main>`-Bäume wie bei /formulare: Diese Seite hat
+ * ein `autoOeffnen`-Dialog (AuftragErstellenDialog), und zwei parallel im
+ * DOM stehende Kopien davon hätten dasselbe Doppel-Dialog-Problem wie
+ * seinerzeit bei der Kontaktstelle (siehe Memory
+ * kontaktstelle-meldestelle-baustein) — ein einziger Baum mit reinem
+ * CSS-Umbruch vermeidet das von vornherein.
+ *
+ * Die rechte Spalte bleibt für die meisten Personen leer (keine
+ * Berechtigung "Aufgaben", kein Projekt, nichts vergeben) — Screenshot-
+ * Rückmeldung direkt danach: ein leerer Bereich neben der linken Spalte
+ * sah schlimmer aus als einspaltig. `seiteZweispaltig` (aus
+ * `rechteSpalteHatInhalt` bzw. der Admin-Modus-Entsprechung berechnet)
+ * schaltet Breite UND Grid-Spalten deshalb nur ein, wenn auf der rechten
+ * Seite tatsächlich etwas zu zeigen ist — sonst bleibt die Seite komplett
+ * einspaltig und schmal (`max-w-2xl`), wie vor dem Zwei-Spalten-Umbau.
  */
 export default async function AufgabenSeite({
   searchParams,
@@ -182,6 +243,7 @@ export default async function AufgabenSeite({
     eigeneProjektAufgabenOffen,
     firmenweiteProjektAufgabenOffen,
     projekte,
+    eigeneAufgaben,
   ] = await Promise.all([
     kontext.adminModusAktiv ? Promise.resolve(null) : auftraegeFuerPerson(kontext.personId),
     kontext.adminModusAktiv ? alleOffenenAuftraege() : Promise.resolve(null),
@@ -194,6 +256,7 @@ export default async function AufgabenSeite({
     kontext.adminModusAktiv ? Promise.resolve(null) : projektAufgabenFuerPerson(kontext.personId),
     kontext.adminModusAktiv ? alleOffenenProjektAufgaben() : Promise.resolve(null),
     kontext.adminModusAktiv ? alleProjekte() : projekteFuerPerson(kontext.personId),
+    kontext.adminModusAktiv ? Promise.resolve(null) : aufgabenFuerPerson(kontext.personId),
   ])
   const { zugewiesenOffen, zugewiesenErledigt, vergebenOffen, vergebenErledigt } = eigeneAuftraege ?? {
     zugewiesenOffen: [],
@@ -202,11 +265,24 @@ export default async function AufgabenSeite({
     vergebenErledigt: [],
   }
   const projektAufgabenOffen = eigeneProjektAufgabenOffen ?? []
+  const { offen: todosOffen, erledigt: todosErledigt } = eigeneAufgaben ?? { offen: [], erledigt: [] }
   const personenAnzeige = personen.map((p) => ({ id: p.benutzername, name: `${p.vorname} ${p.nachname}` }))
   const zeigeProjekteKachel = projekte.length > 0 || kontext.berechtigungen.includes("Projektmanager")
+  const darfAuftraegeZuweisen = kontext.berechtigungen.includes("Aufgaben")
+  // Rechte Spalte kann für die meisten Personen komplett leer bleiben (keine
+  // Berechtigung "Aufgaben", kein Projekt, nichts vergeben) — dann NICHT in
+  // zwei Spalten aufteilen (leerer Bereich neben der linken Spalte wirkt
+  // schlimmer als schlicht einspaltig), sondern grid-cols-1 belassen.
+  const rechteSpalteHatInhalt =
+    projektAufgabenOffen.length > 0 || darfAuftraegeZuweisen || vergebenOffen.length > 0 || entwuerfe.length > 0
+  // Dasselbe Kriterium für die Admin-Modus-Übersicht (zwei firmenweite
+  // Karten statt zwei persönlicher Spalten) — bestimmt zusammen mit
+  // rechteSpalteHatInhalt, ob die Seite überhaupt breiter/zweispaltig wird.
+  const zweiteFirmenkarteHatInhalt = (firmenweiteProjektAufgabenOffen?.length ?? 0) > 0
+  const seiteZweispaltig = kontext.adminModusAktiv ? zweiteFirmenkarteHatInhalt : rechteSpalteHatInhalt
 
   return (
-    <main className="mx-auto max-w-2xl px-5 py-10">
+    <main className={"mx-auto max-w-2xl px-5 py-10" + (seiteZweispaltig ? " md:max-w-4xl" : "")}>
       <Kopfleiste />
       <ZielHervorheben zielId={zielAuftragId} />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Aufgaben</h1>
@@ -240,8 +316,9 @@ export default async function AufgabenSeite({
       )}
 
       {!kontext.adminModusAktiv && (
-      <>
-      <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
+      <div className={"mt-6 grid grid-cols-1 gap-6" + (seiteZweispaltig ? " md:grid-cols-2 md:items-start" : "")}>
+      <div className="flex flex-col gap-4">
+      <div className="rounded-xl border border-rand bg-flaeche p-4">
         <h2 className="text-sm font-semibold text-ueberschrift">Dir zugewiesen ({zugewiesenOffen.length})</h2>
 
         {zugewiesenOffen.length === 0 ? (
@@ -288,7 +365,7 @@ export default async function AufgabenSeite({
       </div>
 
       {zugewiesenErledigt.length > 0 && (
-        <details className="mt-4 rounded-xl border border-rand bg-flaeche p-4">
+        <details className="rounded-xl border border-rand bg-flaeche p-4">
           <summary className="cursor-pointer text-sm font-semibold text-ueberschrift">
             Dir zugewiesen, erledigt ({zugewiesenErledigt.length})
           </summary>
@@ -326,8 +403,143 @@ export default async function AufgabenSeite({
         </details>
       )}
 
+      <div className="rounded-xl border border-rand bg-flaeche p-4">
+        <h2 className="text-sm font-semibold text-ueberschrift">Meine To-Dos</h2>
+
+        <form
+          action={aufgabeErstellen}
+          className="mt-3 flex flex-col gap-3 rounded-lg border border-flaeche-100 bg-flaeche-schwach p-3"
+        >
+          <AufgabeFormFelder standardwerte={LEERE_AUFGABE_STANDARDWERTE} />
+          <button
+            type="submit"
+            className="ml-auto h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
+          >
+            Hinzufügen
+          </button>
+        </form>
+
+        {todosOffen.length === 0 ? (
+          <p className="mt-3 text-sm text-sekundaer">Keine offenen To-Dos.</p>
+        ) : (
+          <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
+            {todosOffen.map((aufgabe) => {
+              const faellig = faelligAnzeige(aufgabe, heute)
+              const standardwerte = aufgabeZuStandardwerte(aufgabe)
+              return (
+                <li key={aufgabe.id} className="flex items-start gap-3 py-2.5">
+                  <form action={aufgabeErledigtSetzen.bind(null, aufgabe.id, true)}>
+                    <button
+                      type="submit"
+                      aria-label="Als erledigt markieren"
+                      className="mt-0.5 h-5 w-5 shrink-0 rounded border-2 border-flaeche-300 transition hover:border-marke-gruen"
+                    />
+                  </form>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        aria-label={`Priorität: ${AUFGABE_PRIORITAET_NAMEN[aufgabe.prioritaet]}`}
+                        title={AUFGABE_PRIORITAET_NAMEN[aufgabe.prioritaet]}
+                        className={"h-2 w-2 shrink-0 rounded-full " + AUFGABE_PRIORITAET_KLASSEN[aufgabe.prioritaet]}
+                      />
+                      <span className="text-sm text-primaer">{aufgabe.titel}</span>
+                    </div>
+                    {aufgabe.beschreibung && (
+                      <p className="mt-0.5 truncate text-xs text-tertiaer">{richTextZuText(aufgabe.beschreibung)}</p>
+                    )}
+                    <AufgabeAnhaengeAnzeige aufgabeId={aufgabe.id} anhaenge={aufgabe.anhaenge} />
+                  </div>
+
+                  {faellig && (
+                    <span
+                      className={
+                        "mt-0.5 flex shrink-0 items-center gap-1 text-xs font-medium " +
+                        (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
+                      }
+                    >
+                      {faellig.ueberfaellig && <span aria-hidden>⚠</span>}
+                      {faellig.text}
+                      {faellig.ueberfaellig && <span className="sr-only"> (überfällig)</span>}
+                    </span>
+                  )}
+
+                  <AufgabeBearbeitenDialog
+                    aufgabeId={aufgabe.id}
+                    standardwerte={standardwerte}
+                    bestehendeAnhaenge={aufgabe.anhaenge}
+                    aktualisierenAktion={aufgabeAktualisieren}
+                    anhangLoeschenAktion={aufgabeAnhangLoeschen}
+                  />
+
+                  <form action={aufgabeLoeschen.bind(null, aufgabe.id)}>
+                    <button
+                      type="submit"
+                      aria-label="Aufgabe löschen"
+                      className="mt-0.5 shrink-0 rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
+                    >
+                      ×
+                    </button>
+                  </form>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
+
+      {todosErledigt.length > 0 && (
+        <details className="rounded-xl border border-rand bg-flaeche p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-ueberschrift">
+            Meine To-Dos, erledigt ({todosErledigt.length})
+          </summary>
+
+          <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
+            {todosErledigt.map((aufgabe) => (
+              <li key={aufgabe.id} className="flex items-start gap-3 py-2.5">
+                <form action={aufgabeErledigtSetzen.bind(null, aufgabe.id, false)}>
+                  <button
+                    type="submit"
+                    aria-label="Als offen markieren"
+                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-marke-gruen text-xs font-bold text-neutral-900"
+                  >
+                    ✓
+                  </button>
+                </form>
+
+                <div className="min-w-0 flex-1">
+                  <span className="text-sm text-tertiaer line-through">{aufgabe.titel}</span>
+                  {aufgabe.beschreibung && (
+                    <p className="mt-0.5 truncate text-xs text-neutral-300 line-through">
+                      {richTextZuText(aufgabe.beschreibung)}
+                    </p>
+                  )}
+                  <AufgabeAnhaengeAnzeige aufgabeId={aufgabe.id} anhaenge={aufgabe.anhaenge} />
+                </div>
+
+                <span className="mt-0.5 shrink-0 text-xs text-tertiaer">
+                  {aufgabe.erledigtAm && datumIsoAusDate(aufgabe.erledigtAm)}
+                </span>
+
+                <form action={aufgabeLoeschen.bind(null, aufgabe.id)}>
+                  <button
+                    type="submit"
+                    aria-label="Aufgabe löschen"
+                    className="mt-0.5 shrink-0 rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
+                  >
+                    ×
+                  </button>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+      </div>
+
+      <div className="flex flex-col gap-4">
       {projektAufgabenOffen.length > 0 && (
-        <div className="mt-4 rounded-xl border border-rand bg-flaeche p-4">
+        <div className="rounded-xl border border-rand bg-flaeche p-4">
           <h2 className="text-sm font-semibold text-ueberschrift">
             Aus Projekten zugewiesen ({projektAufgabenOffen.length})
           </h2>
@@ -380,15 +592,18 @@ export default async function AufgabenSeite({
         </div>
       )}
 
-      <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
+      {(darfAuftraegeZuweisen || vergebenOffen.length > 0 || entwuerfe.length > 0) && (
+      <div className="rounded-xl border border-rand bg-flaeche p-4">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-sm font-semibold text-ueberschrift">Von dir vergeben ({vergebenOffen.length})</h2>
-          <AuftragErstellenDialog
-            personen={personenAnzeige}
-            erstellenAktion={auftragErstellen}
-            entwurfSpeichernAktion={auftragAlsEntwurfSpeichern}
-            autoOeffnen={neu === "1"}
-          />
+          {darfAuftraegeZuweisen && (
+            <AuftragErstellenDialog
+              personen={personenAnzeige}
+              erstellenAktion={auftragErstellen}
+              entwurfSpeichernAktion={auftragAlsEntwurfSpeichern}
+              autoOeffnen={neu === "1"}
+            />
+          )}
         </div>
 
         {entwuerfe.length > 0 && (
@@ -402,12 +617,14 @@ export default async function AufgabenSeite({
                   </span>
                 </div>
                 <div className="flex shrink-0 items-center gap-3">
-                  <AuftragErstellenDialog
-                    personen={personenAnzeige}
-                    erstellenAktion={auftragEntwurfFinalisieren.bind(null, entwurf.id)}
-                    entwurfSpeichernAktion={auftragEntwurfAktualisieren.bind(null, entwurf.id)}
-                    entwurf={{ id: entwurf.id, standardwerte: auftragZuStandardwerte(entwurf) }}
-                  />
+                  {darfAuftraegeZuweisen && (
+                    <AuftragErstellenDialog
+                      personen={personenAnzeige}
+                      erstellenAktion={auftragEntwurfFinalisieren.bind(null, entwurf.id)}
+                      entwurfSpeichernAktion={auftragEntwurfAktualisieren.bind(null, entwurf.id)}
+                      entwurf={{ id: entwurf.id, standardwerte: auftragZuStandardwerte(entwurf) }}
+                    />
+                  )}
                   <form action={auftragLoeschen.bind(null, entwurf.id)}>
                     <button type="submit" className="text-xs text-tertiaer hover:text-red-600">
                       Löschen
@@ -453,9 +670,10 @@ export default async function AufgabenSeite({
           </ul>
         )}
       </div>
+      )}
 
       {vergebenErledigt.length > 0 && (
-        <details className="mt-4 rounded-xl border border-rand bg-flaeche p-4">
+        <details className="rounded-xl border border-rand bg-flaeche p-4">
           <summary className="cursor-pointer text-sm font-semibold text-ueberschrift">
             Von dir vergeben, erledigt ({vergebenErledigt.length})
           </summary>
@@ -492,12 +710,13 @@ export default async function AufgabenSeite({
           </ul>
         </details>
       )}
-      </>
+      </div>
+      </div>
       )}
 
       {kontext.adminModusAktiv && (
-        <>
-          <div className="mt-6 rounded-xl border border-rand bg-flaeche p-4">
+        <div className={"mt-6 grid grid-cols-1 gap-6" + (seiteZweispaltig ? " md:grid-cols-2 md:items-start" : "")}>
+          <div className="rounded-xl border border-rand bg-flaeche p-4">
             <h2 className="text-sm font-semibold text-ueberschrift">
               Alle offenen Aufgaben (Firma) ({firmenweiteAuftraege?.length ?? 0})
             </h2>
@@ -521,7 +740,7 @@ export default async function AufgabenSeite({
           </div>
 
           {firmenweiteProjektAufgabenOffen && firmenweiteProjektAufgabenOffen.length > 0 && (
-            <div className="mt-4 rounded-xl border border-rand bg-flaeche p-4">
+            <div className="rounded-xl border border-rand bg-flaeche p-4">
               <h2 className="text-sm font-semibold text-ueberschrift">
                 Alle offenen Projekt-Aufgaben (Firma) ({firmenweiteProjektAufgabenOffen.length})
               </h2>
@@ -576,7 +795,7 @@ export default async function AufgabenSeite({
               </ul>
             </div>
           )}
-        </>
+        </div>
       )}
 
       <ZurueckButton />

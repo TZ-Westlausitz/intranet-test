@@ -7,7 +7,7 @@ import { prisma } from "@/lib/db"
 import { dateiAblegen, dateiLoeschen } from "@/lib/ablage"
 import { formatiereDatumAusDate } from "@/lib/datum"
 import { nutzungsvereinbarungPdfErzeugen } from "@/lib/pdf/nutzungsvereinbarung"
-import { AusleiheStatus, DokumentArt, Rolle } from "@/generated/prisma/enums"
+import { AusleiheStatus, DokumentArt } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -37,7 +37,7 @@ function clientIpAusHeaders(headerListe: Headers): string {
 async function vereinbarungUnterschreiben(formData: FormData) {
   "use server"
 
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  const kontext = await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
   const ausleiheId = String(formData.get("ausleiheId") ?? "")
 
   const ausleihe = await prisma.ausleihe.findUniqueOrThrow({
@@ -127,7 +127,7 @@ export default async function NutzungsvereinbarungUnterschreibenSeite({
 }: {
   params: Promise<{ id: string }>
 }) {
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
   const { id } = await params
 
   const ausleihe = await prisma.ausleihe.findUnique({

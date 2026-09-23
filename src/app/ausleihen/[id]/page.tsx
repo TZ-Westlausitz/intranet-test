@@ -3,7 +3,7 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { AusleiheStatus, Protokollrichtung, Rolle } from "@/generated/prisma/enums"
+import { AusleiheStatus, Protokollrichtung } from "@/generated/prisma/enums"
 import { STATUS_TEXT, NAECHSTER_SCHRITT } from "@/lib/ausleihe-status"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
@@ -32,7 +32,7 @@ async function reservierungStornieren(formData: FormData) {
 
   const istEigeneAnfrage = ausleihe.entleiherId === kontext.personId
   const istWerkstatt =
-    kontext.rollen.includes(Rolle.WERKSTATTLEITER) || kontext.rollen.includes(Rolle.ADMINISTRATION)
+    kontext.berechtigungen.includes("Werkstattleiter") || kontext.berechtigungen.includes("Adminbereich")
 
   const stornierbareStatus: AusleiheStatus[] = istEigeneAnfrage
     ? [AusleiheStatus.ANGEFRAGT, AusleiheStatus.ZUGESAGT]
@@ -79,7 +79,7 @@ export default async function AusleiheSeite({
 
   const istEigeneAnfrage = ausleihe !== null && ausleihe.entleiherId === kontext.personId
   const istWerkstatt =
-    kontext.rollen.includes(Rolle.WERKSTATTLEITER) || kontext.rollen.includes(Rolle.ADMINISTRATION)
+    kontext.berechtigungen.includes("Werkstattleiter") || kontext.berechtigungen.includes("Adminbereich")
 
   const darfSehen = ausleihe !== null && (istEigeneAnfrage || istWerkstatt)
 

@@ -4,11 +4,10 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Rolle } from "@/generated/prisma/enums"
 
 /** Siehe Kommentar am Model Berechtigung: feature-bezogene Freischaltung, unabhängig von Rolle und Gruppe. */
 export async function berechtigungErstellen(formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const name = String(formData.get("name") ?? "").trim()
   if (!name) return
@@ -20,7 +19,7 @@ export async function berechtigungErstellen(formData: FormData) {
 }
 
 export async function berechtigungUmbenennen(berechtigungId: string, formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const name = String(formData.get("name") ?? "").trim()
   if (!name) return
@@ -32,7 +31,7 @@ export async function berechtigungUmbenennen(berechtigungId: string, formData: F
 
 /** Kein Löschen: bestehende Zuweisungen (PersonBerechtigung) müssen ihre Berechtigung behalten. */
 export async function berechtigungAktivSetzen(berechtigungId: string, aktiv: boolean) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   await prisma.berechtigung.update({ where: { id: berechtigungId }, data: { aktiv } })
 

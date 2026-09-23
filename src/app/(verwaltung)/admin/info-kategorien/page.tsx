@@ -2,7 +2,6 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Rolle } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import {
@@ -23,7 +22,7 @@ import {
  * oben, damit beide Seiten von der einen Kachel aus auffindbar bleiben.
  */
 export default async function InfoKategorienSeite() {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
   const kategorien = await prisma.infoKategorie.findMany({
     orderBy: { name: "asc" },
     include: { _count: { select: { infos: true } } },

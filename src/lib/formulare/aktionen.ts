@@ -245,7 +245,7 @@ async function bedingungenVerknuepfen(vorlageId: string, elemente: GeprueftesEle
 
 /** Lädt eine Vorlage samt Elementen für den Baukasten-Bearbeiten-Modus. */
 export async function vorlageZumBearbeitenLaden(vorlageId: string) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   const [vorlage, hatEinreichungen] = await Promise.all([
     vorlageDetailFuerVerwaltung(vorlageId),
     vorlageHatEinreichungen(vorlageId),
@@ -316,7 +316,7 @@ async function vorlageAnlegen(
 }
 
 export async function vorlageErstellen(formData: FormData) {
-  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   // "+ Formular" ist ein Pop-Up direkt auf /formulare/verwalten (Rückmeldung
   // 2026-09-09) — keine eigene Seite mehr, Fehler landen deshalb dort.
   const rueckkehrPfad = "/formulare/verwalten"
@@ -338,7 +338,7 @@ export async function vorlageErstellen(formData: FormData) {
  * bleiben.
  */
 export async function vorlageAlsEntwurfSpeichern(formData: FormData) {
-  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   const rueckkehrPfad = "/formulare/verwalten"
 
   const metadaten = metadatenLesenOderFehler(formData, rueckkehrPfad, { entwurf: true })
@@ -356,7 +356,7 @@ export async function vorlageAlsEntwurfSpeichern(formData: FormData) {
  * ignoriert.
  */
 export async function vorlageAktualisieren(vorlageId: string, formData: FormData) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   // Bearbeiten ist ein Pop-Up auf /formulare/verwalten (Rückmeldung
   // 2026-09-09), keine eigene Seite mehr — Fehler landen deshalb dort.
   const rueckkehrPfad = "/formulare/verwalten"
@@ -458,7 +458,7 @@ export async function vorlageAktualisieren(vorlageId: string, formData: FormData
  * Standort/Zweck eingetragen werden müssen. Deaktivieren geht immer.
  */
 export async function vorlageAktivSetzen(vorlageId: string, aktiv: boolean) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   if (aktiv) {
     const vorlage = await prisma.formularVorlage.findUnique({ where: { id: vorlageId }, select: { istEntwurf: true } })
     if (vorlage?.istEntwurf) redirect("/formulare/verwalten?fehler=entwurfAktivierung")
@@ -486,7 +486,7 @@ export async function vorlageAktivSetzen(vorlageId: string, aktiv: boolean) {
  * eigenes Ziel mehr, auf das sich direkt weiterleiten ließe.
  */
 export async function vorlageDuplizieren(vorlageId: string) {
-  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
 
   const original = await prisma.formularVorlage.findUnique({
     where: { id: vorlageId },
@@ -524,7 +524,7 @@ export async function vorlageDuplizieren(vorlageId: string) {
 
 /** Nur löschbar, solange es keine Einreichungen gibt (siehe Plan) — sonst deaktivieren. */
 export async function vorlageLoeschen(vorlageId: string) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   if (await vorlageHatEinreichungen(vorlageId)) {
     throw new NichtBerechtigt("Vorlage hat bereits Einreichungen — nur noch deaktivierbar")
   }

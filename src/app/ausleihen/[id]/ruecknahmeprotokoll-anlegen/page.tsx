@@ -11,7 +11,7 @@ import {
   type RuecknahmeEntwurfDaten,
   type Schadenspunkt,
 } from "@/lib/pdf/uebergabeprotokoll"
-import { AusleiheStatus, Rolle } from "@/generated/prisma/enums"
+import { AusleiheStatus } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -34,7 +34,7 @@ import { RuecknahmeBewertung } from "@/components/ruecknahme-bewertung"
 async function ruecknahmeprotokollEntwurfErzeugen(formData: FormData) {
   "use server"
 
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
   const ausleiheId = String(formData.get("ausleiheId") ?? "")
 
   const ausleihe = await prisma.ausleihe.findUniqueOrThrow({
@@ -109,7 +109,7 @@ export default async function RuecknahmeprotokollAnlegenSeite({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  const kontext = await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
 
   const { id } = await params
 

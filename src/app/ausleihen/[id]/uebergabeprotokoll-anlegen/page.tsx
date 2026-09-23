@@ -12,7 +12,6 @@ import {
   type RuecknahmeEntwurfDaten,
   type Schadenspunkt,
 } from "@/lib/pdf/uebergabeprotokoll"
-import { Rolle } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -44,7 +43,7 @@ const TANKFUELLUNG_OPTIONEN = [
 async function protokollEntwurfErzeugen(formData: FormData) {
   "use server"
 
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
   const ausleiheId = String(formData.get("ausleiheId") ?? "")
 
   const ausleihe = await prisma.ausleihe.findUniqueOrThrow({
@@ -109,7 +108,7 @@ export default async function UebergabeprotokollAnlegenSeite({
 }: {
   params: Promise<{ id: string }>
 }) {
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  const kontext = await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
 
   const { id } = await params
 

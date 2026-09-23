@@ -4,11 +4,10 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Rolle } from "@/generated/prisma/enums"
 
 /** Nur der Adminbereich verwaltet Abteilungen — sie hängen am Rechtemodell (Zugehoerigkeit). */
 export async function abteilungErstellen(formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const name = String(formData.get("name") ?? "").trim()
   const kuerzel = String(formData.get("kuerzel") ?? "").trim().toLowerCase() || null
@@ -26,7 +25,7 @@ export async function abteilungErstellen(formData: FormData) {
  * ohne Kürzel kann in dieser Abteilung niemand mehr angelegt werden.
  */
 export async function abteilungUmbenennen(abteilungId: string, formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const name = String(formData.get("name") ?? "").trim()
   const kuerzel = String(formData.get("kuerzel") ?? "").trim().toLowerCase() || null
@@ -39,7 +38,7 @@ export async function abteilungUmbenennen(abteilungId: string, formData: FormDat
 
 /** Kein Löschen: bestehende Zugehoerigkeiten müssen ihre Abteilung behalten. */
 export async function abteilungAktivSetzen(abteilungId: string, aktiv: boolean) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   await prisma.abteilung.update({ where: { id: abteilungId }, data: { aktiv } })
 

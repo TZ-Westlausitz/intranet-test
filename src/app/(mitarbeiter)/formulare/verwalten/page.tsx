@@ -65,7 +65,7 @@ export default async function FormulareVerwaltenSeite({
 }: {
   searchParams: Promise<{ fehler?: string }>
 }) {
-  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   const { fehler } = await searchParams
   const [vorlagen, personen, gruppen, abteilungen, orte] = await Promise.all([
     alleVorlagenFuerVerwaltung(kontext.personId),

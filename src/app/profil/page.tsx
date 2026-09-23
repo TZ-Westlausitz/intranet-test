@@ -3,7 +3,6 @@ import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { InfoAvatar } from "@/components/info-avatar"
 import { ProfilbildBearbeiten } from "@/components/profilbild-bearbeiten"
-import { ROLLE_NAMEN } from "@/lib/rollen-optionen"
 import { personKontaktDetail } from "@/lib/kontakte/abfragen"
 import { profilAktualisieren, profilbildAktualisieren } from "@/lib/profil/aktionen"
 
@@ -14,15 +13,15 @@ const FEHLER_TEXTE: Record<string, string> = {
 }
 
 /**
- * Eigenes Profil — Name/Benutzername/Rolle(n) bleiben Anzeige (die pflegt
+ * Eigenes Profil — Name/Benutzername bleiben Anzeige (die pflegt
  * die Verwaltung im Adminbereich, siehe personBenutzernameAktualisieren
  * & Co.), aber E-Mail/Telefon/Weitere Informationen/Profilbild sind
  * freiwillige Angaben, die jede Person selbst pflegt (Vorbild Altsystem
  * "Überblick", Rückmeldung vom 2026-09-07) — dieselben Felder, die auch in
  * der Kontakte-Übersicht erscheinen, deshalb hier `personKontaktDetail`
- * wiederverwendet statt eines eigenen, engeren Querys. Kein Rollenfilter
- * in `berechtigung()`: jede angemeldete Person darf ihre eigenen Daten
- * sehen und ändern.
+ * wiederverwendet statt eines eigenen, engeren Querys. Keine Berechtigung
+ * in `berechtigung()` nötig: jede angemeldete Person darf ihre eigenen
+ * Daten sehen und ändern.
  */
 export default async function ProfilSeite({
   searchParams,
@@ -60,12 +59,6 @@ export default async function ProfilSeite({
         <div className="flex justify-between border-b border-flaeche-100 pb-2">
           <dt className="text-sekundaer">Benutzername</dt>
           <dd className="font-medium">{kontext.benutzername}</dd>
-        </div>
-        <div className="flex justify-between border-b border-flaeche-100 pb-2">
-          <dt className="text-sekundaer">Rolle(n)</dt>
-          <dd className="font-medium">
-            {kontext.rollen.length > 0 ? kontext.rollen.map((r) => ROLLE_NAMEN[r]).join(", ") : "—"}
-          </dd>
         </div>
         {person.zugehoerigkeiten.length > 0 && (
           <div className="flex justify-between border-b border-flaeche-100 pb-2">

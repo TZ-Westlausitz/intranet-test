@@ -1,5 +1,4 @@
 import { InfoAvatar } from "@/components/info-avatar"
-import { ROLLE_NAMEN } from "@/lib/rollen-optionen"
 import type { personKontaktDetail } from "@/lib/kontakte/abfragen"
 
 type PersonDetail = NonNullable<Awaited<ReturnType<typeof personKontaktDetail>>>
@@ -40,7 +39,7 @@ export function KontaktProfil({ person }: { person: PersonDetail }) {
                 {person.zugehoerigkeiten.map((z) => (
                   <li key={z.id} className="text-sm text-primaer">
                     {z.abteilung.name}
-                    {z.standort ? ` · ${z.standort.name}` : ""} · {ROLLE_NAMEN[z.rolle]}
+                    {z.standort ? ` · ${z.standort.name}` : ""}
                   </li>
                 ))}
               </ul>

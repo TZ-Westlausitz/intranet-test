@@ -17,7 +17,7 @@ import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
  * gäbe es ein Projekt ohne jede Leitung.
  */
 export async function projektErstellen(formData: FormData) {
-  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Projektmanager" })
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Projektmanager" })
 
   const titel = String(formData.get("titel") ?? "").trim()
   const ziel = richTextSanitisieren(String(formData.get("ziel") ?? ""))

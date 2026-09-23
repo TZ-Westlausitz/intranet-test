@@ -176,7 +176,7 @@ export async function meldungKommentarErstellen(meldungId: string, formData: For
  * sie auf der Meldungsseite selbst (siehe MeldungAbschlussAbfrage).
  */
 export async function meldungStatusAktualisieren(meldungId: string, formData: FormData) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Meldestelle" })
+  await berechtigung({ benoetigteBerechtigung: "Meldestelle" })
 
   const statusEingabe = String(formData.get("status") ?? "")
   if (!Object.values(MeldungStatus).includes(statusEingabe as MeldungStatus)) return

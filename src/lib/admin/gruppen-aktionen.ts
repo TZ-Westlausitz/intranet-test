@@ -4,11 +4,10 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Rolle } from "@/generated/prisma/enums"
 
 /** Siehe Kommentar am Model Gruppe: freie Mehrfachzuordnung, unabhängig von Abteilung/Standort/Rolle. */
 export async function gruppeErstellen(formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const name = String(formData.get("name") ?? "").trim()
   if (!name) return
@@ -20,7 +19,7 @@ export async function gruppeErstellen(formData: FormData) {
 }
 
 export async function gruppeUmbenennen(gruppeId: string, formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const name = String(formData.get("name") ?? "").trim()
   if (!name) return
@@ -32,7 +31,7 @@ export async function gruppeUmbenennen(gruppeId: string, formData: FormData) {
 
 /** Kein Löschen: bestehende Mitgliedschaften (PersonGruppe) müssen ihre Gruppe behalten. */
 export async function gruppeAktivSetzen(gruppeId: string, aktiv: boolean) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   await prisma.gruppe.update({ where: { id: gruppeId }, data: { aktiv } })
 

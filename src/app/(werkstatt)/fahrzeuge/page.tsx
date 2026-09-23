@@ -1,7 +1,5 @@
 import Link from "next/link"
 
-import { Rolle } from "@/generated/prisma/enums"
-
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Kopfleiste } from "@/components/kopfleiste"
@@ -13,7 +11,7 @@ import { ZurueckButton } from "@/components/zurueck-button"
  * Offene Vorgänge, Übergabe und Rücknahme kommen als Nächstes dazu.
  */
 export default async function Fahrzeuguebersicht() {
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
 
   const fahrzeuge = await prisma.fahrzeug.findMany({
     where: { aktiv: true, fuerPrivatausleiheFreigegeben: true },
@@ -24,7 +22,6 @@ export default async function Fahrzeuguebersicht() {
     <main className="mx-auto max-w-2xl px-5 py-10">
       <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Fahrzeugausleihe</h1>
-      <p className="mt-1 text-sm text-primaer">{kontext.rollen.join(", ")}</p>
 
       <h2 className="mt-8 text-lg font-medium">Für Privatausleihe freigegeben</h2>
 

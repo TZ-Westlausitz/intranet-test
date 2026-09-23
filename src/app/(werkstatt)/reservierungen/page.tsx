@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { dateiLoeschen } from "@/lib/ablage"
-import { AusleiheStatus, Rolle } from "@/generated/prisma/enums"
+import { AusleiheStatus } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { StatusBadge } from "@/components/status-badge"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -34,7 +34,7 @@ import { TestphaseLoeschenButton } from "@/components/testphase-loeschen-button"
 async function reservierungEndgueltigLoeschen(ausleiheId: string) {
   "use server"
 
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
 
   const ausleihe = await prisma.ausleihe.findUnique({
     where: { id: ausleiheId },
@@ -69,7 +69,7 @@ async function reservierungEndgueltigLoeschen(ausleiheId: string) {
 }
 
 export default async function ReservierungenSeite() {
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
 
   const reservierungen = await prisma.ausleihe.findMany({
     where: { status: { in: [AusleiheStatus.ZUGESAGT, AusleiheStatus.STORNIERT] } },

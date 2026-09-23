@@ -3,7 +3,6 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Rolle } from "@/generated/prisma/enums"
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
 
 type UpdateEintrag = { id: string; name: string; zeitpunkt: Date; art: "neu" | "abgang" }
@@ -27,7 +26,7 @@ type UpdateEintrag = { id: string; name: string; zeitpunkt: Date; art: "neu" | "
  * Die drei Symbole liegen als PNG unter public/admin/ (von Jonas geliefert).
  */
 export default async function AdminSeite() {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const [neuePersonen, deaktiviertePersonen, aktiveMitarbeiterAnzahl] = await Promise.all([
     prisma.person.findMany({

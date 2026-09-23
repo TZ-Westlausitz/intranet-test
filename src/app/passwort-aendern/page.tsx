@@ -14,7 +14,7 @@ const FEHLER_TEXTE: Record<string, string> = {
  * personPasswortZuruecksetzen — beide vergeben nur noch das gemeinsame
  * Startpasswort, siehe STANDARD_STARTPASSWORT).
  *
- * `berechtigung(undefined, { erlaubeVorPasswortwechsel: true })` statt der
+ * `berechtigung({ erlaubeVorPasswortwechsel: true })` statt der
  * normalen `berechtigung()`: sonst würde die zentrale Umleitung genau
  * hierher wieder hierher zurückführen, eine Endlosschleife.
  */
@@ -23,7 +23,7 @@ export default async function PasswortAendernSeite({
 }: {
   searchParams: Promise<{ fehler?: string }>
 }) {
-  const kontext = await berechtigung(undefined, { erlaubeVorPasswortwechsel: true })
+  const kontext = await berechtigung({ erlaubeVorPasswortwechsel: true })
   const { fehler } = await searchParams
 
   return (

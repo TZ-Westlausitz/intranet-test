@@ -2,7 +2,7 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { AusleiheStatus, Rolle } from "@/generated/prisma/enums"
+import { AusleiheStatus } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { MONATSNAMEN, istGleicherTag } from "@/lib/kalender"
 import { naechsterTermin, faelligeErinnerungenAnzahl } from "@/lib/termine/abfragen"
@@ -18,7 +18,7 @@ import {
   UNTERNEHMENSNAME,
 } from "@/lib/infos/abfragen"
 import { NewsfeedHomeKachel } from "@/components/newsfeed-home-kachel"
-import { BAUSTEINE } from "@/lib/bausteine"
+import { STARTSEITE_WEITERES_MODULE } from "@/lib/bausteine"
 
 /**
  * DIE ZWEI STUNDEN VERSICHERUNG — Fortsetzung.
@@ -78,21 +78,17 @@ export default async function Startseite() {
   const heute = new Date()
 
   const istWerkstatt =
-    kontext.rollen.includes(Rolle.WERKSTATTLEITER) ||
-    kontext.rollen.includes(Rolle.ADMINISTRATION)
+    kontext.berechtigungen.includes("Werkstattleiter") || kontext.berechtigungen.includes("Adminbereich")
 
   // Welches "Weiteres"-Modul für Zeile 2, Spalte 4 eingestellt ist (siehe
   // /einstellungen) — ohne eigene Einstellung greift der
   // erste Eintrag der Liste als Default (aktuell Fahrzeuge, das bisherige
   // Verhalten für alle, die die Einstellung noch nicht angefasst haben).
-  const [person, weiteresEintrag] = [
-    await prisma.person.findUniqueOrThrow({
-      where: { benutzername: kontext.personId },
-      select: { startseiteWeiteresModul: true },
-    }),
-    BAUSTEINE.find((baustein) => baustein.unterpunkte),
-  ]
-  const weiteresModule = weiteresEintrag?.unterpunkte ?? []
+  const person = await prisma.person.findUniqueOrThrow({
+    where: { benutzername: kontext.personId },
+    select: { startseiteWeiteresModul: true },
+  })
+  const weiteresModule = STARTSEITE_WEITERES_MODULE
   const ausgewaehltesModul = person.startseiteWeiteresModul ?? weiteresModule[0]?.name ?? ""
   const zeigeFahrzeuge = ausgewaehltesModul === "Fahrzeuge"
   const zeigeTodoListe = ausgewaehltesModul === "To-Do-Liste"
@@ -290,7 +286,7 @@ export default async function Startseite() {
                 ? { href: "/fahrzeug-reservierungen", name: "Fahrzeuge", icon: "🚐" }
                 : { href: "/fahrzeug-mieten", name: "Fahrzeug mieten", icon: "🚐" },
               { href: "/meine-anfragen", name: "Meine Anfragen", icon: "📝" },
-              { href: "/aufgaben/todos", name: "To-Do-Liste", icon: "☑️" },
+              { href: "/aufgaben", name: "To-Do-Liste", icon: "☑️" },
               { href: "/geplante-aktionen", name: "Geplante Aktionen", icon: "🕒" },
             ].map((kachel) => (
               <li key={kachel.href}>
@@ -473,7 +469,7 @@ export default async function Startseite() {
             {zeigeTodoListe && (
               <div className="col-start-4 row-start-2 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen">
                 <Link
-                  href="/aufgaben/todos"
+                  href="/aufgaben"
                   className="flex items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
                 >
                   <h2 className="text-lg font-semibold text-ueberschrift hover:underline">To-Do-Liste</h2>

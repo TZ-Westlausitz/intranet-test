@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
 
-import { Rolle, Farbschema } from "@/generated/prisma/enums"
+import { Farbschema } from "@/generated/prisma/enums"
 
 import { auth } from "./auth"
 import { prisma } from "@/lib/db"
@@ -13,7 +13,7 @@ import { prisma } from "@/lib/db"
  * ignorieren. Ein vergessenes `if` fällt sonst niemandem auf.
  *
  *   export async function ausleiheAnlegen(daten: FormData) {
- *     const kontext = await berechtigung([Rolle.WERKSTATTLEITER])
+ *     const kontext = await berechtigung({ benoetigteBerechtigung: "Werkstattleiter" })
  *     ...
  *   }
  *
@@ -36,22 +36,21 @@ import { prisma } from "@/lib/db"
  * abgelaufener/ungültiger Token, deaktiviertes Konto), ist das ein
  * Authentifizierungs-Problem — Umleitung zu /anmelden, denselben Weg wie
  * jeder andere abgemeldete Aufruf. Ist die Person zwar gültig angemeldet,
- * hat aber nicht die geforderte Rolle, ist das ein echtes
+ * hat aber nicht die geforderte Berechtigung, ist das ein echtes
  * Berechtigungs-Problem — dafür bleibt `NichtBerechtigt` ein lauter Fehler
  * (Regel 5: ein ausgeblendeter Knopf ist keine Zugriffskontrolle, ein
  * stillschweigendes Umleiten wäre hier dasselbe Versäumnis).
  *
- * `optionen.benoetigteBerechtigung` prüft zusätzlich eine benannte
- * PersonBerechtigung (z. B. "Projektmanager" für das Anlegen eines
- * Projekts) — genau wie ein fehlendes `erforderlich`-Rolle ein lauter
- * Fehler, kein stilles Umleiten. Das ist bewusst NICHT der große,
- * zurückgestellte Umbau "Berechtigung ersetzt Rolle überall" (siehe Memory
- * adminbereich-rechteverwaltung) — nur eine gezielte, additive Fähigkeit
- * dieser einen zentralen Funktion, für den einen Fall, der sie jetzt
- * braucht. Pro-Datensatz-Sichtbarkeit (z. B. "ist Mitglied dieses
- * Projekts") ist weiterhin NICHT Teil von `berechtigung()` — das läuft wie
- * bei Auftrag/Termin über einen eigenen, lokalen Helfer pro Baustein
- * (siehe src/lib/projekte/mitgliedschaft.ts).
+ * `optionen.benoetigteBerechtigung` prüft eine benannte PersonBerechtigung
+ * (z. B. "Werkstattleiter" fürs Fuhrpark-Modul, "Adminbereich" für den
+ * Adminbereich) — seit 2026-09 der EINZIGE Rechtemechanismus im Projekt.
+ * Bis dahin lief das parallel zu einem `Zugehoerigkeit.rolle`-Enum, das
+ * komplett abgelöst wurde (siehe Memory adminbereich-rechteverwaltung).
+ * Ein Array prüft mehrere Berechtigungen mit ODER-Semantik (mindestens
+ * eine davon reicht). Pro-Datensatz-Sichtbarkeit (z. B. "ist Mitglied
+ * dieses Projekts") ist weiterhin NICHT Teil von `berechtigung()` — das
+ * läuft wie bei Auftrag/Termin über einen eigenen, lokalen Helfer pro
+ * Baustein (siehe src/lib/projekte/mitgliedschaft.ts).
  */
 
 export class NichtBerechtigt extends Error {
@@ -65,16 +64,15 @@ export type Kontext = {
   personId: string
   benutzername: string
   name: string
-  rollen: Rolle[]
   standortIds: string[]
   berechtigungen: string[]
   /**
    * Firmenweiter, rein lesender Überblicksmodus (Admin-Modus), umschaltbar
    * über den Schalter in der Desktop-Menüleiste (adminModusUmschalten).
    * Bewusst HIER berechnet, nicht einfach `person.adminModusAktiv`
-   * durchgereicht: die Kombination aus DB-Feld UND aktueller Rolle
-   * ADMINISTRATION läuft an derselben einen Stelle zusammen wie jede
-   * andere Rechteprüfung (Regel 5) — wird die Rolle entzogen, ist der
+   * durchgereicht: die Kombination aus DB-Feld UND aktueller Berechtigung
+   * "Admin" läuft an derselben einen Stelle zusammen wie jede andere
+   * Rechteprüfung (Regel 5) — wird die Berechtigung entzogen, ist der
    * Modus sofort wirkungslos, selbst wenn das Feld noch `true` ist.
    */
   adminModusAktiv: boolean
@@ -82,10 +80,10 @@ export type Kontext = {
   farbschema: Farbschema
 }
 
-export async function berechtigung(
-  erforderlich?: Rolle[],
-  optionen?: { erlaubeVorPasswortwechsel?: boolean; benoetigteBerechtigung?: string },
-): Promise<Kontext> {
+export async function berechtigung(optionen?: {
+  erlaubeVorPasswortwechsel?: boolean
+  benoetigteBerechtigung?: string | string[]
+}): Promise<Kontext> {
   const session = await auth()
   const personId = session?.user?.id
 
@@ -137,28 +135,27 @@ export async function berechtigung(
       .catch(() => {})
   }
 
-  const rollen = [...new Set(person.zugehoerigkeiten.map((z) => z.rolle))]
   const standortIds = [
     ...new Set(person.zugehoerigkeiten.map((z) => z.standortId).filter((id): id is string => id !== null)),
   ]
   const berechtigungen = [...new Set(person.berechtigungen.map((b) => b.berechtigung.name))]
 
-  if (erforderlich?.length && !erforderlich.some((r) => rollen.includes(r))) {
-    throw new NichtBerechtigt("fehlende Rolle")
-  }
-
-  if (optionen?.benoetigteBerechtigung && !berechtigungen.includes(optionen.benoetigteBerechtigung)) {
-    throw new NichtBerechtigt("fehlende Berechtigung")
+  if (optionen?.benoetigteBerechtigung) {
+    const erforderlich = Array.isArray(optionen.benoetigteBerechtigung)
+      ? optionen.benoetigteBerechtigung
+      : [optionen.benoetigteBerechtigung]
+    if (!erforderlich.some((b) => berechtigungen.includes(b))) {
+      throw new NichtBerechtigt("fehlende Berechtigung")
+    }
   }
 
   return {
     personId: person.benutzername,
     benutzername: person.benutzername,
     name: `${person.vorname} ${person.nachname}`,
-    rollen,
     standortIds,
     berechtigungen,
-    adminModusAktiv: person.adminModusAktiv && rollen.includes(Rolle.ADMINISTRATION),
+    adminModusAktiv: person.adminModusAktiv && berechtigungen.includes("Admin"),
     farbschema: person.farbschema,
   }
 }
@@ -194,12 +191,12 @@ function istPasswortWechselWeiterleitung(wert: unknown): boolean {
  * Funktion auf JEDER Seite auf, auch auf /passwort-aendern und /anmelden
  * selbst — ohne die Ausnahme würde sie dort ihre eigene Umleitung wieder
  * auslösen (Endlosschleife aus 307ern). Die eigentliche Sperre bleibt
- * trotzdem scharf: jede geschützte Seite/Aktion ruft `berechtigung([...])`
+ * trotzdem scharf: jede geschützte Seite/Aktion ruft `berechtigung({...})`
  * direkt auf, ohne diese Ausnahme.
  */
 export async function kontextOderNull(): Promise<Kontext | null> {
   try {
-    return await berechtigung(undefined, { erlaubeVorPasswortwechsel: true })
+    return await berechtigung({ erlaubeVorPasswortwechsel: true })
   } catch (fehler) {
     // Nur die Passwortwechsel-Umleitung muss Next.js selbst zu sehen
     // bekommen, sonst bleibt sie hier hängen und die Seite zeigt einfach

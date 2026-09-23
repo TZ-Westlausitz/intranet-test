@@ -2,7 +2,6 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Rolle } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { ortErstellen, ortUmbenennen, ortAktivSetzen } from "@/lib/admin/orte-aktionen"
@@ -18,7 +17,7 @@ import { ortErstellen, ortUmbenennen, ortAktivSetzen } from "@/lib/admin/orte-ak
  * bleiben.
  */
 export default async function OrteSeite() {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
   const orte = await prisma.ort.findMany({ orderBy: { name: "asc" } })
 
   return (

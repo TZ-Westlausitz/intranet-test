@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { kontextOderNull } from "@/lib/auth/berechtigung";
-import { Rolle } from "@/generated/prisma/enums";
 import { BenutzerMenu } from "@/components/benutzer-menu";
 import { BenachrichtigungsGlocke } from "@/components/benachrichtigungs-glocke";
 import { ChatWidget } from "@/components/chat-widget";
@@ -155,7 +154,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                   />
                   <BenutzerMenu
                     name={kontext.name}
-                    istAdmin={kontext.rollen.includes(Rolle.ADMINISTRATION)}
+                    istAdmin={kontext.berechtigungen.includes("Adminbereich")}
                     adminModusAktiv={kontext.adminModusAktiv}
                   />
                 </div>
@@ -167,7 +166,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
               >
                 <BausteineLeiste adminModusAktiv={kontext.adminModusAktiv} />
 
-                {kontext.rollen.includes(Rolle.ADMINISTRATION) && (
+                {kontext.berechtigungen.includes("Admin") && (
                   <AdminModusSchalter aktiv={kontext.adminModusAktiv} />
                 )}
               </nav>
@@ -178,11 +177,19 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         </div>
 
         {kontext && <ChatWidget konversationen={chatKonversationen} ungeleseneAnzahl={chatUngeleseneAnzahl} />}
-        {kontext && <DesktopSchnellmenu darfInfo={kontext.berechtigungen.includes("Infos")} />}
+        {kontext && (
+          <DesktopSchnellmenu
+            darfInfo={kontext.berechtigungen.includes("Infos")}
+            darfAufgabeZuweisen={kontext.berechtigungen.includes("Aufgaben")}
+          />
+        )}
 
         {kontext && (
           <>
-            <MobileSchnellmenu darfInfo={kontext.berechtigungen.includes("Infos")} />
+            <MobileSchnellmenu
+              darfInfo={kontext.berechtigungen.includes("Infos")}
+              darfAufgabeZuweisen={kontext.berechtigungen.includes("Aufgaben")}
+            />
             <MobileTabBar
               chatUngeleseneAnzahl={chatUngeleseneAnzahl}
               benachrichtigungenUngeleseneAnzahl={anzahlUngelesen}

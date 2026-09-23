@@ -2,7 +2,7 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { AusleiheStatus, Rolle } from "@/generated/prisma/enums"
+import { AusleiheStatus } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 
@@ -40,7 +40,7 @@ const UNTERMODULE = [
 ]
 
 export default async function FahrzeugReservierungenMenueSeite() {
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
 
   const offeneAnfragen = await prisma.ausleihe.count({
     where: { status: AusleiheStatus.ANGEFRAGT },

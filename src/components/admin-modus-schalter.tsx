@@ -5,8 +5,8 @@ import { useRef } from "react"
 import { adminModusUmschalten } from "@/lib/admin/admin-modus-aktionen"
 
 /**
- * Schieberegler ganz rechts in der Desktop-Menüleiste — nur für Rolle
- * ADMINISTRATION gerendert (siehe layout.tsx). Schickt bei jeder Änderung
+ * Schieberegler ganz rechts in der Desktop-Menüleiste — nur für die
+ * Berechtigung "Admin" gerendert (siehe layout.tsx). Schickt bei jeder Änderung
  * sofort ab (`requestSubmit`), kein separater Speichern-Klick nötig. Kein
  * Pendant in der mobilen Kopfleiste — der Admin-Modus ist bewusst nur auf
  * dem Desktop erreichbar (siehe Plan).

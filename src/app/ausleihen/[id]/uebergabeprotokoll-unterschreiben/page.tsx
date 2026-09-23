@@ -10,7 +10,7 @@ import {
   uebergabeprotokollPdfErzeugen,
   type AusgabeEntwurfDaten,
 } from "@/lib/pdf/uebergabeprotokoll"
-import { AusleiheStatus, DokumentArt, Protokollrichtung, Rolle, Tankfuellung } from "@/generated/prisma/enums"
+import { AusleiheStatus, DokumentArt, Protokollrichtung, Tankfuellung } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -36,7 +36,7 @@ function dataUrlZuBytes(dataUrl: string): Uint8Array {
 async function uebergabeprotokollUnterschreiben(formData: FormData) {
   "use server"
 
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  const kontext = await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
   const ausleiheId = String(formData.get("ausleiheId") ?? "")
 
   const ausleihe = await prisma.ausleihe.findUniqueOrThrow({
@@ -138,7 +138,7 @@ export default async function UebergabeprotokollUnterschreibenSeite({
 }: {
   params: Promise<{ id: string }>
 }) {
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
   const { id } = await params
 
   const ausleihe = await prisma.ausleihe.findUnique({

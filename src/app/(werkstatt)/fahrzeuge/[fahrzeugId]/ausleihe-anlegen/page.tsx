@@ -6,7 +6,7 @@ import { naechsteVorgangsnummer } from "@/lib/vorgangsnummer"
 import { berlinerTagesbeginn, formatiereDatum } from "@/lib/datum"
 import { dateiAblegen } from "@/lib/ablage"
 import { nutzungsvereinbarungPdfErzeugen } from "@/lib/pdf/nutzungsvereinbarung"
-import { AusleiheStatus, Rolle } from "@/generated/prisma/enums"
+import { AusleiheStatus } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import {
@@ -32,7 +32,7 @@ import { AusleiheAnlegenFormular } from "./ausleihe-anlegen-formular"
 async function ausleiheAnlegen(formData: FormData) {
   "use server"
 
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  const kontext = await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
 
   const fahrzeugId = String(formData.get("fahrzeugId") ?? "")
   const entleiherId = String(formData.get("entleiherId") ?? "")
@@ -105,7 +105,7 @@ export default async function AusleiheAnlegenSeite({
   params: Promise<{ fahrzeugId: string }>
   searchParams: Promise<{ fehler?: string; monat?: string }>
 }) {
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
 
   const { fahrzeugId } = await params
   const { fehler, monat } = await searchParams

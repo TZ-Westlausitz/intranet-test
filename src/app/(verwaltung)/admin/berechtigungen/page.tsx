@@ -1,6 +1,5 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Rolle } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import {
@@ -11,14 +10,14 @@ import {
 
 /**
  * Berechtigungen sind feature-bezogene Freischaltungen unabhängig von
- * Rolle und Gruppe (siehe Model Berechtigung). Kein Löschen, nur Umbenennen
- * und Deaktivieren: bestehende Zuweisungen (PersonBerechtigung) müssen ihre
- * Berechtigung behalten. Die meisten Einträge betreffen Bausteine, die es
- * hier noch nicht gibt — der Adminbereich selbst prüft weiterhin über
- * Rolle.ADMINISTRATION, nicht über einen Eintrag hier.
+ * Standort/Abteilung und Gruppe (siehe Model Berechtigung). Kein Löschen,
+ * nur Umbenennen und Deaktivieren: bestehende Zuweisungen
+ * (PersonBerechtigung) müssen ihre Berechtigung behalten. Berechtigung ist
+ * seit 2026-09 die EINZIGE Rechtequelle im Projekt — auch dieser
+ * Adminbereich prüft über die Berechtigung "Adminbereich" (siehe unten).
  */
 export default async function BerechtigungenSeite() {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
   const berechtigungen = await prisma.berechtigung.findMany({
     orderBy: { name: "asc" },
     include: { _count: { select: { mitglieder: true } } },

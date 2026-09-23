@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { formatiereCentAlsEuro } from "@/lib/geld"
-import { AusleiheStatus, Rolle } from "@/generated/prisma/enums"
+import { AusleiheStatus } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -28,7 +28,7 @@ function monatsSchluessel(personId: string, datum: Date): string {
 async function anLohnbuchhaltungMelden(formData: FormData) {
   "use server"
 
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
   const ausleiheId = String(formData.get("ausleiheId") ?? "")
 
   // Nur aus ZURUECKGEGEBEN heraus möglich — sonst gäbe es nichts Berechnetes
@@ -43,7 +43,7 @@ async function anLohnbuchhaltungMelden(formData: FormData) {
 }
 
 export default async function AbrechnungSeite() {
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
 
   const ausleihen = await prisma.ausleihe.findMany({
     where: { status: { in: [AusleiheStatus.ZURUECKGEGEBEN, AusleiheStatus.ABGESCHLOSSEN] } },

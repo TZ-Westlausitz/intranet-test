@@ -12,7 +12,7 @@ type Schnellaktion = { name: string; href: string; icon: React.ReactNode }
 // Sinn, und das schwebende "+" verdeckte dort teils echten Inhalt, z. B.
 // das "Gemeldet am"-Datum auf /abrechnung oder Kalendertage). Dasselbe
 // Präfix-Muster wie MobileTabBar/istAktiv, deshalb gilt "/aufgaben" auch
-// für /aufgaben/todos und /aufgaben/projekte. "/formulare" ergänzt
+// für /aufgaben/projekte. "/formulare" ergänzt
 // (Rückmeldung 2026-09-22) — auf der Formularübersicht selbst macht das
 // Schnellmenü genauso Sinn wie auf den anderen Baustein-Seiten.
 const RELEVANTE_PFADE = ["/newsfeed", "/aufgaben", "/kalender", "/chat", "/formulare"]
@@ -58,11 +58,12 @@ const TERMIN_ICON = (
 /**
  * Schwebendes "+" unten rechts auf dem Handy (Rückmeldung 2026-09-15,
  * Vorbild app.ueberblick.io) — klappt zu den Schnellerstellen-Zielen auf,
- * "sofern man Berechtigungen dafür hat" (Zitat der Rückmeldung): nur
- * "+ Info" ist an eine Berechtigung geknüpft (dieselbe "Infos"-Berechtigung
- * wie der "+ Info"-Knopf im Newsfeed selbst), die übrigen vier sind für
- * jede angemeldete Person offen — genau wie ihre jeweiligen Knöpfe auf
- * /aufgaben, /kalender und /chat es schon sind.
+ * "sofern man Berechtigungen dafür hat" (Zitat der Rückmeldung): "+ Info"
+ * ist an die Berechtigung "Infos" geknüpft (dieselbe wie der "+ Info"-Knopf
+ * im Newsfeed selbst), "+ Aufgabe" seit 2026-09-23 an "Aufgaben" (Auftrag an
+ * eine andere Person zuweisen, siehe auftragErstellen) — die übrigen drei
+ * sind für jede angemeldete Person offen, genau wie ihre jeweiligen Knöpfe
+ * auf /kalender und /chat es schon sind.
  *
  * Jeder Punkt navigiert zur jeweiligen Baustein-Seite mit `?neu=1` in der
  * URL, statt das Formular hier einzubetten — die Seite selbst reicht das
@@ -72,7 +73,7 @@ const TERMIN_ICON = (
  * gibt. "+ Formular" führt ohne Parameter direkt zur Formularübersicht, weil
  * Formulare vorlagenbasiert sind — es gibt dort kein "leeres" Anlegen.
  */
-export function MobileSchnellmenu({ darfInfo }: { darfInfo: boolean }) {
+export function MobileSchnellmenu({ darfInfo, darfAufgabeZuweisen }: { darfInfo: boolean; darfAufgabeZuweisen: boolean }) {
   const pathname = usePathname()
   const [offen, setOffen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -96,7 +97,7 @@ export function MobileSchnellmenu({ darfInfo }: { darfInfo: boolean }) {
   const aktionen: Schnellaktion[] = [
     ...(darfInfo ? [{ name: "Info", href: "/newsfeed?neu=1", icon: INFO_ICON }] : []),
     { name: "Formular", href: "/formulare", icon: FORMULAR_ICON },
-    { name: "Aufgabe", href: "/aufgaben?neu=1", icon: AUFGABE_ICON },
+    ...(darfAufgabeZuweisen ? [{ name: "Aufgabe", href: "/aufgaben?neu=1", icon: AUFGABE_ICON }] : []),
     { name: "Termin", href: "/kalender?neu=1", icon: TERMIN_ICON },
     { name: "Chat", href: "/chat?neu=1", icon: CHAT_ICON },
   ]

@@ -11,11 +11,12 @@ import { abmelden } from "@/lib/auth/aktionen"
  * dieselbe Funktion auch im festen Desktop-Header (src/app/layout.tsx)
  * verfügbar ist, statt sie dort zu duplizieren.
  *
- * `istAdmin` blendet den Admin-Link aus, wenn die Person keine
- * ADMINISTRATION-Rolle hat — reine Anzeige-Entscheidung wie bei jedem
+ * `istAdmin` blendet den Admin-Link aus, wenn die Person die Berechtigung
+ * "Adminbereich" nicht hat — reine Anzeige-Entscheidung wie bei jedem
  * anderen ausgeblendeten Menüpunkt, kein Ersatz für die echte Rechteprüfung
  * (Regel 5): jede Admin-Seite und jede ihrer Server Actions ruft
- * `berechtigung([Rolle.ADMINISTRATION])` selbst noch einmal auf. Optional
+ * `berechtigung({ benoetigteBerechtigung: "Adminbereich" })` selbst noch
+ * einmal auf. Optional
  * mit Default `false`, damit bestehende Aufrufe (z. B. die mobile
  * Kopfleiste) unverändert weiterlaufen.
  *

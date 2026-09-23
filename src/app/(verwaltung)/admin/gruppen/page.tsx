@@ -1,6 +1,5 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Rolle } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { gruppeErstellen, gruppeUmbenennen, gruppeAktivSetzen } from "@/lib/admin/gruppen-aktionen"
@@ -27,7 +26,7 @@ import { abteilungErstellen, abteilungUmbenennen, abteilungAktivSetzen } from "@
  * Kachel mit zwei Inhalten ihre Unterseite aufbauen soll.
  */
 export default async function GruppenUndAbteilungenSeite() {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
   const [gruppen, abteilungen] = await Promise.all([
     prisma.gruppe.findMany({ orderBy: { name: "asc" } }),
     prisma.abteilung.findMany({ orderBy: { name: "asc" } }),

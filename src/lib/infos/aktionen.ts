@@ -128,7 +128,7 @@ async function inlineBilderAufloesenUndSpeichern(
  * Altsystem.
  */
 export async function infoErstellen(formData: FormData) {
-  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Infos" })
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Infos" })
 
   const {
     titel,
@@ -254,7 +254,7 @@ export async function infoErstellen(formData: FormData) {
  * normal fertiggestellt wird.
  */
 export async function infoAlsEntwurfSpeichern(formData: FormData) {
-  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Infos" })
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Infos" })
 
   const {
     titel,
@@ -311,7 +311,7 @@ export async function infoAlsEntwurfSpeichern(formData: FormData) {
  * dafür die zusätzliche Löschen-Berechtigung nötig wäre.
  */
 export async function infoEntwurfLoeschen(infoId: string) {
-  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Infos" })
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Infos" })
 
   const info = await prisma.info.findUnique({ where: { id: infoId }, select: { erstelltVonId: true, istEntwurf: true } })
   if (!info?.istEntwurf || info.erstelltVonId !== kontext.personId) {

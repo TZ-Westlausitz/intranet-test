@@ -17,7 +17,6 @@ import {
   AusleiheStatus,
   DokumentArt,
   Protokollrichtung,
-  Rolle,
   Tankfuellung,
 } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
@@ -42,7 +41,7 @@ function dataUrlZuBytes(dataUrl: string): Uint8Array {
 async function ruecknahmeprotokollUnterschreiben(formData: FormData) {
   "use server"
 
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  const kontext = await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
   const ausleiheId = String(formData.get("ausleiheId") ?? "")
 
   const ausleihe = await prisma.ausleihe.findUniqueOrThrow({
@@ -180,7 +179,7 @@ export default async function RuecknahmeprotokollUnterschreibenSeite({
 }: {
   params: Promise<{ id: string }>
 }) {
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
   const { id } = await params
 
   const ausleihe = await prisma.ausleihe.findUnique({

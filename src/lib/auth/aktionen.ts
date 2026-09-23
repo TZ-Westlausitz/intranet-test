@@ -27,7 +27,7 @@ export async function abmelden() {
  * zu setzen — die nächste Anfrage sieht das sofort, ganz ohne neues Token.
  */
 export async function eigenesPasswortFestlegen(formData: FormData) {
-  const kontext = await berechtigung(undefined, { erlaubeVorPasswortwechsel: true })
+  const kontext = await berechtigung({ erlaubeVorPasswortwechsel: true })
 
   const neuesPasswort = String(formData.get("neuesPasswort") ?? "")
   const wiederholung = String(formData.get("passwortWiederholung") ?? "")

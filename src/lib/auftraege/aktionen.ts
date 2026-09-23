@@ -118,12 +118,15 @@ async function auftragSpeichern(
 
 /**
  * Legt einen Auftrag für eine ANDERE Person an — für die eigene Liste
- * gibt es Aufgabe (To-do), kein Selbstauftrag hier. Keine Rollenprüfung:
- * jede aktive Person darf jeder anderen einen Auftrag geben, genau wie
- * beim Einladen zu einem Termin.
+ * gibt es Aufgabe (To-do), kein Selbstauftrag hier. Braucht die
+ * Berechtigung "Aufgaben" (Rückmeldung 2026-09-23: Fremdzuweisen soll nur
+ * bestimmten Mitarbeitenden möglich sein, Empfangen/Erledigen und die
+ * eigene To-Do-Liste bleiben dagegen für jeden offen — deshalb NUR hier
+ * und in den drei Funktionen darunter geprüft, nicht in
+ * auftragAnnehmen/auftragErledigtSetzen/aufgaben/aktionen.ts).
  */
 export async function auftragErstellen(formData: FormData) {
-  const kontext = await berechtigung()
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Aufgaben" })
   const felder = auftragFelderLesenOderFehler(formData, kontext.personId, false)
   await auftragSpeichern(kontext, felder, false)
 }
@@ -131,10 +134,13 @@ export async function auftragErstellen(formData: FormData) {
 /**
  * Vervollständigt einen eigenen Entwurf (siehe auftragAlsEntwurfSpeichern)
  * zu einem echten Auftrag — dieselbe Pflichtprüfung wie beim frischen
- * Anlegen (Titel + Zuweisen). Nur die erstellende Person darf das.
+ * Anlegen (Titel + Zuweisen). Nur die erstellende Person darf das, und
+ * auch sie braucht weiterhin die Berechtigung "Aufgaben" (siehe
+ * auftragErstellen) — falls sie zwischen Entwurf und Finalisieren entzogen
+ * wurde, bleibt der Entwurf löschbar, aber nicht mehr versendbar.
  */
 export async function auftragEntwurfFinalisieren(entwurfId: string, formData: FormData) {
-  const kontext = await berechtigung()
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Aufgaben" })
 
   const entwurf = await prisma.auftrag.findUnique({
     where: { id: entwurfId },
@@ -153,7 +159,9 @@ export async function auftragEntwurfFinalisieren(entwurfId: string, formData: Fo
  * ohne normales Zuweisen geschlossen wird (Abbrechen/Escape, siehe
  * AuftragErstellenDialog/EntwurfBestaetigenDialog) und sich die Person
  * dagegen entscheidet, die Eingaben zu verwerfen. Ohne die
- * Pflichtprüfungen von auftragErstellen, ohne Benachrichtigung. Für einen
+ * Pflichtprüfungen von auftragErstellen, ohne Benachrichtigung, aber mit
+ * derselben Berechtigung "Aufgaben" (siehe dort) — ein Entwurf ohne
+ * Aussicht, ihn je zuweisen zu dürfen, wäre nur verwirrend. Für einen
  * bereits bestehenden Entwurf (erneutes Entwurf-Speichern beim "Weiter
  * bearbeiten") siehe auftragEntwurfAktualisieren — zwei getrennte
  * Funktionen statt eines optionalen führenden Parameters, weil Server
@@ -162,14 +170,14 @@ export async function auftragEntwurfFinalisieren(entwurfId: string, formData: Fo
  * überall sonst in diesem Projekt).
  */
 export async function auftragAlsEntwurfSpeichern(formData: FormData) {
-  const kontext = await berechtigung()
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Aufgaben" })
   const felder = auftragFelderLesenOderFehler(formData, kontext.personId, true)
   await auftragSpeichern(kontext, felder, true)
 }
 
 /** Speichert einen BEREITS BESTEHENDEN Entwurf erneut — siehe auftragAlsEntwurfSpeichern. */
 export async function auftragEntwurfAktualisieren(entwurfId: string, formData: FormData) {
-  const kontext = await berechtigung()
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Aufgaben" })
 
   const entwurf = await prisma.auftrag.findUnique({
     where: { id: entwurfId },

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { AusleiheStatus, Rolle } from "@/generated/prisma/enums"
+import { AusleiheStatus } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 
@@ -16,7 +16,7 @@ import { ZurueckButton } from "@/components/zurueck-button"
 async function anfrageBestaetigen(formData: FormData) {
   "use server"
 
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  const kontext = await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
   const ausleiheId = String(formData.get("ausleiheId") ?? "")
 
   // updateMany statt update: die zusätzliche status-Bedingung ist keine
@@ -36,7 +36,7 @@ async function anfrageBestaetigen(formData: FormData) {
 async function anfrageAblehnen(formData: FormData) {
   "use server"
 
-  const kontext = await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  const kontext = await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
   const ausleiheId = String(formData.get("ausleiheId") ?? "")
   const ablehnungsgrund = String(formData.get("ablehnungsgrund") ?? "").trim() || null
 
@@ -54,7 +54,7 @@ async function anfrageAblehnen(formData: FormData) {
 }
 
 export default async function AnfragenSeite() {
-  await berechtigung([Rolle.WERKSTATTLEITER, Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: ["Werkstattleiter", "Adminbereich"] })
 
   const anfragen = await prisma.ausleihe.findMany({
     where: { status: AusleiheStatus.ANGEFRAGT },

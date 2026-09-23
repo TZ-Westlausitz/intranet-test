@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { BAUSTEINE } from "@/lib/bausteine"
+import { STARTSEITE_WEITERES_MODULE } from "@/lib/bausteine"
 import { Farbschema } from "@/generated/prisma/enums"
 
 /**
@@ -17,8 +17,7 @@ export async function nutzeroberflaecheAktualisieren(formData: FormData) {
   const kontext = await berechtigung()
 
   const gewaehlt = String(formData.get("startseiteModul") ?? "")
-  const weiteresEintrag = BAUSTEINE.find((baustein) => baustein.unterpunkte)
-  const gueltig = weiteresEintrag?.unterpunkte?.some((punkt) => punkt.name === gewaehlt) ?? false
+  const gueltig = STARTSEITE_WEITERES_MODULE.some((punkt) => punkt.name === gewaehlt)
 
   await prisma.person.update({
     where: { benutzername: kontext.personId },

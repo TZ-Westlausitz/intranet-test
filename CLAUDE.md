@@ -156,11 +156,19 @@ Deshalb prüft die zentrale Rechtefunktion (Regel 5) bei **jeder** Anfrage
 gegen die Datenbank, ob `person.aktiv` noch stimmt. Diese Prüfung nicht
 wegoptimieren — sie ist der Ersatz für die fehlende Session-Verwaltung.
 
-**Im Token steht nur die Person-ID.** Rollen und Standorte bewusst nicht:
-`berechtigung()` fragt die Datenbank ohnehin bei jeder Anfrage ab. Stünden
-die Rollen zusätzlich im Token, gäbe es zwei Wahrheitsquellen — und eine
-Rollenänderung würde erst beim nächsten Token-Wechsel wirken. Eine Abfrage
-pro Anfrage ist bei dieser Nutzerzahl kein Thema.
+**Im Token steht nur die Person-ID.** Berechtigungen und Standorte bewusst
+nicht: `berechtigung()` fragt die Datenbank ohnehin bei jeder Anfrage ab.
+Stünden die Berechtigungen zusätzlich im Token, gäbe es zwei
+Wahrheitsquellen — und eine Rechteänderung würde erst beim nächsten
+Token-Wechsel wirken. Eine Abfrage pro Anfrage ist bei dieser Nutzerzahl
+kein Thema.
+
+**Zugriffskontrolle läuft ausschließlich über `Berechtigung`/
+`PersonBerechtigung`** (Admin-Bereich unter `/admin/berechtigungen`,
+Zuweisung pro Person über den Bearbeiten-Dialog). Das frühere
+`Zugehoerigkeit.rolle`-Enum wurde 2026-09 vollständig entfernt — jede
+neue Zugriffsprüfung ruft `berechtigung({ benoetigteBerechtigung: "Name" })`
+auf, nie ein Rollen-Array.
 
 **Split-Config-Muster:** `auth.config.ts` ist edge-sicher (keine Provider,
 kein Prisma, kein bcrypt) und wird von der Middleware geladen; `auth.ts`

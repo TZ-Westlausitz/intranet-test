@@ -5,7 +5,6 @@ import bcrypt from "bcryptjs"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Rolle } from "@/generated/prisma/enums"
 
 /**
  * Gemeinsames Startpasswort für alle im Adminbereich neu angelegten bzw.
@@ -75,18 +74,15 @@ function nameNormalisieren(text: string): string {
 export async function personErstellen(
   formData: FormData,
 ): Promise<{ personId: string; benutzername: string; passwort: string }> {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const vorname = String(formData.get("vorname") ?? "").trim()
   const nachname = String(formData.get("nachname") ?? "").trim()
   const abteilungId = String(formData.get("abteilungId") ?? "")
-  const rolleEingabe = String(formData.get("rolle") ?? "")
 
   if (!vorname || !nachname || !abteilungId) {
     throw new Error("Bitte Vorname, Nachname und Abteilung ausfüllen.")
   }
-
-  const rolle = Object.values(Rolle).includes(rolleEingabe as Rolle) ? (rolleEingabe as Rolle) : Rolle.MITARBEITENDE
 
   const abteilung = await prisma.abteilung.findUnique({ where: { id: abteilungId } })
   if (!abteilung?.kuerzel) {
@@ -113,7 +109,7 @@ export async function personErstellen(
       benutzername,
       passwortHash: await bcrypt.hash(passwort, 10),
       passwortWechselErforderlich: true,
-      zugehoerigkeiten: { create: { abteilungId, rolle } },
+      zugehoerigkeiten: { create: { abteilungId } },
     },
   })
 
@@ -129,7 +125,7 @@ export async function personErstellen(
  * aus, der es kennt.
  */
 export async function personPasswortZuruecksetzen(personId: string): Promise<string> {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const passwort = standardStartpasswort()
   await prisma.person.update({
@@ -143,7 +139,7 @@ export async function personPasswortZuruecksetzen(personId: string): Promise<str
 
 /** Regel 4: Person wird nie gelöscht, nur deaktiviert. */
 export async function personAktivSetzen(personId: string, aktiv: boolean) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   await prisma.person.update({
     where: { benutzername: personId },
@@ -161,7 +157,7 @@ export async function personAktivSetzen(personId: string, aktiv: boolean) {
  * siehe Kommentar am Model Person) auf das neue Format zu bringen.
  */
 export async function personBenutzernameAktualisieren(personId: string, formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const benutzername = String(formData.get("benutzername") ?? "").trim()
   if (!benutzername) return
@@ -182,26 +178,23 @@ export async function personBenutzernameAktualisieren(personId: string, formData
 }
 
 /**
- * Ergänzt eine weitere Zugehörigkeit (Standort × Abteilung × Rolle) — eine
+ * Ergänzt eine weitere Zugehörigkeit (Standort × Abteilung) — eine
  * Person kann mehrere gleichzeitig haben, siehe Kommentar am Model
  * Zugehoerigkeit ("Mehrfachstandorte kommen vor"). Anders als beim Anlegen
  * (personErstellen) wird der Standort hier weiterhin abgefragt: wer über
  * "Bearbeiten" gezielt einen festen Standort ergänzen will, kann das.
  */
 export async function zugehoerigkeitHinzufuegen(personId: string, formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const standortId = String(formData.get("standortId") ?? "")
   const abteilungId = String(formData.get("abteilungId") ?? "")
-  const rolleEingabe = String(formData.get("rolle") ?? "")
   if (!standortId || !abteilungId) return
 
-  const rolle = Object.values(Rolle).includes(rolleEingabe as Rolle) ? (rolleEingabe as Rolle) : Rolle.MITARBEITENDE
-
   await prisma.zugehoerigkeit.upsert({
-    where: { personId_standortId_abteilungId_rolle: { personId, standortId, abteilungId, rolle } },
+    where: { personId_standortId_abteilungId: { personId, standortId, abteilungId } },
     update: { bisDatum: null },
-    create: { personId, standortId, abteilungId, rolle },
+    create: { personId, standortId, abteilungId },
   })
 
   revalidatePath("/admin/benutzer")
@@ -209,7 +202,7 @@ export async function zugehoerigkeitHinzufuegen(personId: string, formData: Form
 
 /** Beendet eine Zugehörigkeit zum heutigen Tag statt sie zu löschen — die Historie bleibt nachvollziehbar. */
 export async function zugehoerigkeitBeenden(zugehoerigkeitId: string) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   await prisma.zugehoerigkeit.update({ where: { id: zugehoerigkeitId }, data: { bisDatum: new Date() } })
 
@@ -218,7 +211,7 @@ export async function zugehoerigkeitBeenden(zugehoerigkeitId: string) {
 
 /** Ersetzt die komplette Gruppen-Zuordnung einer Person durch die im Formular angehakten Gruppen. */
 export async function personGruppenAktualisieren(personId: string, formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const gruppenIds = formData.getAll("gruppen").map(String)
 
@@ -238,7 +231,7 @@ export async function personGruppenAktualisieren(personId: string, formData: For
 
 /** Ersetzt die komplette Berechtigungs-Zuordnung einer Person durch die im Formular angehakten Berechtigungen. */
 export async function personBerechtigungenAktualisieren(personId: string, formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const berechtigungIds = formData.getAll("berechtigungen").map(String)
 

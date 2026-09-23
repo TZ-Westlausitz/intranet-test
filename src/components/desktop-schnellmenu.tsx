@@ -63,8 +63,18 @@ const TERMIN_ICON = (
  * "+ Chat" fehlt hier deshalb bewusst (anders als mobil): Ein Chat direkt
  * daneben zu starten wäre auf dem Desktop redundant zur ohnehin
  * sichtbaren Chat-Sprechblase.
+ *
+ * "+ Aufgabe" seit 2026-09-23 an die Berechtigung "Aufgaben" geknüpft
+ * (dasselbe Muster wie "+ Info"/"Infos") — Auftrag an eine andere Person
+ * zuweisen ist jetzt kein offener Vorgang mehr, siehe auftragErstellen.
  */
-export function DesktopSchnellmenu({ darfInfo }: { darfInfo: boolean }) {
+export function DesktopSchnellmenu({
+  darfInfo,
+  darfAufgabeZuweisen,
+}: {
+  darfInfo: boolean
+  darfAufgabeZuweisen: boolean
+}) {
   const pathname = usePathname()
   const [offen, setOffen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -85,7 +95,7 @@ export function DesktopSchnellmenu({ darfInfo }: { darfInfo: boolean }) {
   const aktionen: Schnellaktion[] = [
     ...(darfInfo ? [{ name: "Info", href: "/newsfeed?neu=1", icon: INFO_ICON }] : []),
     { name: "Formular", href: "/formulare", icon: FORMULAR_ICON },
-    { name: "Aufgabe", href: "/aufgaben?neu=1", icon: AUFGABE_ICON },
+    ...(darfAufgabeZuweisen ? [{ name: "Aufgabe", href: "/aufgaben?neu=1", icon: AUFGABE_ICON }] : []),
     { name: "Termin", href: "/kalender?neu=1", icon: TERMIN_ICON },
   ]
 

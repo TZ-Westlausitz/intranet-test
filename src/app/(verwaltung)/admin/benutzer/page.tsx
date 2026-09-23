@@ -1,7 +1,5 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Rolle } from "@/generated/prisma/enums"
-import { ROLLE_NAMEN } from "@/lib/rollen-optionen"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { PersonErstellenFormular } from "@/components/admin/person-erstellen-formular"
@@ -19,13 +17,13 @@ import {
 
 /**
  * Zentrale Benutzerverwaltung: Zugänge anlegen, Zugehörigkeiten (Standort ×
- * Abteilung × Rolle), Gruppen und Berechtigungen zuweisen, Passwörter
+ * Abteilung), Gruppen und Berechtigungen zuweisen, Passwörter
  * zurücksetzen. Anders als das Altsystem (app.ueberblick.io, siehe PDF-
  * Vorlage) gibt es hier KEIN Löschen — Regel 4: Person wird nie gelöscht,
  * nur deaktiviert.
  */
 export default async function BenutzerSeite() {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
   const jetzt = new Date()
 
   const [personen, standorte, abteilungen, gruppen, berechtigungenListe] = await Promise.all([
@@ -61,7 +59,6 @@ export default async function BenutzerSeite() {
             id: z.id,
             standort: z.standort,
             abteilung: z.abteilung,
-            rolle: z.rolle,
           }))
           const gruppenIds = person.gruppen.map((g) => g.gruppeId)
           const berechtigungIds = person.berechtigungen.map((b) => b.berechtigungId)
@@ -123,7 +120,7 @@ export default async function BenutzerSeite() {
                   zugehoerigkeitenAnzeige.map((z) => (
                     <span key={z.id} className="rounded-full bg-flaeche-100 px-2 py-0.5">
                       {z.standort ? `${z.standort.name} · ` : ""}
-                      {z.abteilung.name} · {ROLLE_NAMEN[z.rolle]}
+                      {z.abteilung.name}
                     </span>
                   ))
                 )}

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FarbschemaSchalter } from "@/components/farbschema-schalter"
-import { BAUSTEINE } from "@/lib/bausteine"
+import { STARTSEITE_WEITERES_MODULE } from "@/lib/bausteine"
 import { nutzeroberflaecheAktualisieren } from "@/lib/einstellungen/aktionen"
 
 /**
@@ -19,8 +19,7 @@ export default async function EinstellungenSeite() {
     where: { benutzername: kontext.personId },
     select: { startseiteWeiteresModul: true },
   })
-  const weiteresEintrag = BAUSTEINE.find((baustein) => baustein.unterpunkte)
-  const weiteresModule = weiteresEintrag?.unterpunkte ?? []
+  const weiteresModule = STARTSEITE_WEITERES_MODULE
   const ausgewaehlt = person.startseiteWeiteresModul ?? weiteresModule[0]?.name ?? ""
 
   return (

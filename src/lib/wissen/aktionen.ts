@@ -66,7 +66,7 @@ function rueckkehrPfadAus(ordnerId: string | null, unterordnerId: string | null)
  * — Regel 5: nie dem Formularwert vertrauen, wo es nicht nötig ist.
  */
 export async function artikelErstellen(ordnerId: string, unterordnerId: string | null, formData: FormData) {
-  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   const rueckkehrPfad = rueckkehrPfadAus(ordnerId, unterordnerId)
 
   const { titel, inhalt, empfaengerPersonen, empfaengerGruppen, empfaengerAbteilungen, neueAnhaenge } =
@@ -96,7 +96,7 @@ export async function artikelErstellen(ordnerId: string, unterordnerId: string |
 
 /** Bearbeitet einen bestehenden Artikel — dieselben Felder wie beim Anlegen, der Ordner-Bezug bleibt unverändert. */
 export async function artikelAktualisieren(artikelId: string, formData: FormData) {
-  const kontext = await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
 
   const artikel = await prisma.wissensArtikel.findUnique({
     where: { id: artikelId },
@@ -138,7 +138,7 @@ export async function artikelAktualisieren(artikelId: string, formData: FormData
  * Artikels überraschend wäre — nur revalidatePath, die Seite bleibt stehen.
  */
 export async function artikelLoeschen(artikelId: string) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
 
   const artikel = await prisma.wissensArtikel.findUnique({
     where: { id: artikelId },
@@ -154,7 +154,7 @@ export async function artikelLoeschen(artikelId: string) {
 
 /** Entfernt einen einzelnen Anhang — Anhänge lassen sich nur nachträglich löschen, nicht ergänzen (Muster: Info). */
 export async function artikelAnhangLoeschen(anhangId: string) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
 
   const anhang = await prisma.wissensAnhang.findUnique({
     where: { id: anhangId },
@@ -170,7 +170,7 @@ export async function artikelAnhangLoeschen(anhangId: string) {
 
 /** Kein echtes Löschen (siehe Kommentar am Model) — erneutes Anlegen mit demselben Namen reaktiviert einen deaktivierten Ordner (Muster: Info-Kategorien). */
 export async function ordnerErstellen(formData: FormData) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   const name = String(formData.get("name") ?? "").trim()
   if (!name) return
   await prisma.wissensOrdner.upsert({ where: { name }, update: { aktiv: true }, create: { name } })
@@ -178,7 +178,7 @@ export async function ordnerErstellen(formData: FormData) {
 }
 
 export async function ordnerUmbenennen(ordnerId: string, formData: FormData) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   const name = String(formData.get("name") ?? "").trim()
   if (!name) return
   await prisma.wissensOrdner.update({ where: { id: ordnerId }, data: { name } })
@@ -187,13 +187,13 @@ export async function ordnerUmbenennen(ordnerId: string, formData: FormData) {
 }
 
 export async function ordnerAktivSetzen(ordnerId: string, aktiv: boolean) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   await prisma.wissensOrdner.update({ where: { id: ordnerId }, data: { aktiv } })
   revalidatePath("/wissen")
 }
 
 export async function unterordnerErstellen(ordnerId: string, formData: FormData) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   const name = String(formData.get("name") ?? "").trim()
   if (!name) return
   await prisma.wissensUnterordner.upsert({
@@ -205,7 +205,7 @@ export async function unterordnerErstellen(ordnerId: string, formData: FormData)
 }
 
 export async function unterordnerUmbenennen(unterordnerId: string, formData: FormData) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   const name = String(formData.get("name") ?? "").trim()
   if (!name) return
   const unterordner = await prisma.wissensUnterordner.update({ where: { id: unterordnerId }, data: { name } })
@@ -214,7 +214,7 @@ export async function unterordnerUmbenennen(unterordnerId: string, formData: For
 }
 
 export async function unterordnerAktivSetzen(unterordnerId: string, aktiv: boolean) {
-  await berechtigung(undefined, { benoetigteBerechtigung: "Wissensmanager" })
+  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   const unterordner = await prisma.wissensUnterordner.update({ where: { id: unterordnerId }, data: { aktiv } })
   revalidatePath(`/wissen/${unterordner.ordnerId}`)
 }

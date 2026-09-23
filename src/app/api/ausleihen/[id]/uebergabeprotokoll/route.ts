@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { dateiLesen } from "@/lib/ablage"
-import { Protokollrichtung, Rolle } from "@/generated/prisma/enums"
+import { Protokollrichtung } from "@/generated/prisma/enums"
 
 /**
  * Liefert das aktuell aussagekräftigste unterschriebene Übergabeprotokoll
@@ -27,8 +27,8 @@ export async function GET(
   const darfSehen =
     ausleihe !== null &&
     (ausleihe.entleiherId === kontext.personId ||
-      kontext.rollen.includes(Rolle.WERKSTATTLEITER) ||
-      kontext.rollen.includes(Rolle.ADMINISTRATION))
+      kontext.berechtigungen.includes("Werkstattleiter") ||
+      kontext.berechtigungen.includes("Adminbereich"))
 
   if (!ausleihe || !darfSehen) {
     return new Response("Nicht gefunden", { status: 404 })

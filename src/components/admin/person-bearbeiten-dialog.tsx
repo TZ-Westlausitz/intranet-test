@@ -2,23 +2,18 @@
 
 import { useRef, useState, useTransition } from "react"
 
-import { ROLLEN_OPTIONEN } from "@/lib/rollen-optionen"
-import { ROLLE_NAMEN } from "@/lib/rollen-optionen"
-import { Rolle } from "@/generated/prisma/enums"
-
 type Option = { id: string; name: string }
 
 export type ZugehoerigkeitAnzeige = {
   id: string
   standort: Option | null
   abteilung: Option
-  rolle: Rolle
 }
 
 /**
  * Bearbeiten-Pop-Up für einen Benutzer — bündelt die vier Dinge, die im
  * Adminbereich pro Person einstellbar sind: Zugehörigkeiten (Standort ×
- * Abteilung × Rolle, siehe Model Zugehoerigkeit — mehrere gleichzeitig
+ * Abteilung, siehe Model Zugehoerigkeit — mehrere gleichzeitig
  * möglich), Gruppen, Berechtigungen und das Passwort. Jeder Abschnitt ist
  * ein eigenes `<form>`, unabhängig absendbar — wie bei TerminInfoDialog,
  * das ebenfalls mehrere Formulare in einem Pop-Up kombiniert.
@@ -128,7 +123,7 @@ export function PersonBearbeitenDialog({
                   >
                     <span className="text-primaer">
                       {z.standort ? `${z.standort.name} · ` : ""}
-                      {z.abteilung.name} · {ROLLE_NAMEN[z.rolle]}
+                      {z.abteilung.name}
                     </span>
                     <form action={zugehoerigkeitBeendenAktion.bind(null, z.id)}>
                       <button
@@ -166,13 +161,6 @@ export function PersonBearbeitenDialog({
                 {abteilungen.map((abteilung) => (
                   <option key={abteilung.id} value={abteilung.id}>
                     {abteilung.name}
-                  </option>
-                ))}
-              </select>
-              <select name="rolle" className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm">
-                {ROLLEN_OPTIONEN.map((option) => (
-                  <option key={option.wert} value={option.wert}>
-                    {option.name}
                   </option>
                 ))}
               </select>

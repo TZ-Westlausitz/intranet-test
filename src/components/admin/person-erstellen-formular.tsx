@@ -2,9 +2,6 @@
 
 import { useRef, useState, useTransition } from "react"
 
-import { ROLLEN_OPTIONEN } from "@/lib/rollen-optionen"
-import { Rolle } from "@/generated/prisma/enums"
-
 type Option = { id: string; name: string }
 
 /**
@@ -102,43 +99,25 @@ export function PersonErstellenFormular({
           (vorname.nachname@kuerzel) — keine Personalnummer und keine E-Mail nötig. Ein fester Standort ist
           hier bewusst kein Pflichtfeld: manche Personen bekommen ihren Einsatzort nur über mehrere Gruppen
           verschiedener Standorte. Wer einen festen Standort braucht, bekommt ihn später über &quot;Bearbeiten&quot;.
+          Berechtigungen (Fuhrpark, Adminbereich, …) werden ebenfalls erst danach dort vergeben.
         </p>
 
-        <div className="flex flex-wrap gap-3">
-          <div className="flex-1">
-            <label htmlFor="pe-abteilung" className="block text-xs font-medium text-primaer">
-              Abteilung
-            </label>
-            <select
-              id="pe-abteilung"
-              name="abteilungId"
-              required
-              className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
-            >
-              {abteilungen.map((abteilung) => (
-                <option key={abteilung.id} value={abteilung.id}>
-                  {abteilung.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1">
-            <label htmlFor="pe-rolle" className="block text-xs font-medium text-primaer">
-              Rolle
-            </label>
-            <select
-              id="pe-rolle"
-              name="rolle"
-              defaultValue={Rolle.MITARBEITENDE}
-              className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
-            >
-              {ROLLEN_OPTIONEN.map((option) => (
-                <option key={option.wert} value={option.wert}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label htmlFor="pe-abteilung" className="block text-xs font-medium text-primaer">
+            Abteilung
+          </label>
+          <select
+            id="pe-abteilung"
+            name="abteilungId"
+            required
+            className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
+          >
+            {abteilungen.map((abteilung) => (
+              <option key={abteilung.id} value={abteilung.id}>
+                {abteilung.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <button

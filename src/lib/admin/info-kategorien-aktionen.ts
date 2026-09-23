@@ -4,11 +4,10 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Rolle } from "@/generated/prisma/enums"
 
 /** Siehe Kommentar am Model InfoKategorie: feste, im Adminbereich gepflegte Liste statt Freitext. */
 export async function infoKategorieErstellen(formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const name = String(formData.get("name") ?? "").trim()
   if (!name) return
@@ -19,7 +18,7 @@ export async function infoKategorieErstellen(formData: FormData) {
 }
 
 export async function infoKategorieUmbenennen(kategorieId: string, formData: FormData) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   const name = String(formData.get("name") ?? "").trim()
   if (!name) return
@@ -31,7 +30,7 @@ export async function infoKategorieUmbenennen(kategorieId: string, formData: For
 
 /** Kein Löschen: bestehende Infos (Info.kategorieId) müssen ihre Kategorie behalten. */
 export async function infoKategorieAktivSetzen(kategorieId: string, aktiv: boolean) {
-  await berechtigung([Rolle.ADMINISTRATION])
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
   await prisma.infoKategorie.update({ where: { id: kategorieId }, data: { aktiv } })
 

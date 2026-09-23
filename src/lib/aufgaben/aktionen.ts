@@ -24,7 +24,7 @@ export async function aufgabeErstellen(formData: FormData) {
 
   const titel = String(formData.get("titel") ?? "").trim()
   if (!titel) {
-    redirect("/aufgaben/todos?fehler=pflichtfeld")
+    redirect("/aufgaben?fehler=todoPflichtfeld")
   }
 
   const beschreibung = richTextSanitisieren(String(formData.get("beschreibung") ?? "")) || null
@@ -32,7 +32,7 @@ export async function aufgabeErstellen(formData: FormData) {
   const faelligEingabe = String(formData.get("faelligAm") ?? "")
   const faelligAm = faelligEingabe ? new Date(`${faelligEingabe}T00:00:00`) : null
   if (faelligAm && Number.isNaN(faelligAm.getTime())) {
-    redirect("/aufgaben/todos?fehler=pflichtfeld")
+    redirect("/aufgaben?fehler=todoPflichtfeld")
   }
 
   // "Geplant für" — Datum-only wie faelligAm, kein datetime-local nötig.
@@ -42,7 +42,7 @@ export async function aufgabeErstellen(formData: FormData) {
   const geplantEingabe = String(formData.get("geplantAm") ?? "")
   const geplantAm = geplantEingabe ? new Date(`${geplantEingabe}T00:00:00`) : null
   if (geplantAm && Number.isNaN(geplantAm.getTime())) {
-    redirect("/aufgaben/todos?fehler=pflichtfeld")
+    redirect("/aufgaben?fehler=todoPflichtfeld")
   }
 
   const prioritaetEingabe = String(formData.get("prioritaet") ?? "")
@@ -53,7 +53,7 @@ export async function aufgabeErstellen(formData: FormData) {
   const neueAnhaenge = anhaengeAusFormData(formData)
   const anhaengeFehler = aufgabeAnhaengePruefen(neueAnhaenge)
   if (anhaengeFehler) {
-    redirect(`/aufgaben/todos?fehler=${anhaengeFehler}`)
+    redirect(`/aufgaben?fehler=${anhaengeFehler}`)
   }
 
   const aufgabe = await prisma.aufgabe.create({
@@ -71,7 +71,7 @@ export async function aufgabeErstellen(formData: FormData) {
   // setzen weder unkontrollierte Felder noch den Editor-Zustand zurück)
   // — ein echter Sprung zurück auf dieselbe Seite baut das Formular neu
   // auf und leert es damit zuverlässig für die nächste Aufgabe.
-  redirect("/aufgaben/todos")
+  redirect("/aufgaben")
 }
 
 /**
@@ -92,7 +92,7 @@ export async function aufgabeAktualisieren(aufgabeId: string, formData: FormData
 
   const titel = String(formData.get("titel") ?? "").trim()
   if (!titel) {
-    redirect("/aufgaben/todos?fehler=pflichtfeld")
+    redirect("/aufgaben?fehler=todoPflichtfeld")
   }
 
   const beschreibung = richTextSanitisieren(String(formData.get("beschreibung") ?? "")) || null
@@ -100,7 +100,7 @@ export async function aufgabeAktualisieren(aufgabeId: string, formData: FormData
   const faelligEingabe = String(formData.get("faelligAm") ?? "")
   const faelligAm = faelligEingabe ? new Date(`${faelligEingabe}T00:00:00`) : null
   if (faelligAm && Number.isNaN(faelligAm.getTime())) {
-    redirect("/aufgaben/todos?fehler=pflichtfeld")
+    redirect("/aufgaben?fehler=todoPflichtfeld")
   }
 
   // "Geplant für" nur anfassen, solange die Aufgabe noch nicht aktiv ist —
@@ -115,7 +115,7 @@ export async function aufgabeAktualisieren(aufgabeId: string, formData: FormData
         const eingabe = String(formData.get("geplantAm") ?? "")
         const geplantAmNeu = eingabe ? new Date(`${eingabe}T00:00:00`) : null
         if (geplantAmNeu && Number.isNaN(geplantAmNeu.getTime())) {
-          redirect("/aufgaben/todos?fehler=pflichtfeld")
+          redirect("/aufgaben?fehler=todoPflichtfeld")
         }
         return { geplantAm: geplantAmNeu }
       })()
@@ -129,7 +129,7 @@ export async function aufgabeAktualisieren(aufgabeId: string, formData: FormData
   const neueAnhaenge = anhaengeAusFormData(formData)
   const anhaengeFehler = aufgabeAnhaengePruefen(neueAnhaenge)
   if (anhaengeFehler) {
-    redirect(`/aufgaben/todos?fehler=${anhaengeFehler}`)
+    redirect(`/aufgaben?fehler=${anhaengeFehler}`)
   }
 
   await prisma.aufgabe.update({
@@ -141,7 +141,7 @@ export async function aufgabeAktualisieren(aufgabeId: string, formData: FormData
     await aufgabeAnhaengeSpeichern(aufgabeId, neueAnhaenge)
   }
 
-  revalidatePath("/aufgaben/todos")
+  revalidatePath("/aufgaben")
   revalidatePath("/")
   revalidatePath("/geplante-aktionen")
 }
@@ -167,7 +167,7 @@ export async function aufgabeErledigtSetzen(aufgabeId: string, erledigt: boolean
     data: { erledigtAm: erledigt ? new Date() : null },
   })
 
-  revalidatePath("/aufgaben/todos")
+  revalidatePath("/aufgaben")
   revalidatePath("/")
 }
 
@@ -184,7 +184,7 @@ export async function aufgabeLoeschen(aufgabeId: string) {
 
   await prisma.aufgabe.delete({ where: { id: aufgabeId } })
 
-  revalidatePath("/aufgaben/todos")
+  revalidatePath("/aufgaben")
   revalidatePath("/")
   revalidatePath("/geplante-aktionen")
 }
@@ -203,6 +203,6 @@ export async function aufgabeAnhangLoeschen(anhangId: string) {
 
   await aufgabeAnhangLoeschenIntern(anhangId)
 
-  revalidatePath("/aufgaben/todos")
+  revalidatePath("/aufgaben")
   revalidatePath("/geplante-aktionen")
 }

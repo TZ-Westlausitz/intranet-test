@@ -41,15 +41,6 @@ enum Farbschema {
   DUNKEL
 }
 
-enum Rolle {
-  MITARBEITENDE
-  FUEHRUNGSKRAFT
-  WERKSTATTLEITER
-  REDAKTION
-  QM
-  ADMINISTRATION
-}
-
 enum DokumentArt {
   NUTZUNGSVEREINBARUNG
   UEBERGABEPROTOKOLL
@@ -314,20 +305,24 @@ model Abteilung {
   formulareEmpfaenger FormularEmpfaengerAbteilung[]
 }
 
-/// Person × Standort × Abteilung × Rolle. Mehrfachstandorte kommen vor —
-/// deshalb eine eigene Tabelle und KEIN Feld "standortId" an der Person.
+/// Person × Standort × Abteilung. Mehrfachstandorte kommen vor — deshalb
+/// eine eigene Tabelle und KEIN Feld "standortId" an der Person.
 ///
 /// `standortId` ist optional: manche Personen lassen sich keinem festen
 /// Standort zuordnen (sie bekommen ihren Einsatzort stattdessen über
 /// mehrere Gruppen verschiedener Standorte, siehe Kommentar am Model
-/// Gruppe) — beim Anlegen wird deshalb nur noch Abteilung + Rolle
-/// abgefragt, kein Standort mehr (siehe personErstellen).
+/// Gruppe) — beim Anlegen wird deshalb nur noch die Abteilung abgefragt,
+/// kein Standort mehr (siehe personErstellen).
+///
+/// Trug bis 2026-09 zusätzlich ein `rolle`-Feld (Zugriffskontrolle) —
+/// das lief inzwischen komplett über Berechtigung/PersonBerechtigung
+/// und wurde entfernt; dieses Model bildet seither ausschließlich die
+/// organisatorische Standort/Abteilung-Zuordnung ab.
 model Zugehoerigkeit {
   id          String  @id @default(cuid())
   personId    String
   standortId  String?
   abteilungId String
-  rolle       Rolle   @default(MITARBEITENDE)
 
   vonDatum DateTime  @default(now())
   bisDatum DateTime?
@@ -336,7 +331,7 @@ model Zugehoerigkeit {
   standort  Standort? @relation(fields: [standortId], references: [id])
   abteilung Abteilung @relation(fields: [abteilungId], references: [id])
 
-  @@unique([personId, standortId, abteilungId, rolle])
+  @@unique([personId, standortId, abteilungId])
   @@index([personId])
   @@index([standortId])
   @@index([abteilungId])
@@ -375,12 +370,13 @@ model PersonGruppe {
 }
 
 /// Feature-bezogene Freischaltung pro Person, z. B. "Wissensartikel
-/// anlegen" oder "Adminbereich" — unabhängig von Rolle (Zugehoerigkeit) und
-/// Gruppe. Ebenfalls aus dem Altsystem übernommen. Die meisten Einträge
-/// betreffen Bausteine, die es hier noch nicht gibt (Infos, Wissensmanager,
-/// Meldestelle) und haben deshalb noch keine erzwingende Wirkung — der
-/// Adminbereich selbst prüft weiterhin über Rolle.ADMINISTRATION
-/// (berechtigung()), nicht über einen Eintrag hier.
+/// anlegen" oder "Adminbereich" — unabhängig von Standort/Abteilung
+/// (Zugehoerigkeit) und Gruppe. Ebenfalls aus dem Altsystem übernommen.
+/// Seit 2026-09 die EINZIGE Rechtequelle im Projekt (siehe berechtigung())
+/// — das frühere `Zugehoerigkeit.rolle`-Enum wurde vollständig abgelöst,
+/// u. a. durch die Einträge "Werkstattleiter" (Fuhrpark-Zugriff),
+/// "Adminbereich" (Zugriff auf /admin) und "Admin" (zusätzlich: schaltet
+/// den unternehmensweiten Admin-Modus frei).
 model Berechtigung {
   id    String  @id @default(cuid())
   name  String  @unique
