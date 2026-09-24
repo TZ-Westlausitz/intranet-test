@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { AlertTriangle, Check, Paperclip } from "lucide-react"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Kopfleiste } from "@/components/kopfleiste"
@@ -63,7 +64,7 @@ function AufgabeAnhaengeAnzeige({ aufgabeId, anhaenge }: { aufgabeId: string; an
           rel="noopener noreferrer"
           className="flex max-w-[10rem] items-center gap-1 truncate rounded-full bg-flaeche-100 px-2 py-0.5 text-xs text-primaer hover:underline"
         >
-          📎 {anhang.dateiname}
+          <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden /> {anhang.dateiname}
         </a>
       ))}
     </div>
@@ -112,9 +113,9 @@ function AnhaengeAnzeige({
             href={`/api/auftraege/${auftragId}/anhaenge/${anhang.id}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="max-w-[10rem] truncate hover:underline"
+            className="flex max-w-[10rem] items-center gap-1 truncate hover:underline"
           >
-            📎 {anhang.dateiname}
+            <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden /> {anhang.dateiname}
           </a>
           {loeschbar && (
             <form action={auftragAnhangLoeschen.bind(null, anhang.id)}>
@@ -167,7 +168,7 @@ function AuftragInhalt({ auftrag, heute, name }: { auftrag: AuftragMitBeziehung;
             (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
           }
         >
-          {faellig.ueberfaellig && <span aria-hidden>⚠</span>}
+          {faellig.ueberfaellig && <AlertTriangle className="h-3.5 w-3.5" aria-hidden />}
           {faellig.text}
           {faellig.ueberfaellig && <span className="sr-only"> (überfällig)</span>}
         </span>
@@ -376,9 +377,9 @@ export default async function AufgabenSeite({
                   <button
                     type="submit"
                     aria-label="Als offen markieren"
-                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-marke-gruen text-xs font-bold text-neutral-900"
+                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-marke-gruen text-neutral-900"
                   >
-                    ✓
+                    <Check className="h-3.5 w-3.5" />
                   </button>
                 </form>
                 <div className="min-w-0 flex-1">
@@ -458,7 +459,7 @@ export default async function AufgabenSeite({
                         (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
                       }
                     >
-                      {faellig.ueberfaellig && <span aria-hidden>⚠</span>}
+                      {faellig.ueberfaellig && <AlertTriangle className="h-3.5 w-3.5" aria-hidden />}
                       {faellig.text}
                       {faellig.ueberfaellig && <span className="sr-only"> (überfällig)</span>}
                     </span>
@@ -501,9 +502,9 @@ export default async function AufgabenSeite({
                   <button
                     type="submit"
                     aria-label="Als offen markieren"
-                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-marke-gruen text-xs font-bold text-neutral-900"
+                    className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-marke-gruen text-neutral-900"
                   >
-                    ✓
+                    <Check className="h-3.5 w-3.5" />
                   </button>
                 </form>
 
@@ -573,7 +574,7 @@ export default async function AufgabenSeite({
                         (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
                       }
                     >
-                      {faellig.ueberfaellig && <span aria-hidden>⚠</span>}
+                      {faellig.ueberfaellig && <AlertTriangle className="h-3.5 w-3.5" aria-hidden />}
                       {faellig.text}
                       {faellig.ueberfaellig && <span className="sr-only"> (überfällig)</span>}
                     </span>
@@ -777,7 +778,7 @@ export default async function AufgabenSeite({
                             (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
                           }
                         >
-                          {faellig.ueberfaellig && <span aria-hidden>⚠</span>}
+                          {faellig.ueberfaellig && <AlertTriangle className="h-3.5 w-3.5" aria-hidden />}
                           {faellig.text}
                           {faellig.ueberfaellig && <span className="sr-only"> (überfällig)</span>}
                         </span>

@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache"
+import { AlertTriangle } from "lucide-react"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
@@ -121,12 +122,15 @@ export default async function AbrechnungSeite() {
         </dl>
 
         {ueberschritten && (
-          <p className="mt-3 rounded-lg border border-marke-orange/40 bg-marke-orange/10 px-3 py-2 text-sm text-ueberschrift">
-            ⚠ {a.entleiher.vorname} {a.entleiher.nachname} kommt in{" "}
-            {a.geplantVon.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", month: "long", year: "numeric" })} auf{" "}
-            {tageImMonat} Kalendertage — über der Fünf-Tage-Grenze. Statt der
-            0,001-%-Regel greift dann vermutlich die 1-%-Regelung für den
-            ganzen Monat. Bitte mit dem Steuerberater klären.
+          <p className="mt-3 flex items-start gap-1.5 rounded-lg border border-marke-orange/40 bg-marke-orange/10 px-3 py-2 text-sm text-ueberschrift">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+            <span>
+              {a.entleiher.vorname} {a.entleiher.nachname} kommt in{" "}
+              {a.geplantVon.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", month: "long", year: "numeric" })} auf{" "}
+              {tageImMonat} Kalendertage — über der Fünf-Tage-Grenze. Statt der
+              0,001-%-Regel greift dann vermutlich die 1-%-Regelung für den
+              ganzen Monat. Bitte mit dem Steuerberater klären.
+            </span>
           </p>
         )}
       </li>

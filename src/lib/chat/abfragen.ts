@@ -12,7 +12,7 @@ const NACHRICHTEN_VORSCHAU_INCLUDE = {
 /** Vorschautext für die Konversationsliste — Anhänge ohne Bildunterschrift bekommen einen Platzhalter statt leer zu bleiben. */
 function vorschauText(nachricht: { text: string | null; _count: { anhaenge: number } }): string {
   if (nachricht.text) return nachricht.text
-  return nachricht._count.anhaenge === 1 ? "📎 Anhang" : `📎 ${nachricht._count.anhaenge} Anhänge`
+  return nachricht._count.anhaenge === 1 ? "Anhang" : `${nachricht._count.anhaenge} Anhänge`
 }
 
 /**
@@ -31,7 +31,10 @@ export async function meineKonversationen(kontext: ChatKontext) {
         gruppe: { select: { id: true, name: true } },
         teilnehmer: { select: { person: { select: { benutzername: true, vorname: true, nachname: true } } } },
         nachrichten: NACHRICHTEN_VORSCHAU_INCLUDE,
-        gelesen: { where: { personId: kontext.personId }, select: { zuletztGelesenAm: true } },
+        gelesen: {
+          where: { personId: kontext.personId },
+          select: { zuletztGelesenAm: true, stumm: true, archiviertAm: true },
+        },
       },
     }),
     prisma.gruppe.findMany({
@@ -45,6 +48,8 @@ export async function meineKonversationen(kontext: ChatKontext) {
   const bestehende = konversationen.map((k) => {
     const letzteNachricht = k.nachrichten[0] ?? null
     const zuletztGelesenAm = k.gelesen[0]?.zuletztGelesenAm ?? null
+    const stumm = k.gelesen[0]?.stumm ?? false
+    const archiviertAm = k.gelesen[0]?.archiviertAm ?? null
     const anderer = k.teilnehmer.map((t) => t.person).find((p) => p.benutzername !== kontext.personId)
     return {
       konversationId: k.id as string | null,
@@ -54,7 +59,15 @@ export async function meineKonversationen(kontext: ChatKontext) {
       letzteNachricht: letzteNachricht
         ? { text: vorschauText(letzteNachricht), von: letzteNachricht.absender.vorname, erstelltAm: letzteNachricht.erstelltAm }
         : null,
-      ungelesen: letzteNachricht !== null && (!zuletztGelesenAm || letzteNachricht.erstelltAm > zuletztGelesenAm),
+      // Stummgeschaltet zählt nie als ungelesen (Kachel/Badge sollen sie
+      // nicht mehr melden) — der eigentliche Lesestand bleibt unberührt.
+      ungelesen: !stumm && letzteNachricht !== null && (!zuletztGelesenAm || letzteNachricht.erstelltAm > zuletztGelesenAm),
+      stumm,
+      // Archiviert bleibt sie nur, solange seitdem keine neue Nachricht
+      // eingetroffen ist — neu berechnet statt gespeichert (Muster
+      // istProjektSchreibgeschuetzt), taucht bei neuer Aktivität von
+      // selbst wieder auf.
+      istArchiviert: archiviertAm !== null && (!letzteNachricht || letzteNachricht.erstelltAm <= archiviertAm),
       sortDatum: letzteNachricht?.erstelltAm ?? k.erstelltAm,
     }
   })
@@ -68,6 +81,8 @@ export async function meineKonversationen(kontext: ChatKontext) {
       istGruppe: true,
       letzteNachricht: null,
       ungelesen: false,
+      stumm: false,
+      istArchiviert: false,
       sortDatum: new Date(0),
     }))
 
@@ -78,8 +93,22 @@ export async function meineKonversationen(kontext: ChatKontext) {
 export async function konversationMitZugriff(konversationId: string, kontext: ChatKontext) {
   return prisma.chatKonversation.findFirst({
     where: { id: konversationId, ...chatSichtbarFuer(kontext.personId) },
-    include: { gruppe: { select: { name: true } }, teilnehmer: { select: { person: { select: { benutzername: true, vorname: true, nachname: true } } } } },
+    include: {
+      gruppe: { select: { name: true } },
+      teilnehmer: {
+        select: { istGruppenAdmin: true, person: { select: { benutzername: true, vorname: true, nachname: true } } },
+      },
+    },
   })
+}
+
+/** Eigene Stumm-/Archiv-Einstellung für eine Konversation — für den Menü-Dialog (Rückmeldung 2026-09-24). */
+export async function eigeneKonversationEinstellungen(konversationId: string, personId: string) {
+  const zeile = await prisma.chatKonversationGelesen.findUnique({
+    where: { konversationId_personId: { konversationId, personId } },
+    select: { stumm: true, archiviertAm: true },
+  })
+  return { stumm: zeile?.stumm ?? false, archiviertAm: zeile?.archiviertAm ?? null }
 }
 
 /** Nachrichten einer Konversation, optional nur die seit `seit` (für Polling) — chronologisch aufsteigend. */

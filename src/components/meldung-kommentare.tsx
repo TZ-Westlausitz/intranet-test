@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { Paperclip } from "lucide-react"
 
 import { MELDUNG_STATUS_LABEL } from "@/lib/kontaktstelle/status"
 import type { meldungVerlaufLaden, meldungAlsGelesenMarkieren, meldungKommentarErstellen } from "@/lib/kontaktstelle/aktionen"
@@ -20,9 +21,9 @@ function AnhangZeile({ meldungId, anhang }: { meldungId: string; anhang: { id: s
       href={`/api/kontaktstelle/${meldungId}/anhaenge/${anhang.id}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="block max-w-[14rem] truncate text-xs text-marke-gruen-dunkel hover:underline"
+      className="flex max-w-[14rem] items-center gap-1 truncate text-xs text-marke-gruen-dunkel hover:underline"
     >
-      📎 {anhang.dateiname}
+      <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden /> {anhang.dateiname}
     </a>
   )
 }

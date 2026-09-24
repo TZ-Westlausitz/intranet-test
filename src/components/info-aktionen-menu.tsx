@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { MoreVertical } from "lucide-react"
 
 import { InfoBearbeitenDialog, type InfoBearbeitenDialogHandle } from "@/components/info-bearbeiten-dialog"
 import type { InfoAnhangAnzeige, InfoStandardwerte, InfoFormularOptionen } from "@/components/info-form-felder"
@@ -70,9 +71,9 @@ export function InfoAktionenMenu({
         aria-label="Aktionen"
         aria-expanded={offen}
         aria-haspopup="menu"
-        className="flex h-8 w-8 items-center justify-center rounded-full text-lg leading-none text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
+        className="flex h-8 w-8 items-center justify-center rounded-full text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
       >
-        ⋮
+        <MoreVertical className="h-4 w-4" />
       </button>
 
       {offen && (

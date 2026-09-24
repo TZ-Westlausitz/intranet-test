@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Paperclip } from "lucide-react"
 
 export type AuftragKommentarAnhangAnzeige = { id: string; dateiname: string; groesseBytes: number; mimetyp: string }
 export type AuftragKommentarAnzeige = {
@@ -17,9 +18,9 @@ function AnhangZeile({ auftragId, anhang }: { auftragId: string; anhang: Auftrag
       href={`/api/auftraege/${auftragId}/anhaenge/${anhang.id}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="block max-w-[10rem] truncate text-xs text-marke-gruen-dunkel hover:underline"
+      className="flex max-w-[10rem] items-center gap-1 truncate text-xs text-marke-gruen-dunkel hover:underline"
     >
-      📎 {anhang.dateiname}
+      <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden /> {anhang.dateiname}
     </a>
   )
 }

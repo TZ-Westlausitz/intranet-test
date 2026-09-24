@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { CheckSquare, ClipboardList, Clock, FileEdit, Newspaper, Truck } from "lucide-react"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
@@ -281,22 +282,20 @@ export default async function Startseite() {
               in der neuen mobilen Navigation und bleiben deshalb hier. */}
           <ul className="grid grid-cols-2 gap-3">
             {[
-              { href: "/formulare", name: "Formulare", icon: "📋" },
+              { href: "/formulare", name: "Formulare", icon: ClipboardList },
               istWerkstatt
-                ? { href: "/fahrzeug-reservierungen", name: "Fahrzeuge", icon: "🚐" }
-                : { href: "/fahrzeug-mieten", name: "Fahrzeug mieten", icon: "🚐" },
-              { href: "/meine-anfragen", name: "Meine Anfragen", icon: "📝" },
-              { href: "/aufgaben", name: "To-Do-Liste", icon: "☑️" },
-              { href: "/geplante-aktionen", name: "Geplante Aktionen", icon: "🕒" },
+                ? { href: "/fahrzeug-reservierungen", name: "Fahrzeuge", icon: Truck }
+                : { href: "/fahrzeug-mieten", name: "Fahrzeug mieten", icon: Truck },
+              { href: "/meine-anfragen", name: "Meine Anfragen", icon: FileEdit },
+              { href: "/aufgaben", name: "To-Do-Liste", icon: CheckSquare },
+              { href: "/geplante-aktionen", name: "Geplante Aktionen", icon: Clock },
             ].map((kachel) => (
               <li key={kachel.href}>
                 <Link
                   href={kachel.href}
                   className="flex flex-col items-center gap-1.5 rounded-2xl border border-rand bg-flaeche p-4 text-center shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
                 >
-                  <span aria-hidden className="text-2xl leading-none">
-                    {kachel.icon}
-                  </span>
+                  <kachel.icon aria-hidden className="h-7 w-7 text-primaer" />
                   <span className="text-sm font-medium text-ueberschrift">{kachel.name}</span>
                 </Link>
               </li>
@@ -527,8 +526,14 @@ export default async function Startseite() {
                   <ul className="mt-2 flex flex-col gap-1.5">
                     {naechsteGeplant.map((eintrag) => (
                       <li key={eintrag.id} title={eintrag.titel} className="flex items-center gap-1.5 text-xs">
-                        <span aria-hidden className="shrink-0">
-                          {eintrag.typ === "info" ? "📰" : eintrag.typ === "aufgabe" ? "☑" : "📌"}
+                        <span aria-hidden className="shrink-0 text-tertiaer">
+                          {eintrag.typ === "info" ? (
+                            <Newspaper className="h-3.5 w-3.5" />
+                          ) : eintrag.typ === "aufgabe" ? (
+                            <CheckSquare className="h-3.5 w-3.5" />
+                          ) : (
+                            <ClipboardList className="h-3.5 w-3.5" />
+                          )}
                         </span>
                         <span className="truncate text-primaer">{eintrag.titel}</span>
                         <span className="ml-auto shrink-0 text-tertiaer">

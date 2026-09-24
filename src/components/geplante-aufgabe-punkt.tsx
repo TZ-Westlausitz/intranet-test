@@ -1,6 +1,7 @@
 "use client"
 
 import { forwardRef, useImperativeHandle, useRef } from "react"
+import { Clock } from "lucide-react"
 
 import { AufgabeBearbeitenDialog } from "@/components/aufgabe-bearbeiten-dialog"
 import { aufgabeZuStandardwerte, type AufgabeAnhangAnzeige } from "@/components/aufgabe-form-felder"
@@ -53,8 +54,8 @@ export const GeplanteAufgabePunkt = forwardRef<
       >
         <div className="px-5 py-4">
           <p className="text-sm font-semibold text-ueberschrift">{aufgabe.titel}</p>
-          <p className="mt-1 text-xs text-sekundaer">
-            🕒 Geplant für {aufgabe.geplantAm && formatiereDatumAusDate(aufgabe.geplantAm)}
+          <p className="mt-1 flex items-center gap-1 text-xs text-sekundaer">
+            <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden /> Geplant für {aufgabe.geplantAm && formatiereDatumAusDate(aufgabe.geplantAm)}
           </p>
         </div>
         <div className="flex items-center justify-between gap-2 border-t border-rand px-5 py-3">

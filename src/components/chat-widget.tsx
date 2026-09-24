@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { Users, X } from "lucide-react"
 
 export type ChatWidgetKonversation = {
   konversationId: string | null
@@ -55,7 +56,7 @@ export function ChatWidget({
               aria-label="Chats schließen"
               className="rounded-lg p-1 text-sekundaer transition hover:bg-marke-gruen/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
             >
-              ✕
+              <X className="h-4 w-4" />
             </button>
           </div>
 
@@ -77,8 +78,13 @@ export function ChatWidget({
                   }
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <p className={"truncate text-sm " + (k.ungelesen ? "font-semibold text-ueberschrift" : "text-primaer")}>
-                      {k.istGruppe && "👥 "}
+                    <p
+                      className={
+                        "flex items-center gap-1 truncate text-sm " +
+                        (k.ungelesen ? "font-semibold text-ueberschrift" : "text-primaer")
+                      }
+                    >
+                      {k.istGruppe && <Users className="h-3.5 w-3.5 shrink-0 text-sekundaer" aria-hidden />}
                       {k.titel}
                     </p>
                     {k.ungelesen && <span className="h-2 w-2 shrink-0 rounded-full bg-marke-orange" />}

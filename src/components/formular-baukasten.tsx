@@ -11,6 +11,7 @@ import {
 } from "@dnd-kit/core"
 import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { GripVertical } from "lucide-react"
 
 import { FormularElementTyp } from "@/generated/prisma/enums"
 import type { Person } from "@/components/termin-form-felder"
@@ -127,7 +128,7 @@ function ElementBlock({
             aria-label="Zum Sortieren ziehen"
             className="cursor-grab text-tertiaer hover:text-primaer active:cursor-grabbing"
           >
-            ⠿
+            <GripVertical className="h-4 w-4" />
           </button>
           <span className="text-xs font-semibold tracking-wide text-tertiaer uppercase">{TYP_LABEL[element.typ]}</span>
         </div>

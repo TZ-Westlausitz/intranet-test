@@ -1,6 +1,7 @@
 "use client"
 
 import { useId, useRef, useState } from "react"
+import { FileText, X } from "lucide-react"
 
 import { TERMIN_FARBEN, TERMIN_ERINNERUNGEN } from "@/lib/termin-optionen"
 import { PersonenAuswahl } from "@/components/personen-auswahl"
@@ -74,7 +75,7 @@ function BestehenderAnhangZeile({ terminId, anhang }: { terminId: string; anhang
         <img src={url} alt="" className="h-8 w-8 shrink-0 rounded object-cover" />
       ) : (
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-flaeche-100 text-tertiaer">
-          📄
+          <FileText className="h-4 w-4" />
         </span>
       )}
       <span className="truncate text-marke-gruen-dunkel hover:underline">{anhang.dateiname}</span>
@@ -106,7 +107,7 @@ function BestehenderAnhangZeile({ terminId, anhang }: { terminId: string; anhang
                 onClick={() => lightboxRef.current?.close()}
                 className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900/60 text-white transition hover:bg-neutral-900/80"
               >
-                ✕
+                <X className="h-4 w-4" />
               </button>
               {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
               <img src={url} alt={anhang.dateiname} className="max-h-[85vh] max-w-[92vw] rounded-xl object-contain" />

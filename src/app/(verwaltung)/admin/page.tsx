@@ -17,12 +17,12 @@ type UpdateEintrag = { id: string; name: string; zeitpunkt: Date; art: "neu" | "
  * Desktop-Header, nicht in der mobilen Kopfleiste (siehe Memory
  * mobile-kopfleiste-fehlende-parity).
  *
- * Fünf Kacheln: links Mitarbeiter-Übersicht und Gruppen/Abteilungen
+ * Fünf Kacheln: links Benutzer-Übersicht und Gruppen/Abteilungen
  * (grün), mittig Berechtigungen und Orte/Kategorien (orange), rechts eine
  * große, über beide Zeilen reichende Kachel mit dem Mitarbeiterupdates-Feed
  * (grün). Gruppen/Abteilungen, Berechtigungen und Orte/Kategorien sind
  * bewusst nur Überschrift + Symbol ohne Zahlen — reine Einstiegspunkte in
- * die jeweilige Verwaltungsseite, keine Kennzahlen-Kacheln wie Mitarbeiter.
+ * die jeweilige Verwaltungsseite, keine Kennzahlen-Kacheln wie Benutzer.
  * Die drei Symbole liegen als PNG unter public/admin/ (von Jonas geliefert).
  */
 export default async function AdminSeite() {
@@ -83,12 +83,12 @@ export default async function AdminSeite() {
           <h1 className="text-2xl font-semibold text-ueberschrift">Adminbereich</h1>
 
           <div className="grid grid-cols-[repeat(3,min(24rem,34vh,27vw))] grid-rows-[repeat(2,min(24rem,34vh,27vw))] gap-[min(2.5rem,4vh)]">
-            {/* Links oben — Mitarbeiter (Benutzer) */}
+            {/* Links oben — Benutzer */}
             <Link
               href="/admin/benutzer"
               className="col-start-1 row-start-1 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 text-center shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
             >
-              <h2 className="text-lg font-semibold text-ueberschrift">Mitarbeiter</h2>
+              <h2 className="text-lg font-semibold text-ueberschrift">Benutzer</h2>
               <div className="flex flex-1 flex-col items-center justify-center">
                 <span className="text-5xl font-bold leading-none text-ueberschrift">{aktiveMitarbeiterAnzahl}</span>
                 <span className="mt-1.5 text-sm font-medium text-sekundaer">aktiv</span>

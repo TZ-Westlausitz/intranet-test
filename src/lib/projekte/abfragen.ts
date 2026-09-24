@@ -30,7 +30,7 @@ export async function projektDetails(projektId: string) {
       erstelltVon: { select: { vorname: true, nachname: true } },
       mitglieder: {
         where: { ausgeschiedenAm: null },
-        include: { person: { select: { vorname: true, nachname: true } } },
+        include: { person: { select: { vorname: true, nachname: true, aktiv: true } } },
         orderBy: [{ rolle: "asc" }, { beigetretenAm: "asc" }],
       },
       zwischenziele: { orderBy: { frist: "asc" } },

@@ -1,3 +1,5 @@
+import { Paperclip } from "lucide-react"
+
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { InfoEmpfaengerAuswahl } from "@/components/info-empfaenger-auswahl"
 import type { Person } from "@/components/termin-form-felder"
@@ -122,9 +124,9 @@ export function ArtikelFormFelder({
                   href={`/api/wissen/${artikelId}/anhaenge/${anhang.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="truncate text-marke-gruen-dunkel hover:underline"
+                  className="flex items-center gap-1 truncate text-marke-gruen-dunkel hover:underline"
                 >
-                  📎 {anhang.dateiname}
+                  <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden /> {anhang.dateiname}
                 </a>
                 {anhangLoeschenAktion && (
                   <form action={anhangLoeschenAktion.bind(null, anhang.id)}>

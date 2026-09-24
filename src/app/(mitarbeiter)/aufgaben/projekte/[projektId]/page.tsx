@@ -131,10 +131,13 @@ export default async function ProjektDetailSeite({
     titel: m.titel,
     fristIso: datumIsoAusDate(m.frist),
   }))
-  const projektmitgliederKandidaten = projekt.mitglieder.map((m) => ({
-    id: m.personId,
-    name: `${m.person.vorname} ${m.person.nachname}`,
-  }))
+  // Deaktivierte Mitglieder bleiben Mitglied (siehe mitgliederAnzeige oben),
+  // stehen aber nicht mehr zur Auswahl für NEUE Aufgabenzuweisungen —
+  // Rückmeldung 2026-09-24: kann sich ohnehin nicht mehr einloggen, um die
+  // Aufgabe zu bearbeiten.
+  const projektmitgliederKandidaten = projekt.mitglieder
+    .filter((m) => m.person.aktiv)
+    .map((m) => ({ id: m.personId, name: `${m.person.vorname} ${m.person.nachname}` }))
   const dokumenteAnzeige = dokumenteRoh.map((d) => ({
     ...d,
     darfLoeschen: istLeitung,

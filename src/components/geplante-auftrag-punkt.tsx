@@ -1,6 +1,7 @@
 "use client"
 
 import { forwardRef, useImperativeHandle, useRef } from "react"
+import { Clock } from "lucide-react"
 
 import type { GeplanteAktionPunktHandle } from "@/components/geplante-aktion-punkt"
 import { formatiereDatumAusDate } from "@/lib/datum"
@@ -43,8 +44,8 @@ export const GeplanteAuftragPunkt = forwardRef<
       >
         <div className="px-5 py-4">
           <p className="text-sm font-semibold text-ueberschrift">{auftrag.titel}</p>
-          <p className="mt-1 text-xs text-sekundaer">
-            🕒 Geplant für {auftrag.geplantAm && formatiereDatumAusDate(auftrag.geplantAm)}
+          <p className="mt-1 flex items-center gap-1 text-xs text-sekundaer">
+            <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden /> Geplant für {auftrag.geplantAm && formatiereDatumAusDate(auftrag.geplantAm)}
           </p>
           {/* auftraegeGeplantFuerZeitraum schließt Entwürfe aus (istEntwurf: false) — zugewiesenAn ist hier immer gesetzt. */}
           <p className="mt-1 text-xs text-sekundaer">

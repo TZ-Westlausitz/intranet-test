@@ -1,5 +1,7 @@
 "use client"
 
+import { Trash2 } from "lucide-react"
+
 /**
  * NUR FÜR DIE TESTPHASE (siehe Kommentar bei der Server Action in
  * app/(werkstatt)/reservierungen/page.tsx) — vor der ersten offiziellen
@@ -28,7 +30,7 @@ export function TestphaseLoeschenButton({ action }: { action: (formData: FormDat
         title="Nur Testphase: endgültig löschen"
         className="rounded-md p-1.5 text-tertiaer hover:bg-red-50 hover:text-red-700"
       >
-        🗑️
+        <Trash2 className="h-4 w-4" />
       </button>
     </form>
   )

@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { Paperclip } from "lucide-react"
 
 /**
  * "+ Meldung"-Knopf + Anlegen-Pop-Up für die Kontaktstelle. Kein
@@ -91,7 +92,7 @@ export function MeldungErstellenDialog({
 
             <div className="flex flex-col gap-1">
               <label className="flex w-fit cursor-pointer items-center gap-2 rounded-lg border border-flaeche-300 px-3 py-2 text-sm font-medium text-primaer transition hover:bg-flaeche-100">
-                📎 Anhänge hinzufügen
+                <Paperclip className="h-4 w-4 shrink-0" aria-hidden /> Anhänge hinzufügen
                 <span className="text-xs font-normal text-tertiaer">optional</span>
                 <input
                   type="file"

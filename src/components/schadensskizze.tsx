@@ -7,6 +7,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react"
+import { X } from "lucide-react"
 
 /**
  * Klick-Skizze für Schadensstellen auf der Fahrzeug-Draufsicht. Ergänzt das
@@ -436,7 +437,7 @@ export function Schadensskizze({
                   aria-label={`Schadensstelle ${i + 1} löschen`}
                   className="rounded-md px-1.5 py-0.5 text-tertiaer hover:bg-red-50 hover:text-red-700"
                 >
-                  ✕
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <select

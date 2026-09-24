@@ -1,6 +1,7 @@
 "use client"
 
 import { forwardRef, useImperativeHandle, useRef } from "react"
+import { Clock } from "lucide-react"
 
 import { InfoBearbeitenDialog, type InfoBearbeitenDialogHandle } from "@/components/info-bearbeiten-dialog"
 import { infoZuStandardwerte, type InfoAnhangAnzeige, type InfoFormularOptionen } from "@/components/info-form-felder"
@@ -60,8 +61,9 @@ export const GeplanteAktionPunkt = forwardRef<
       >
         <div className="px-5 py-4">
           <p className="text-sm font-semibold text-ueberschrift">{info.titel}</p>
-          <p className="mt-1 text-xs text-sekundaer">
-            🕒 Geplant für {formatiereDatumAusDate(info.veroeffentlichtAm)}, {zeitAusDate(info.veroeffentlichtAm)} Uhr
+          <p className="mt-1 flex items-center gap-1 text-xs text-sekundaer">
+            <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden /> Geplant für {formatiereDatumAusDate(info.veroeffentlichtAm)},{" "}
+            {zeitAusDate(info.veroeffentlichtAm)} Uhr
           </p>
         </div>
         <div className="flex justify-end gap-2 border-t border-rand px-5 py-3">

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { MoreVertical } from "lucide-react"
 
 /**
  * Eine Ordner- (oder Unterordner-)Kachel — dieselbe Komponente für beide
@@ -87,7 +88,7 @@ export function WissensOrdnerKachel({
             aria-haspopup="menu"
             className="flex h-7 w-7 items-center justify-center rounded-full text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
           >
-            ⋮
+            <MoreVertical className="h-4 w-4" />
           </button>
 
           {menuOffen && (

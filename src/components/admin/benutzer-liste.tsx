@@ -63,9 +63,16 @@ export function BenutzerListe({
   const [abteilungFilter, setAbteilungFilter] = useState("")
   const [gruppeFilter, setGruppeFilter] = useState("")
 
+  // Deaktivierte Mitarbeitende stecken seit Rückmeldung 2026-09-24 in einer
+  // eigenen, eingeklappten Box unten statt grau markiert zwischen den
+  // aktiven zu stehen — Suche/Filter oben wirken deshalb nur noch auf die
+  // aktive Liste.
+  const aktive = useMemo(() => personen.filter((person) => person.aktiv), [personen])
+  const inaktive = useMemo(() => personen.filter((person) => !person.aktiv), [personen])
+
   const gefiltert = useMemo(() => {
     const text = suchtext.trim().toLowerCase()
-    return personen.filter((person) => {
+    return aktive.filter((person) => {
       if (text) {
         const name = `${person.vorname} ${person.nachname}`.toLowerCase()
         if (!name.includes(text) && !person.benutzername.toLowerCase().includes(text)) return false
@@ -74,9 +81,23 @@ export function BenutzerListe({
       if (gruppeFilter && !person.gruppenIds.includes(gruppeFilter)) return false
       return true
     })
-  }, [personen, suchtext, abteilungFilter, gruppeFilter])
+  }, [aktive, suchtext, abteilungFilter, gruppeFilter])
 
   const filterAktiv = suchtext.trim() !== "" || abteilungFilter !== "" || gruppeFilter !== ""
+
+  const zeilenProps = {
+    standorte,
+    abteilungen,
+    gruppen,
+    berechtigungenListe,
+    benutzernameAktualisierenAktion,
+    zugehoerigkeitHinzufuegenAktion,
+    zugehoerigkeitBeendenAktion,
+    personGruppenAktualisierenAktion,
+    personBerechtigungenAktualisierenAktion,
+    personPasswortZuruecksetzenAktion,
+    personAktivSetzenAktion,
+  }
 
   return (
     <>
@@ -116,7 +137,7 @@ export function BenutzerListe({
 
       {filterAktiv && (
         <p className="mt-2 text-xs text-tertiaer">
-          {gefiltert.length} von {personen.length} Benutzern
+          {gefiltert.length} von {aktive.length} Benutzern
         </p>
       )}
 
@@ -124,82 +145,125 @@ export function BenutzerListe({
         {gefiltert.length === 0 ? (
           <li className="px-4 py-6 text-center text-sm text-sekundaer">Keine Treffer.</li>
         ) : (
-          gefiltert.map((person) => (
-            <li key={person.benutzername} className="flex flex-col gap-2 px-4 py-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <span className={"font-medium " + (person.aktiv ? "text-ueberschrift" : "text-tertiaer")}>
-                    {person.vorname} {person.nachname}
-                  </span>
-                  <span className="ml-2 text-xs text-tertiaer">{person.benutzername}</span>
-                  {!person.aktiv && (
-                    <span className="ml-2 rounded-full bg-flaeche-100 px-2 py-0.5 text-xs text-sekundaer">
-                      deaktiviert
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex shrink-0 items-center gap-1">
-                  <PersonBearbeitenDialog
-                    personId={person.benutzername}
-                    name={`${person.vorname} ${person.nachname}`}
-                    benutzername={person.benutzername}
-                    zugehoerigkeiten={person.zugehoerigkeiten}
-                    standorte={standorte}
-                    abteilungen={abteilungen}
-                    gruppen={gruppen}
-                    ausgewaehlteGruppenIds={person.gruppenIds}
-                    berechtigungenListe={berechtigungenListe}
-                    ausgewaehlteBerechtigungIds={person.berechtigungIds}
-                    benutzernameAktualisierenAktion={benutzernameAktualisierenAktion}
-                    zugehoerigkeitHinzufuegenAktion={zugehoerigkeitHinzufuegenAktion}
-                    zugehoerigkeitBeendenAktion={zugehoerigkeitBeendenAktion}
-                    personGruppenAktualisierenAktion={personGruppenAktualisierenAktion}
-                    personBerechtigungenAktualisierenAktion={personBerechtigungenAktualisierenAktion}
-                    personPasswortZuruecksetzenAktion={personPasswortZuruecksetzenAktion}
-                  />
-                  <form action={personAktivSetzenAktion.bind(null, person.benutzername, !person.aktiv)}>
-                    <button
-                      type="submit"
-                      className={
-                        "h-9 shrink-0 rounded-lg px-2.5 text-xs font-medium transition " +
-                        (person.aktiv
-                          ? "text-sekundaer hover:bg-red-50 hover:text-red-600"
-                          : "bg-marke-gruen/15 text-marke-gruen-dunkel hover:bg-marke-gruen/25")
-                      }
-                    >
-                      {person.aktiv ? "Deaktivieren" : "Aktivieren"}
-                    </button>
-                  </form>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 text-xs text-sekundaer">
-                {person.zugehoerigkeiten.length === 0 ? (
-                  <span className="text-tertiaer">Keine Zugehörigkeit</span>
-                ) : (
-                  person.zugehoerigkeiten.map((z) => (
-                    <span key={z.id} className="rounded-full bg-flaeche-100 px-2 py-0.5">
-                      {z.standort ? `${z.standort.name} · ` : ""}
-                      {z.abteilung.name}
-                    </span>
-                  ))
-                )}
-                {person.gruppenIds.length > 0 && (
-                  <span className="rounded-full bg-flaeche-100 px-2 py-0.5">
-                    {person.gruppenIds.length} Gruppe{person.gruppenIds.length === 1 ? "" : "n"}
-                  </span>
-                )}
-                {person.berechtigungIds.length > 0 && (
-                  <span className="rounded-full bg-flaeche-100 px-2 py-0.5">
-                    {person.berechtigungIds.length} Berechtigung{person.berechtigungIds.length === 1 ? "" : "en"}
-                  </span>
-                )}
-              </div>
-            </li>
-          ))
+          gefiltert.map((person) => <BenutzerZeile key={person.benutzername} person={person} {...zeilenProps} />)
         )}
       </ul>
+
+      {inaktive.length > 0 && (
+        <details className="mt-6 rounded-xl border border-rand bg-flaeche">
+          <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-sekundaer">
+            Deaktivierte Mitarbeiter ({inaktive.length})
+          </summary>
+          <ul className="flex flex-col divide-y divide-flaeche-100 border-t border-rand">
+            {inaktive.map((person) => (
+              <BenutzerZeile key={person.benutzername} person={person} {...zeilenProps} />
+            ))}
+          </ul>
+        </details>
+      )}
     </>
+  )
+}
+
+/**
+ * Eine Zeile — ausgelagert, damit dieselbe Zeile unverändert in der
+ * aktiven Liste UND in der eingeklappten "Deaktivierte Mitarbeiter"-Box
+ * verwendet werden kann.
+ */
+function BenutzerZeile({
+  person,
+  standorte,
+  abteilungen,
+  gruppen,
+  berechtigungenListe,
+  benutzernameAktualisierenAktion,
+  zugehoerigkeitHinzufuegenAktion,
+  zugehoerigkeitBeendenAktion,
+  personGruppenAktualisierenAktion,
+  personBerechtigungenAktualisierenAktion,
+  personPasswortZuruecksetzenAktion,
+  personAktivSetzenAktion,
+}: {
+  person: PersonZeile
+  standorte: Option[]
+  abteilungen: Option[]
+  gruppen: Option[]
+  berechtigungenListe: Option[]
+  benutzernameAktualisierenAktion: (personId: string, formData: FormData) => void
+  zugehoerigkeitHinzufuegenAktion: (personId: string, formData: FormData) => void
+  zugehoerigkeitBeendenAktion: (zugehoerigkeitId: string) => void
+  personGruppenAktualisierenAktion: (personId: string, formData: FormData) => void
+  personBerechtigungenAktualisierenAktion: (personId: string, formData: FormData) => void
+  personPasswortZuruecksetzenAktion: (personId: string) => Promise<string>
+  personAktivSetzenAktion: (personId: string, aktiv: boolean) => void
+}) {
+  return (
+    <li className="flex flex-col gap-2 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <span className={"font-medium " + (person.aktiv ? "text-ueberschrift" : "text-tertiaer")}>
+            {person.vorname} {person.nachname}
+          </span>
+          <span className="ml-2 text-xs text-tertiaer">{person.benutzername}</span>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1">
+          <PersonBearbeitenDialog
+            personId={person.benutzername}
+            name={`${person.vorname} ${person.nachname}`}
+            benutzername={person.benutzername}
+            zugehoerigkeiten={person.zugehoerigkeiten}
+            standorte={standorte}
+            abteilungen={abteilungen}
+            gruppen={gruppen}
+            ausgewaehlteGruppenIds={person.gruppenIds}
+            berechtigungenListe={berechtigungenListe}
+            ausgewaehlteBerechtigungIds={person.berechtigungIds}
+            benutzernameAktualisierenAktion={benutzernameAktualisierenAktion}
+            zugehoerigkeitHinzufuegenAktion={zugehoerigkeitHinzufuegenAktion}
+            zugehoerigkeitBeendenAktion={zugehoerigkeitBeendenAktion}
+            personGruppenAktualisierenAktion={personGruppenAktualisierenAktion}
+            personBerechtigungenAktualisierenAktion={personBerechtigungenAktualisierenAktion}
+            personPasswortZuruecksetzenAktion={personPasswortZuruecksetzenAktion}
+          />
+          <form action={personAktivSetzenAktion.bind(null, person.benutzername, !person.aktiv)}>
+            <button
+              type="submit"
+              className={
+                "h-9 shrink-0 rounded-lg px-2.5 text-xs font-medium transition " +
+                (person.aktiv
+                  ? "text-sekundaer hover:bg-red-50 hover:text-red-600"
+                  : "bg-marke-gruen/15 text-marke-gruen-dunkel hover:bg-marke-gruen/25")
+              }
+            >
+              {person.aktiv ? "Deaktivieren" : "Aktivieren"}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 text-xs text-sekundaer">
+        {person.zugehoerigkeiten.length === 0 ? (
+          <span className="text-tertiaer">Keine Zugehörigkeit</span>
+        ) : (
+          person.zugehoerigkeiten.map((z) => (
+            <span key={z.id} className="rounded-full bg-flaeche-100 px-2 py-0.5">
+              {z.standort ? `${z.standort.name} · ` : ""}
+              {z.abteilung.name}
+            </span>
+          ))
+        )}
+        {person.gruppenIds.length > 0 && (
+          <span className="rounded-full bg-flaeche-100 px-2 py-0.5">
+            {person.gruppenIds.length} Gruppe{person.gruppenIds.length === 1 ? "" : "n"}
+          </span>
+        )}
+        {person.berechtigungIds.length > 0 && (
+          <span className="rounded-full bg-flaeche-100 px-2 py-0.5">
+            {person.berechtigungIds.length} Berechtigung{person.berechtigungIds.length === 1 ? "" : "en"}
+          </span>
+        )}
+      </div>
+    </li>
   )
 }

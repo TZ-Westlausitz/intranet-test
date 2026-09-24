@@ -1,6 +1,7 @@
 "use client"
 
 import { forwardRef, useImperativeHandle, useRef, useState } from "react"
+import { Check, FileText, X } from "lucide-react"
 
 import type { Person, TerminStandardwerte } from "@/components/termin-form-felder"
 import { TerminBearbeitenDialog } from "@/components/termin-bearbeiten-dialog"
@@ -33,7 +34,7 @@ function AnhangZeile({ terminId, anhang }: { terminId: string; anhang: TerminAnh
         <img src={url} alt="" className="h-9 w-9 shrink-0 rounded object-cover" />
       ) : (
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-flaeche-100 text-tertiaer">
-          📄
+          <FileText className="h-4 w-4" />
         </span>
       )}
       <span className="min-w-0 flex-1">
@@ -80,7 +81,7 @@ function AnhangZeile({ terminId, anhang }: { terminId: string; anhang: TerminAnh
             onClick={() => lightboxRef.current?.close()}
             className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900/60 text-white transition hover:bg-neutral-900/80"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
           {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
           <img src={url} alt={anhang.dateiname} className="max-h-[85vh] max-w-[92vw] rounded-xl object-contain" />
@@ -237,12 +238,12 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
                   {t.status === "ERSTELLER" && <span className="text-xs text-tertiaer">(Ersteller)</span>}
                   {t.status === TerminTeilnahmeStatus.ZUGESAGT && (
                     <span className="text-green-600" aria-label="hat zugesagt" title="Zugesagt">
-                      ✓
+                      <Check className="h-3.5 w-3.5" />
                     </span>
                   )}
                   {t.status === TerminTeilnahmeStatus.ABGESAGT && (
                     <span className="text-red-600" aria-label="hat abgesagt" title="Abgesagt">
-                      ✗
+                      <X className="h-3.5 w-3.5" />
                     </span>
                   )}
                 </li>
@@ -271,7 +272,9 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
                     : "bg-flaeche-100 text-primaer hover:bg-green-50 hover:text-green-700")
                 }
               >
-                ✓ Zusagen
+                <span className="flex items-center gap-1">
+                  <Check className="h-3.5 w-3.5" aria-hidden /> Zusagen
+                </span>
               </button>
             </form>
             <form action={teilnahmeAktion.bind(null, termin.id, TerminTeilnahmeStatus.ABGESAGT)}>
@@ -284,7 +287,9 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
                     : "bg-flaeche-100 text-primaer hover:bg-red-50 hover:text-red-700")
                 }
               >
-                ✗ Absagen
+                <span className="flex items-center gap-1">
+                  <X className="h-3.5 w-3.5" aria-hidden /> Absagen
+                </span>
               </button>
             </form>
           </div>

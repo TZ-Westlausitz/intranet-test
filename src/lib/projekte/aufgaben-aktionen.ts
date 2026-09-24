@@ -18,7 +18,9 @@ function anhaengeAusFormData(formData: FormData): File[] {
  * Legt eine Aufgabe INNERHALB eines Projekts an — jedes aktive Mitglied
  * darf das, nicht nur die Leitung (siehe Rechte-Tabelle im Plan). Wird
  * gleich jemand zugewiesen, muss diese Person ebenfalls aktives Mitglied
- * sein — sonst bliebe die Aufgabe für sie unsichtbar (siehe
+ * UND eine aktive Person sein (Rückmeldung 2026-09-24: eine deaktivierte
+ * Person kann sich nicht mehr einloggen, um die Aufgabe zu bearbeiten) —
+ * sonst bliebe die Aufgabe unbearbeitet liegen (siehe
  * projektSichtbarFuer/projektMitgliedschaftPruefen).
  */
 export async function projektAufgabeErstellen(projektId: string, formData: FormData) {
@@ -49,8 +51,9 @@ export async function projektAufgabeErstellen(projektId: string, formData: FormD
   if (zugewiesenAnId) {
     const mitglied = await prisma.projektmitglied.findUnique({
       where: { projektId_personId: { projektId, personId: zugewiesenAnId } },
+      include: { person: { select: { aktiv: true } } },
     })
-    if (!mitglied || mitglied.ausgeschiedenAm !== null) {
+    if (!mitglied || mitglied.ausgeschiedenAm !== null || !mitglied.person.aktiv) {
       throw new NichtBerechtigt("zugewiesene Person ist kein aktives Mitglied dieses Projekts")
     }
   }

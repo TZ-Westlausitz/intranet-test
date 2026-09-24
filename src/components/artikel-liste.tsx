@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef } from "react"
+import { BookOpen, Paperclip } from "lucide-react"
 
 import { ArtikelAktionenMenu } from "@/components/artikel-aktionen-menu"
 import { ArtikelAnzeigenDialog, type ArtikelAnzeigenDialogHandle } from "@/components/artikel-anzeigen-dialog"
@@ -59,10 +60,12 @@ export function ArtikelListe({
               onClick={() => dialogRef.current?.oeffnen(eintrag.id)}
               className="flex min-w-0 flex-1 items-center gap-2 text-left"
             >
-              <span aria-hidden>📖</span>
+              <BookOpen className="h-4 w-4 shrink-0 text-tertiaer" aria-hidden />
               <span className="truncate text-sm text-primaer">{eintrag.titel}</span>
               {eintrag.anhaenge.length > 0 && (
-                <span className="shrink-0 text-xs text-tertiaer">📎 {eintrag.anhaenge.length}</span>
+                <span className="flex shrink-0 items-center gap-0.5 text-xs text-tertiaer">
+                  <Paperclip className="h-3.5 w-3.5" aria-hidden /> {eintrag.anhaenge.length}
+                </span>
               )}
             </button>
             <span className="shrink-0 text-xs text-tertiaer">{formatiereDatumAusDate(eintrag.aktualisiertAm)}</span>

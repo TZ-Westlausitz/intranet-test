@@ -57,13 +57,18 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // fällt dann einfach weg, statt die Seite mit einem Fehler abzubrechen.
   const kontext = await kontextOderNull();
 
-  const [benachrichtigungenRoh, anzahlUngelesen, chatKonversationen] = kontext
+  const [benachrichtigungenRoh, anzahlUngelesen, chatKonversationenRoh] = kontext
     ? await Promise.all([
         neuesteBenachrichtigungen(kontext.personId),
         ungeleseneAnzahl(kontext.personId),
         meineKonversationen(kontext),
       ])
     : [[], 0, []];
+  // Archivierte Konversationen (Rückmeldung 2026-09-24) gehören nicht ins
+  // Schnellzugriffs-Widget — wer sie aus der Liste geräumt hat, soll sie
+  // hier nicht wiedersehen, solange keine neue Nachricht eintrifft (siehe
+  // meineKonversationen: `istArchiviert` berücksichtigt das bereits).
+  const chatKonversationen = chatKonversationenRoh.filter((k) => !k.istArchiviert);
   const chatUngeleseneAnzahl = chatKonversationen.filter((k) => k.ungelesen).length;
 
   const benachrichtigungen = benachrichtigungenRoh.map((b) => ({

@@ -2013,6 +2013,13 @@ model ChatKonversationTeilnehmer {
   konversationId String
   personId       String
 
+  /// Nur bei einer frei angelegten Gruppe von Bedeutung (siehe Kommentar
+  /// oben) — die erstellende Person bekommt das bei Anlage automatisch
+  /// (gruppenchatErstellen), kann es danach an weitere Mitglieder
+  /// weitergeben (Rückmeldung 2026-09-24: "Gruppenmenü", gleiche Rechte wie
+  /// der Ersteller). Bei Direktnachricht ungenutzt (immer false).
+  istGruppenAdmin Boolean @default(false)
+
   konversation ChatKonversation @relation(fields: [konversationId], references: [id], onDelete: Cascade)
   person       Person           @relation(fields: [personId], references: [benutzername])
 
@@ -2031,6 +2038,14 @@ model ChatNachricht {
   absenderId     String
   text           String?
   erstelltAm     DateTime @default(now())
+
+  /// Statusnachricht statt echter Chatnachricht — bisher nur für "X hat die
+  /// Gruppe verlassen" (siehe gruppeVerlassen, Rückmeldung 2026-09-24).
+  /// `absenderId` bleibt dabei die Person, um die es geht (bleibt als
+  /// Person bestehen, Regel 4 — nur nicht mehr Teilnehmer dieser
+  /// Konversation), `text` trägt den fertigen Satz. Wird im Chatverlauf
+  /// zentriert/schlicht statt als Sprechblase gerendert.
+  istSystemnachricht Boolean @default(false)
 
   konversation ChatKonversation      @relation(fields: [konversationId], references: [id], onDelete: Cascade)
   absender     Person                @relation("ChatNachrichtAbsender", fields: [absenderId], references: [benutzername])
@@ -2057,11 +2072,24 @@ model ChatNachrichtAnhang {
 }
 
 /// Ein Zeitstempel statt einer Zeile pro gelesener Nachricht — reicht für
-/// den Ungelesen-Zähler (Muster: Benachrichtigung.gelesenAm).
+/// den Ungelesen-Zähler (Muster: Benachrichtigung.gelesenAm). Trägt seit
+/// Rückmeldung 2026-09-24 zusätzlich zwei rein persönliche Einstellungen
+/// pro Konversation — dieselbe Zeile passt, weil es ohnehin schon "meine
+/// Sicht auf diese Konversation" ist, kein eigenes Modell nötig:
+/// - `stumm`: blendet diese Konversation aus dem Ungelesen-Zähler/der
+///   Kachel-Markierung aus, ändert nichts am Empfang selbst.
+/// - `archiviertAm`: blendet die Konversation aus der eigenen Chat-Liste
+///   aus. Kein Hintergrundjob dafür — eine Konversation gilt als noch
+///   archiviert, solange keine Nachricht NACH `archiviertAm` eingetroffen
+///   ist (neu berechnet bei jeder Anfrage, Muster
+///   istProjektSchreibgeschuetzt), taucht bei neuer Aktivität also
+///   automatisch wieder auf.
 model ChatKonversationGelesen {
   konversationId   String
   personId         String
-  zuletztGelesenAm DateTime @default(now())
+  zuletztGelesenAm DateTime  @default(now())
+  stumm            Boolean   @default(false)
+  archiviertAm     DateTime?
 
   konversation ChatKonversation @relation(fields: [konversationId], references: [id], onDelete: Cascade)
   person       Person           @relation(fields: [personId], references: [benutzername])

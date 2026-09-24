@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef } from "react"
+import { BarChart3, Check, Clock, MessageCircle, Paperclip, ThumbsUp } from "lucide-react"
 
 import { InfoAvatar } from "@/components/info-avatar"
 import { InfoAktionenMenu } from "@/components/info-aktionen-menu"
@@ -124,25 +125,42 @@ export function NewsfeedListe({
                 )}
                 {(info.anhaenge.length > 0 || info._count.kommentare > 0 || info.likeAnzahl > 0 || info.umfrage) && (
                   <div className="mt-2 flex gap-3 text-xs text-tertiaer">
-                    {info.anhaenge.length > 0 && <span>📎 {info.anhaenge.length}</span>}
-                    {info._count.kommentare > 0 && <span>💬 {info._count.kommentare}</span>}
-                    {info.likeAnzahl > 0 && <span>👍 {info.likeAnzahl}</span>}
-                    {info.umfrage && <span>📊 Umfrage</span>}
+                    {info.anhaenge.length > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Paperclip className="h-3.5 w-3.5" aria-hidden /> {info.anhaenge.length}
+                      </span>
+                    )}
+                    {info._count.kommentare > 0 && (
+                      <span className="flex items-center gap-1">
+                        <MessageCircle className="h-3.5 w-3.5" aria-hidden /> {info._count.kommentare}
+                      </span>
+                    )}
+                    {info.likeAnzahl > 0 && (
+                      <span className="flex items-center gap-1">
+                        <ThumbsUp className="h-3.5 w-3.5" aria-hidden /> {info.likeAnzahl}
+                      </span>
+                    )}
+                    {info.umfrage && (
+                      <span className="flex items-center gap-1">
+                        <BarChart3 className="h-3.5 w-3.5" aria-hidden /> Umfrage
+                      </span>
+                    )}
                   </div>
                 )}
               </button>
 
               {info.nochNichtVeroeffentlicht ? (
                 <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-marke-orange/15 px-3 py-2 text-xs font-medium text-ueberschrift">
-                  🕒 Geplant für {formatiereDatumAusDate(info.veroeffentlichtAm)}, {zeitAusDate(info.veroeffentlichtAm)} Uhr
+                  <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden /> Geplant für {formatiereDatumAusDate(info.veroeffentlichtAm)},{" "}
+                  {zeitAusDate(info.veroeffentlichtAm)} Uhr
                 </div>
               ) : (
                 info.mitBestaetigung && (
                   <div className="mt-2 flex items-center gap-2 border-t border-flaeche-100 pt-2">
                     {info.istEmpfaenger &&
                       (info.selbstBestaetigt ? (
-                        <span className="rounded-full bg-marke-gruen/15 px-2.5 py-1 text-xs font-medium text-marke-gruen-dunkel">
-                          ✓ Bestätigt
+                        <span className="flex items-center gap-1 rounded-full bg-marke-gruen/15 px-2.5 py-1 text-xs font-medium text-marke-gruen-dunkel">
+                          <Check className="h-3.5 w-3.5" aria-hidden /> Bestätigt
                         </span>
                       ) : (
                         <form action={infoBestaetigen.bind(null, info.id)}>

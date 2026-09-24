@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef } from "react"
+import { Check, X } from "lucide-react"
 
 import type { Person, TerminStandardwerte } from "@/components/termin-form-felder"
 import { TerminBearbeitenDialog } from "@/components/termin-bearbeiten-dialog"
@@ -94,13 +95,13 @@ export function TerminZeile({ eintrag, aktionen }: { eintrag: TerminListenEintra
               {t.name}
               {t.status === "ERSTELLER" && " (Ersteller)"}
               {t.status === TerminTeilnahmeStatus.ZUGESAGT && (
-                <span className="text-green-600" aria-label="hat zugesagt">
-                  {" "}✓
+                <span className="ml-1 inline-flex align-text-bottom text-green-600" aria-label="hat zugesagt">
+                  <Check className="h-3.5 w-3.5" />
                 </span>
               )}
               {t.status === TerminTeilnahmeStatus.ABGESAGT && (
-                <span className="text-red-600" aria-label="hat abgesagt">
-                  {" "}✗
+                <span className="ml-1 inline-flex align-text-bottom text-red-600" aria-label="hat abgesagt">
+                  <X className="h-3.5 w-3.5" />
                 </span>
               )}
             </span>

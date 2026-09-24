@@ -1,6 +1,7 @@
 "use client"
 
 import { forwardRef, useImperativeHandle, useRef, useState } from "react"
+import { Check, Clock, Paperclip, ThumbsUp, X } from "lucide-react"
 
 import { InfoAvatar } from "@/components/info-avatar"
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
@@ -127,7 +128,7 @@ export const InfoAnzeigenDialog = forwardRef<
             onClick={() => dialogRef.current?.close()}
             className="shrink-0 rounded-full p-1.5 text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
 
@@ -142,10 +143,7 @@ export const InfoAnzeigenDialog = forwardRef<
             // !detail` diesen Fall nie von "lädt noch" unterschied und der
             // Dialog für immer bei "Lädt …" hängen blieb (z. B. über einen
             // Benachrichtigungs-Link auf eine inzwischen gelöschte Info).
-            <p className="py-8 text-center text-sm text-tertiaer">
-              Diese Info ist nicht mehr verfügbar — sie wurde entweder gelöscht oder ist für dich nicht mehr
-              sichtbar.
-            </p>
+            <p className="py-8 text-center text-sm text-tertiaer">Diese Info ist nicht mehr verfügbar</p>
           ) : (
             <>
               {detail.kategorie && (
@@ -176,8 +174,8 @@ export const InfoAnzeigenDialog = forwardRef<
 
               {detail.nochNichtVeroeffentlicht ? (
                 <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-marke-orange/15 px-3 py-2 text-sm font-medium text-ueberschrift">
-                  🕒 Geplant für {formatiereDatumAusDate(detail.veroeffentlichtAm)}, {zeitAusDate(detail.veroeffentlichtAm)} Uhr —
-                  nur für dich sichtbar, bis es veröffentlicht wird.
+                  <Clock className="h-4 w-4 shrink-0" aria-hidden /> Geplant für {formatiereDatumAusDate(detail.veroeffentlichtAm)},{" "}
+                  {zeitAusDate(detail.veroeffentlichtAm)} Uhr — nur für dich sichtbar, bis es veröffentlicht wird.
                 </p>
               ) : (
                 <>
@@ -201,11 +199,11 @@ export const InfoAnzeigenDialog = forwardRef<
                             : "bg-flaeche-100 text-primaer hover:bg-flaeche-200")
                         }
                       >
-                        👍 {detail.likeAnzahl}
+                        <ThumbsUp className="h-3.5 w-3.5" aria-hidden /> {detail.likeAnzahl}
                       </button>
                     ) : (
                       <span className="flex h-8 items-center gap-1 rounded-lg bg-flaeche-100 px-3 text-xs font-semibold text-tertiaer">
-                        👍 {detail.likeAnzahl}
+                        <ThumbsUp className="h-3.5 w-3.5" aria-hidden /> {detail.likeAnzahl}
                       </span>
                     )}
 
@@ -213,8 +211,8 @@ export const InfoAnzeigenDialog = forwardRef<
                       <>
                         {detail.istEmpfaenger &&
                           (detail.selbstBestaetigt ? (
-                            <span className="rounded-full bg-marke-gruen/15 px-2.5 py-1 text-xs font-medium text-marke-gruen-dunkel">
-                              ✓ Bestätigt
+                            <span className="flex items-center gap-1 rounded-full bg-marke-gruen/15 px-2.5 py-1 text-xs font-medium text-marke-gruen-dunkel">
+                              <Check className="h-3.5 w-3.5" aria-hidden /> Bestätigt
                             </span>
                           ) : (
                             <button
@@ -346,7 +344,7 @@ function UmfrageAnzeige({
 /**
  * Bild-Anhänge (mimetyp `image/*`) als anklickbare Vorschau-Kachel statt als
  * Datei-Chip (Rückmeldung 2026-09-16: Fotos tauchten bisher gar nicht als
- * Bild auf, nur als "📎 Dateiname"). Klick öffnet eine eigene Lightbox
+ * Bild auf, nur als Anhang-Chip mit Dateiname). Klick öffnet eine eigene Lightbox
  * (natives `<dialog>`, verschachtelt im schon offenen InfoAnzeigenDialog —
  * das trägt der Browser problemlos) statt `target="_blank"`: Letzteres
  * navigierte in der installierten Web-App (Standalone-Modus, keine
@@ -396,7 +394,7 @@ function AnhaengeListe({
               rel="noopener noreferrer"
               className="flex max-w-[12rem] items-center gap-1 truncate rounded-full bg-flaeche-100 px-2 py-0.5 text-xs text-primaer hover:underline"
             >
-              📎 {anhang.dateiname}
+              <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden /> {anhang.dateiname}
             </a>
           ),
         )}
@@ -417,7 +415,7 @@ function AnhaengeListe({
               onClick={() => lightboxRef.current?.close()}
               className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900/60 text-white transition hover:bg-neutral-900/80"
             >
-              ✕
+              <X className="h-4 w-4" />
             </button>
             {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
             <img

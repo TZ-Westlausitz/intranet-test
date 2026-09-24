@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
+import { ChevronDown } from "lucide-react"
 
 import { abmelden } from "@/lib/auth/aktionen"
 
@@ -66,9 +67,9 @@ export function BenutzerMenu({
         {name}
         <span
           aria-hidden
-          className={"text-xs transition-transform " + (offen ? "rotate-180" : "")}
+          className={"transition-transform " + (offen ? "rotate-180" : "")}
         >
-          ▾
+          <ChevronDown className="h-3.5 w-3.5" />
         </span>
       </button>
 

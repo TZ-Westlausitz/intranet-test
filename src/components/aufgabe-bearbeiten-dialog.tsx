@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef } from "react"
+import { Pencil } from "lucide-react"
 
 import {
   AufgabeFormFelder,
@@ -42,7 +43,7 @@ export function AufgabeBearbeitenDialog({
         onClick={() => dialogRef.current?.showModal()}
         className="mt-0.5 shrink-0 rounded p-1 text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
       >
-        ✎
+        <Pencil className="h-4 w-4" />
       </button>
 
       <dialog

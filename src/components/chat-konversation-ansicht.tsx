@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { Circle, Mic, Paperclip, X } from "lucide-react"
 
 import type { nachrichtSenden, konversationAlsGelesenMarkieren, konversationNachrichtenLaden } from "@/lib/chat/aktionen"
 
@@ -102,7 +103,7 @@ function NachrichtAnhaenge({ nachrichtId, anhaenge }: { nachrichtId: string; anh
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 rounded-lg border border-rand bg-flaeche px-2.5 py-1.5 text-sm text-marke-gruen-dunkel hover:underline"
             >
-              📎 {anhang.dateiname}
+              <Paperclip className="h-4 w-4 shrink-0" aria-hidden /> {anhang.dateiname}
               <span className="text-xs text-tertiaer">({dateigroesseAnzeige(anhang.groesseBytes)})</span>
             </a>
           )
@@ -124,7 +125,7 @@ function NachrichtAnhaenge({ nachrichtId, anhaenge }: { nachrichtId: string; anh
               onClick={() => lightboxRef.current?.close()}
               className="absolute top-2 right-2 flex h-8 w-8 items-center justify-center rounded-full bg-neutral-900/60 text-white transition hover:bg-neutral-900/80"
             >
-              ✕
+              <X className="h-4 w-4" />
             </button>
             {/* eslint-disable-next-line @next/next/no-img-element -- Vorschau aus der Ablage, kein optimierbares Next-Image-Ziel */}
             <img
@@ -279,6 +280,7 @@ export function ChatKonversationAnsicht({
       erstelltAm: new Date(),
       absender: { benutzername: eigenePersonId, vorname: "Du", nachname: "" },
       anhaenge: [],
+      istSystemnachricht: false,
       optimistisch: true,
     }
 
@@ -368,6 +370,15 @@ export function ChatKonversationAnsicht({
         ) : (
           <ul className="flex flex-col gap-3">
             {nachrichten.map((nachricht) => {
+              if (nachricht.istSystemnachricht) {
+                return (
+                  <li key={nachricht.id} className="flex justify-center">
+                    <p className="rounded-full bg-flaeche-100 px-3 py-1 text-center text-xs text-tertiaer">
+                      {nachricht.text}
+                    </p>
+                  </li>
+                )
+              }
               const eigene = nachricht.absender.benutzername === eigenePersonId
               const andereTeilnehmer = teilnehmerIds.filter((id) => id !== nachricht.absenderId)
               const gelesenVonAllen =
@@ -419,7 +430,7 @@ export function ChatKonversationAnsicht({
             title="Anhang hinzufügen"
             className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-flaeche-300 text-sekundaer transition hover:bg-flaeche-100"
           >
-            📎
+            <Paperclip className="h-4 w-4" />
             <input
               ref={dateiInputRef}
               type="file"
@@ -440,7 +451,13 @@ export function ChatKonversationAnsicht({
               (aufnahmeLaeuft ? "min-w-9 border-red-300 bg-red-50 text-red-600" : "w-9 border-flaeche-300 text-sekundaer hover:bg-flaeche-100")
             }
           >
-            {aufnahmeLaeuft ? `● ${aufnahmeZeitAnzeige(aufnahmeSekunden)}` : "🎤"}
+            {aufnahmeLaeuft ? (
+              <>
+                <Circle className="h-2.5 w-2.5 shrink-0 fill-current" aria-hidden /> {aufnahmeZeitAnzeige(aufnahmeSekunden)}
+              </>
+            ) : (
+              <Mic className="h-4 w-4" />
+            )}
           </button>
           <input
             type="text"

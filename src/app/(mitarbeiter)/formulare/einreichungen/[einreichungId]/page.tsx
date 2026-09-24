@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import { FileText } from "lucide-react"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { Kopfleiste } from "@/components/kopfleiste"
@@ -60,9 +61,9 @@ export default async function EinreichungDetailSeite({ params }: { params: Promi
           href={`/api/formulare/einreichungen/${einreichung.id}/anhaenge/${pdfAnhang.id}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-block text-sm font-medium text-marke-gruen-dunkel hover:underline"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-marke-gruen-dunkel hover:underline"
         >
-          📄 {pdfAnhang.dateiname} herunterladen
+          <FileText className="h-4 w-4 shrink-0" aria-hidden /> {pdfAnhang.dateiname} herunterladen
         </a>
       )}
 

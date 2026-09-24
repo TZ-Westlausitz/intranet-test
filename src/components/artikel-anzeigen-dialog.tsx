@@ -1,6 +1,7 @@
 "use client"
 
 import { forwardRef, useImperativeHandle, useRef, useState } from "react"
+import { Paperclip, X } from "lucide-react"
 
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
 import type { artikelDetailLaden } from "@/lib/wissen/aktionen"
@@ -64,7 +65,7 @@ export const ArtikelAnzeigenDialog = forwardRef<
             onClick={() => dialogRef.current?.close()}
             className="shrink-0 rounded-full p-1.5 text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
 
@@ -76,10 +77,7 @@ export const ArtikelAnzeigenDialog = forwardRef<
             // eigenen Zweig für "geladen, aber null" bliebe der Dialog bei
             // einem gelöschten/nicht mehr sichtbaren Artikel für immer bei
             // "Lädt …" hängen.
-            <p className="py-8 text-center text-sm text-tertiaer">
-              Dieser Artikel ist nicht mehr verfügbar — er wurde entweder gelöscht oder ist für dich nicht mehr
-              sichtbar.
-            </p>
+            <p className="py-8 text-center text-sm text-tertiaer">Dieser Artikel ist nicht mehr verfügbar</p>
           ) : (
             <>
               <h1 className="text-xl font-bold text-ueberschrift">{detail.titel}</h1>
@@ -101,7 +99,7 @@ export const ArtikelAnzeigenDialog = forwardRef<
                       rel="noopener noreferrer"
                       className="flex max-w-[12rem] items-center gap-1 truncate rounded-full bg-flaeche-100 px-2 py-0.5 text-xs text-primaer hover:underline"
                     >
-                      📎 {anhang.dateiname}
+                      <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden /> {anhang.dateiname}
                     </a>
                   ))}
                 </div>

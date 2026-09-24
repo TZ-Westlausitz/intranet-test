@@ -26,7 +26,7 @@ const RELEVANTE_BERECHTIGUNGEN = ["Infos", "Bearbeiten", "Löschen & Bearbeiten"
  * Einstieg in den Newsfeed-Baustein — EIN chronologischer Feed, bewusst
  * keine Spalten-Trennung "Infos"/"Infos mit Bestätigung" wie im Altsystem
  * (siehe Chat vom 2026-09-05): die Bestätigungspflicht steht stattdessen
- * direkt auf der jeweiligen Karte (Bestätigen-Button bzw. "✓ Bestätigt"),
+ * direkt auf der jeweiligen Karte (Bestätigen-Button bzw. "Bestätigt"-Chip),
  * zusammen mit dem Stand "X von Y". "+ Info" erscheint nur mit der
  * Berechtigung "Infos" (siehe infoErstellen) — ein ausgeblendeter Knopf
  * ist keine Zugriffskontrolle, die eigentliche Prüfung sitzt serverseitig.

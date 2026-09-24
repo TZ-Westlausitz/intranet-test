@@ -2,6 +2,7 @@
 
 import { useRef } from "react"
 import Link from "next/link"
+import { BarChart3, FileText, MessageCircle, Paperclip, ThumbsUp } from "lucide-react"
 
 import { InfoAnzeigenDialog, type InfoAnzeigenDialogHandle } from "@/components/info-anzeigen-dialog"
 import {
@@ -141,17 +142,29 @@ export function NewsfeedHomeKachel({
                   />
                 ) : (
                   info.anhaengeAnzahl > 0 && (
-                    <span aria-hidden className="mt-1 block text-center text-2xl leading-none">
-                      📄
+                    <span aria-hidden className="mt-1 flex justify-center text-tertiaer">
+                      <FileText className="h-6 w-6" />
                     </span>
                   )
                 )}
                 {(info.anhaengeAnzahl > 0 || info.kommentareAnzahl > 0 || info.likeAnzahl > 0 || info.umfrage) && (
                   <div className="mt-1.5 flex justify-center gap-3 text-[11px] text-tertiaer">
-                    {info.anhaengeAnzahl > 0 && <span>📎 {info.anhaengeAnzahl}</span>}
-                    {info.kommentareAnzahl > 0 && <span>💬 {info.kommentareAnzahl}</span>}
-                    {info.likeAnzahl > 0 && <span>👍 {info.likeAnzahl}</span>}
-                    {info.umfrage && <span>📊</span>}
+                    {info.anhaengeAnzahl > 0 && (
+                      <span className="flex items-center gap-0.5">
+                        <Paperclip className="h-3 w-3" aria-hidden /> {info.anhaengeAnzahl}
+                      </span>
+                    )}
+                    {info.kommentareAnzahl > 0 && (
+                      <span className="flex items-center gap-0.5">
+                        <MessageCircle className="h-3 w-3" aria-hidden /> {info.kommentareAnzahl}
+                      </span>
+                    )}
+                    {info.likeAnzahl > 0 && (
+                      <span className="flex items-center gap-0.5">
+                        <ThumbsUp className="h-3 w-3" aria-hidden /> {info.likeAnzahl}
+                      </span>
+                    )}
+                    {info.umfrage && <BarChart3 className="h-3 w-3" aria-hidden />}
                   </div>
                 )}
               </button>

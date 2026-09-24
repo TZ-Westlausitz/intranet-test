@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
+import { Paperclip } from "lucide-react"
 
 export type ProjektnachrichtAnzeige = {
   id: string
@@ -173,9 +174,9 @@ export function ProjektThread({
                     type="button"
                     onMouseDown={(ereignis) => ereignis.preventDefault()}
                     onClick={() => dokumentEinfuegen(dokument)}
-                    className="block w-full truncate px-3 py-2 text-left text-sm text-primaer hover:bg-flaeche-schwach"
+                    className="flex w-full items-center gap-1 truncate px-3 py-2 text-left text-sm text-primaer hover:bg-flaeche-schwach"
                   >
-                    📎 {dokument.dateiname}
+                    <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden /> {dokument.dateiname}
                   </button>
                 ))
               )}

@@ -1,6 +1,7 @@
 "use client"
 
 import { forwardRef, useImperativeHandle, useRef, useState } from "react"
+import { X } from "lucide-react"
 
 import { KontaktProfil } from "@/components/kontakt-profil"
 import type { personDetailLaden } from "@/lib/kontakte/aktionen"
@@ -52,7 +53,7 @@ export const KontaktAnzeigenDialog = forwardRef<
             onClick={() => dialogRef.current?.close()}
             className="shrink-0 rounded-full p-1.5 text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
           >
-            ✕
+            <X className="h-4 w-4" />
           </button>
         </div>
 

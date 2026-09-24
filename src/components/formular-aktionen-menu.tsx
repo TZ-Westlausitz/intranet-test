@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import { MoreVertical } from "lucide-react"
 
 import type { vorlageAktivSetzen, vorlageDuplizieren, vorlageLoeschen } from "@/lib/formulare/aktionen"
 
@@ -155,9 +156,9 @@ export function FormularAktionenMenu({
         aria-label="Aktionen"
         aria-expanded={offen}
         aria-haspopup="menu"
-        className="flex h-8 w-8 items-center justify-center rounded-full text-lg leading-none text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
+        className="flex h-8 w-8 items-center justify-center rounded-full text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
       >
-        ⋮
+        <MoreVertical className="h-4 w-4" />
       </button>
 
       {menu && createPortal(menu, document.body)}

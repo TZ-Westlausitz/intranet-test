@@ -1,6 +1,14 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import {
+  AlignVerticalJustifyCenter,
+  AlignVerticalJustifyEnd,
+  AlignVerticalJustifyStart,
+  Columns2,
+  Image as ImageIcon,
+  Link2,
+} from "lucide-react"
 import { useEditor, EditorContent } from "@tiptap/react"
 import StarterKit from "@tiptap/starter-kit"
 import TextAlign from "@tiptap/extension-text-align"
@@ -238,13 +246,13 @@ export function RichTextEditor({
             if (url) editor.chain().focus().setLink({ href: url }).run()
           }}
         >
-          🔗
+          <Link2 className="h-4 w-4" />
         </WerkzeugKnopf>
         {bilderErlaubt && (
           <>
             <span className="mx-1 my-1 w-px bg-flaeche-200" />
             <WerkzeugKnopf label="Bild einfügen" onClick={() => bildAuswahlRef.current?.click()}>
-              🖼️
+              <ImageIcon className="h-4 w-4" />
             </WerkzeugKnopf>
             <input
               ref={bildAuswahlRef}
@@ -262,17 +270,17 @@ export function RichTextEditor({
               label="Zeile in zwei Spalten teilen"
               onClick={() => editor?.chain().focus().insertTable({ rows: 1, cols: 2, withHeaderRow: false }).run()}
             >
-              ⫲
+              <Columns2 className="h-4 w-4" />
             </WerkzeugKnopf>
             <span className="mx-1 my-1 w-px bg-flaeche-200" />
             <WerkzeugKnopf label="Zellinhalt oben ausrichten" aktiv={zellAusrichtungAktiv("top")} onClick={() => zellAusrichtungSetzen("top")}>
-              ⬒
+              <AlignVerticalJustifyStart className="h-4 w-4" />
             </WerkzeugKnopf>
             <WerkzeugKnopf label="Zellinhalt mittig ausrichten" aktiv={zellAusrichtungAktiv("middle")} onClick={() => zellAusrichtungSetzen("middle")}>
-              ▬
+              <AlignVerticalJustifyCenter className="h-4 w-4" />
             </WerkzeugKnopf>
             <WerkzeugKnopf label="Zellinhalt unten ausrichten" aktiv={zellAusrichtungAktiv("bottom")} onClick={() => zellAusrichtungSetzen("bottom")}>
-              ⬓
+              <AlignVerticalJustifyEnd className="h-4 w-4" />
             </WerkzeugKnopf>
           </>
         )}

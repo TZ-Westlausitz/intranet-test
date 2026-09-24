@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState } from "react"
+import { Paperclip } from "lucide-react"
 
 import { PersonenAuswahl } from "@/components/personen-auswahl"
 import { AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAETEN } from "@/lib/aufgaben-optionen"
@@ -78,7 +79,7 @@ function AufgabeZeile({
                 rel="noopener noreferrer"
                 className="flex max-w-[10rem] items-center gap-1 truncate rounded-full bg-flaeche-100 px-2 py-0.5 text-xs text-primaer hover:underline"
               >
-                📎 {anhang.dateiname}
+                <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden /> {anhang.dateiname}
               </a>
             ))}
           </div>

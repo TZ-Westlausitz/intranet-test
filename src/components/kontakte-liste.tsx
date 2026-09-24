@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { ChevronDown } from "lucide-react"
 
 import { InfoAvatar } from "@/components/info-avatar"
 import { KontaktAnzeigenDialog, type KontaktAnzeigenDialogHandle } from "@/components/kontakt-anzeigen-dialog"
@@ -127,7 +128,7 @@ function AbteilungGruppeFilter({
           {ausgewaehlterName ?? "Abteilungen & Gruppen"}
         </span>
         <span aria-hidden className="shrink-0 text-tertiaer">
-          ▾
+          <ChevronDown className="h-4 w-4" />
         </span>
       </button>
 
