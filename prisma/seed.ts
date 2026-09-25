@@ -41,9 +41,11 @@ const ABTEILUNGEN = [
 // unabhängig von Abteilung/Standort/Rolle (siehe Kommentar am Model
 // Gruppe). 1:1 übernommen, damit echte Mitarbeitende später nahtlos
 // migriert werden können; zwei offensichtliche Klammer-Tippfehler der
-// Vorlage sind hier korrigiert (Rezeption/Praxisleitung Königsbrück).
+// Vorlage sind hier korrigiert (Rezeption/Praxisleitung Königsbrück). Die
+// Gruppe "All" der Vorlage ist bewusst NICHT übernommen: Sie hatte keine
+// erkennbare Funktion und war nur ein Stolperstein neben der automatischen
+// Gruppe "Alle" (siehe unten).
 const GRUPPEN = [
-  "All",
   "Ambulanz (Kamenz)",
   "Ambulanz (Königsbrück)",
   "Bereichsleitung (Pflege)",

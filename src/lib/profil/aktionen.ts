@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Prisma } from "@/generated/prisma/client"
-import { dateiAblegen } from "@/lib/ablage"
+import { dateiAblegen, dateiLoeschen } from "@/lib/ablage"
 import { profilbildPruefen } from "@/lib/profil/profilbild"
 
 /**
@@ -68,6 +68,38 @@ export async function profilbildAktualisieren(formData: FormData) {
     where: { benutzername: kontext.personId },
     data: { profilbildPfad: pfad, profilbildMimetyp: datei.type || "application/octet-stream" },
   })
+
+  revalidatePath("/profil")
+  revalidatePath("/newsfeed")
+  revalidatePath("/kontakte")
+  revalidatePath("/kontakte/[personId]", "page")
+  revalidatePath("/")
+  redirect("/profil")
+}
+
+/**
+ * Entfernt das eigene Profilbild — danach zeigt InfoAvatar wieder den
+ * Initialen-Kreis. Erst die Verweise in der Datenbank zurücksetzen, dann
+ * die Datei löschen: scheitert das Löschen, bleibt höchstens eine
+ * unerreichbare Datei zurück, aber kein Verweis auf ein Bild, das es nicht
+ * mehr gibt. Der Pfad kommt aus der Datenbank (nie aus dem Formular), und
+ * `kontext.personId` aus der Sitzung — jede Person kann nur ihr eigenes
+ * Bild löschen.
+ */
+export async function profilbildLoeschen() {
+  const kontext = await berechtigung()
+
+  const person = await prisma.person.findUnique({
+    where: { benutzername: kontext.personId },
+    select: { profilbildPfad: true },
+  })
+  if (!person?.profilbildPfad) return
+
+  await prisma.person.update({
+    where: { benutzername: kontext.personId },
+    data: { profilbildPfad: null, profilbildMimetyp: null },
+  })
+  await dateiLoeschen(person.profilbildPfad)
 
   revalidatePath("/profil")
   revalidatePath("/newsfeed")

@@ -4,7 +4,7 @@ import { ZurueckButton } from "@/components/zurueck-button"
 import { InfoAvatar } from "@/components/info-avatar"
 import { ProfilbildBearbeiten } from "@/components/profilbild-bearbeiten"
 import { personKontaktDetail } from "@/lib/kontakte/abfragen"
-import { profilAktualisieren, profilbildAktualisieren } from "@/lib/profil/aktionen"
+import { profilAktualisieren, profilbildAktualisieren, profilbildLoeschen } from "@/lib/profil/aktionen"
 
 const FEHLER_TEXTE: Record<string, string> = {
   emailVergeben: "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet.",
@@ -48,7 +48,11 @@ export default async function ProfilSeite({
           profilbildPfad={person.profilbildPfad}
           groesse="gross"
         />
-        <ProfilbildBearbeiten aktion={profilbildAktualisieren} />
+        <ProfilbildBearbeiten
+          aktion={profilbildAktualisieren}
+          loeschenAktion={profilbildLoeschen}
+          hatBild={person.profilbildPfad !== null}
+        />
       </div>
 
       <dl className="mt-6 flex flex-col gap-3 text-sm">
