@@ -310,21 +310,36 @@ export default async function Startseite() {
           würde die Seite unter der Kopfzeile wieder über eine Bildschirm-
           höhe hinauswachsen. */}
       <main className="hidden h-full flex-col md:flex">
-        <div className="flex flex-1 flex-col items-center justify-center overflow-auto bg-gradient-to-br from-marke-gruen/5 via-background to-marke-orange/5 p-6">
+        <div className="flex flex-1 flex-col overflow-auto bg-gradient-to-br from-marke-gruen/5 via-background to-marke-orange/5 p-6">
           {/* 4 Spalten statt 4 einzelne Kacheln: Newsfeed nimmt per
               col-span-2 zwei davon ein und bleibt durch row-span-2 genauso
               hoch wie breit — ein großer quadratischer Block statt eines
               schmalen Streifens, damit später Posts (auch mit Fotos)
-              hineinpassen. Die Tile-Größe ist zusätzlich per "22vw"
-              begrenzt (nicht nur wie bisher per rem/vh) — sonst würde das
-              jetzt breitere Grid auf schmaleren Bildschirmen (z. B. das
-              1024px-Tablet) über den Rand hinauswachsen. */}
-          <div className="grid grid-cols-[repeat(4,min(23rem,33vh,26vw))] grid-rows-[repeat(2,min(23rem,33vh,26vw))] gap-[min(2.25rem,4vh)]">
+              hineinpassen.
+
+              Kachelgröße (--kachel) = das Kleinste aus Maximalgröße,
+              Höhenanteil und der tatsächlich verfügbaren Breite geteilt
+              durch 4 Spalten. Die Breite MUSS Seitenpolster (2 × 1.5rem)
+              und die 3 Abstände abziehen — ein fester vw-Anteil pro Kachel
+              (früher 26vw) ergab 4 × 26vw = 104vw und ließ das Raster auf
+              iPads über den Rand hinauswachsen. "m-auto" statt
+              Flex-Zentrierung: bei zu wenig Platz scrollt die Fläche,
+              statt links unerreichbar abgeschnitten zu werden. */}
+          <div
+            style={
+              {
+                "--kachel-abstand": "min(2.25rem, 4vh)",
+                "--kachel":
+                  "min(23rem, 33vh, calc((100vw - 3rem - 3 * var(--kachel-abstand)) / 4))",
+              } as React.CSSProperties
+            }
+            className="m-auto grid grid-cols-[repeat(4,var(--kachel))] grid-rows-[repeat(2,var(--kachel))] gap-[var(--kachel-abstand)] portrait:m-0 portrait:mx-auto portrait:min-h-[42rem] portrait:w-full portrait:max-w-3xl portrait:flex-1 portrait:grid-cols-2 portrait:grid-rows-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1fr)]"
+          >
             <NewsfeedHomeKachel infos={newsfeedKarten} offeneBestaetigungen={offeneBestaetigungen} />
 
             <Link
               href="/kalender"
-              className="col-start-3 row-start-1 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4 text-center shadow-sm transition hover:border-marke-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+              className="col-start-3 row-start-1 portrait:col-start-1 portrait:row-start-2 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4 text-center shadow-sm transition hover:border-marke-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
             >
               <div className="flex items-center justify-center gap-1.5">
                 <h2 className="text-lg font-semibold text-ueberschrift">Kalender</h2>
@@ -356,7 +371,7 @@ export default async function Startseite() {
                 nebeneinander statt in getrennten Abschnitten. */}
             <Link
               href="/aufgaben"
-              className="col-start-4 row-start-1 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen-dunkel bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+              className="col-start-4 row-start-1 portrait:col-start-2 portrait:row-start-2 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen-dunkel bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
             >
               <div className="flex items-center justify-between gap-1.5">
                 <h2 className="text-lg font-semibold text-ueberschrift hover:underline">Aufgaben</h2>
@@ -402,7 +417,7 @@ export default async function Startseite() {
 
             <Link
               href="/wissen"
-              className="col-start-3 row-start-2 flex flex-col justify-between rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4 shadow-sm transition hover:border-marke-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+              className="col-start-3 row-start-2 portrait:col-start-1 portrait:row-start-3 flex flex-col justify-between rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4 shadow-sm transition hover:border-marke-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
             >
               <div>
                 <h2 className="text-lg font-semibold text-ueberschrift">Wissensbereich</h2>
@@ -423,7 +438,7 @@ export default async function Startseite() {
             {zeigeFahrzeuge && (
               <Link
                 href={istWerkstatt ? "/fahrzeug-reservierungen" : "/fahrzeug-mieten"}
-                className="col-start-4 row-start-2 flex flex-col justify-between rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+                className="col-start-4 row-start-2 portrait:col-start-2 portrait:row-start-3 flex flex-col justify-between rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
               >
                 {istWerkstatt ? (
                   <>
@@ -466,7 +481,7 @@ export default async function Startseite() {
             )}
 
             {zeigeTodoListe && (
-              <div className="col-start-4 row-start-2 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen">
+              <div className="col-start-4 row-start-2 portrait:col-start-2 portrait:row-start-3 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen">
                 <Link
                   href="/aufgaben"
                   className="flex items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
@@ -504,7 +519,7 @@ export default async function Startseite() {
             )}
 
             {zeigeGeplanteAktionen && (
-              <div className="col-start-4 row-start-2 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen">
+              <div className="col-start-4 row-start-2 portrait:col-start-2 portrait:row-start-3 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen">
                 <Link
                   href="/geplante-aktionen"
                   className="flex items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
