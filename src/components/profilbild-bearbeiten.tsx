@@ -2,8 +2,14 @@
 
 import { useEffect, useRef, useState } from "react"
 
-/** Kantenlänge des sichtbaren Zuschnitt-Quadrats im Dialog (CSS-Pixel). */
+/** Kantenlänge des Bildfensters im Dialog (CSS-Pixel). */
 const ANSICHT = 288
+/**
+ * Durchmesser des Kreises = das, was später als Profilbild bleibt. Kleiner
+ * als das Fenster, damit die Kreislinie nicht am Fensterrand angeschnitten
+ * wird und man auch sieht, was außerhalb des Kreises liegt.
+ */
+const KREIS = 256
 /** Kantenlänge des hochgeladenen Bildes — reicht für den größten Avatar (h-20) auch auf Retina-Displays. */
 const AUSGABE = 512
 const ZOOM_MAX = 4
@@ -55,13 +61,13 @@ export function ProfilbildBearbeiten({
   const letzterAbstand = useRef<number | null>(null)
 
   // Skalierung, bei der das Bild bei Zoom 1 das Quadrat gerade ausfüllt.
-  const basis = quelle ? ANSICHT / Math.min(quelle.breite, quelle.hoehe) : 1
+  const basis = quelle ? KREIS / Math.min(quelle.breite, quelle.hoehe) : 1
 
   /** Begrenzt den Versatz so, dass das Bild das Quadrat immer vollständig abdeckt. */
   function begrenzen(v: Versatz, z: number): Versatz {
     if (!quelle) return v
-    const maxX = Math.max(0, (quelle.breite * basis * z - ANSICHT) / 2)
-    const maxY = Math.max(0, (quelle.hoehe * basis * z - ANSICHT) / 2)
+    const maxX = Math.max(0, (quelle.breite * basis * z - KREIS) / 2)
+    const maxY = Math.max(0, (quelle.hoehe * basis * z - KREIS) / 2)
     return { x: Math.min(maxX, Math.max(-maxX, v.x)), y: Math.min(maxY, Math.max(-maxY, v.y)) }
   }
 
@@ -144,15 +150,19 @@ export function ProfilbildBearbeiten({
 
     // Sichtbarer Ausschnitt in Pixeln des Originalbildes.
     const skala = basis * zoom
-    const quadrat = ANSICHT / skala
-    const links = (quelle.breite * skala / 2 - versatz.x - ANSICHT / 2) / skala
-    const oben = (quelle.hoehe * skala / 2 - versatz.y - ANSICHT / 2) / skala
+    const quadrat = KREIS / skala
+    const links = (quelle.breite * skala / 2 - versatz.x - KREIS / 2) / skala
+    const oben = (quelle.hoehe * skala / 2 - versatz.y - KREIS / 2) / skala
 
     const leinwand = document.createElement("canvas")
     leinwand.width = AUSGABE
     leinwand.height = AUSGABE
     const kontext = leinwand.getContext("2d")
     if (!kontext) return
+    // Weißer Untergrund: JPEG kennt keine Transparenz, transparente Stellen
+    // (z. B. bei Logos als PNG) würden sonst schwarz.
+    kontext.fillStyle = "#ffffff"
+    kontext.fillRect(0, 0, AUSGABE, AUSGABE)
     kontext.drawImage(bild, links, oben, quadrat, quadrat, 0, 0, AUSGABE, AUSGABE)
 
     const blob = await new Promise<Blob | null>((fertig) => leinwand.toBlob(fertig, "image/jpeg", 0.9))
@@ -237,7 +247,7 @@ export function ProfilbildBearbeiten({
               onPointerCancel={zeigerHoch}
               onWheel={(e) => zoomSetzen(zoom * (e.deltaY < 0 ? 1.08 : 1 / 1.08))}
               style={{ width: ANSICHT, height: ANSICHT }}
-              className="relative cursor-grab touch-none select-none overflow-hidden rounded-lg bg-neutral-900 active:cursor-grabbing"
+              className="relative cursor-grab touch-none select-none overflow-hidden rounded-lg bg-white active:cursor-grabbing"
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- lokale Vorschau aus einer Blob-URL */}
               <img
@@ -258,7 +268,8 @@ export function ProfilbildBearbeiten({
               {/* Kreismaske: der Bereich außerhalb des Kreises wird abgedunkelt — genau das, was später sichtbar bleibt, liegt im Kreis. */}
               <div
                 aria-hidden
-                className="pointer-events-none absolute inset-0 rounded-full shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] ring-2 ring-white/80"
+                style={{ width: KREIS, height: KREIS }}
+                className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_9999px_rgba(0,0,0,0.55)]"
               />
             </div>
 

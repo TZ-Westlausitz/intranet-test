@@ -2,7 +2,7 @@
 
 import { useRef } from "react"
 import Link from "next/link"
-import { BarChart3, FileText, MessageCircle, Paperclip, ThumbsUp } from "lucide-react"
+import { BarChart3, Check, FileText, MessageCircle, Paperclip, ThumbsUp } from "lucide-react"
 
 import { InfoAnzeigenDialog, type InfoAnzeigenDialogHandle } from "@/components/info-anzeigen-dialog"
 import {
@@ -31,6 +31,8 @@ type InfoEintrag = {
   kommentareAnzahl: number
   likeAnzahl: number
   umfrage: boolean
+  /** Diese Person muss den Beitrag noch bestätigen — orange Rand bis dahin. */
+  bestaetigungOffen: boolean
 }
 
 /**
@@ -97,8 +99,21 @@ export function NewsfeedHomeKachel({
                 // inline-block-Buttons falsch. NewsfeedListe hat block an
                 // der entsprechenden Stelle schon und zeigt den Fehler
                 // nicht.
-                className="block w-full min-w-0 rounded-xl border border-rand p-2.5 text-left transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+                className={
+                  "block w-full min-w-0 rounded-xl border p-2.5 text-left transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen " +
+                  // Orange Rand (1 px Rand + 1 px Ring = 2 px, ohne dass sich
+                  // das Layout verschiebt) solange die Bestätigung aussteht.
+                  (info.bestaetigungOffen
+                    ? "border-marke-orange ring-1 ring-marke-orange"
+                    : "border-rand hover:border-marke-gruen")
+                }
               >
+                {info.bestaetigungOffen && (
+                  // Zusätzlich als Text, nicht nur als Farbe (Farbenblindheit).
+                  <span className="mb-1 inline-flex items-center gap-1 rounded-full bg-marke-orange/15 px-2 py-0.5 text-[11px] font-medium text-ueberschrift">
+                    <Check className="h-3 w-3" aria-hidden /> Bestätigung offen
+                  </span>
+                )}
                 <p className="truncate text-[11px] text-tertiaer">
                   {info.absenderName}
                   {" · "}

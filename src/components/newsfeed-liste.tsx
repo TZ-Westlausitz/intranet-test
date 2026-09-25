@@ -75,7 +75,18 @@ export function NewsfeedListe({
             // shrink-0 verhindert, dass min-h-0 die Karten stattdessen
             // zusammendrückt/überlappen lässt. Kein Aufzählungspunkt
             // ohnehin sichtbar, daher block statt list-item unbedenklich.
-            <li key={info.id} className="block min-h-0 shrink-0 rounded-xl border border-rand bg-flaeche p-4">
+            // Orange Rand (1 px Rand + 1 px Ring = 2 px, ohne dass sich das
+            // Layout verschiebt), solange diese Person den Beitrag noch
+            // bestätigen muss — verschwindet mit der Bestätigung.
+            <li
+              key={info.id}
+              className={
+                "block min-h-0 shrink-0 rounded-xl border bg-flaeche p-4 " +
+                (info.mitBestaetigung && info.istEmpfaenger && !info.selbstBestaetigt && !info.nochNichtVeroeffentlicht
+                  ? "border-marke-orange ring-1 ring-marke-orange"
+                  : "border-rand")
+              }
+            >
               <div className="flex items-start gap-2">
                 <InfoAvatar
                   alsUnternehmen={info.alsUnternehmen}

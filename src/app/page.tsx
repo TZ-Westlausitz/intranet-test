@@ -169,6 +169,9 @@ export default async function Startseite() {
       kommentareAnzahl: info._count.kommentare,
       likeAnzahl: info.likeAnzahl,
       umfrage: info.umfrage !== null,
+      // Bestätigung steht noch aus — die Kachel hebt solche Beiträge
+      // orange hervor (siehe NewsfeedHomeKachel).
+      bestaetigungOffen: info.mitBestaetigung && info.istEmpfaenger && !info.selbstBestaetigt,
     }))
   // Handy-Startseite zeigt nur die 3 neuesten Infos direkt (kompakte,
   // natürlich mitscrollende Liste statt einer intern scrollenden Box wie
