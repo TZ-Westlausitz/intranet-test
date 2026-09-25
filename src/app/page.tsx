@@ -328,9 +328,9 @@ export default async function Startseite() {
           <div
             style={
               {
-                "--kachel-abstand": "min(2.25rem, 4vh)",
+                "--kachel-abstand": "min(2.25rem, 4dvh)",
                 "--kachel":
-                  "min(23rem, 33vh, calc((100vw - 3rem - 3 * var(--kachel-abstand)) / 4))",
+                  "min(23rem, 33dvh, calc((100vw - 3rem - 3 * var(--kachel-abstand)) / 4))",
               } as React.CSSProperties
             }
             className="m-auto grid grid-cols-[repeat(4,var(--kachel))] grid-rows-[repeat(2,var(--kachel))] gap-[var(--kachel-abstand)] portrait:m-0 portrait:mx-auto portrait:min-h-[42rem] portrait:w-full portrait:max-w-3xl portrait:flex-1 portrait:grid-cols-2 portrait:grid-rows-[minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1fr)]"

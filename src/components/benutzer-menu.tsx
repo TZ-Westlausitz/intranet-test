@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { ChevronDown } from "lucide-react"
 
+import { AdminModusSchalter } from "@/components/admin-modus-schalter"
 import { abmelden } from "@/lib/auth/aktionen"
 
 /**
@@ -25,15 +26,23 @@ import { abmelden } from "@/lib/auth/aktionen"
  * Admin-Modus an ist (siehe AdminModusSchalter) — dieselbe Erinnerung wie
  * die orange Baustein-Leiste im Root-Layout. Ebenfalls optional mit
  * Default `false`, nur die Desktop-Kopfzeile setzt ihn.
+ *
+ * `adminModusSchalterImMenu`: nur für Personen mit der Berechtigung "Admin".
+ * Zeigt den Admin-Modus-Schalter im Menü — aber nur im Hochformat (Tablet
+ * aufrecht), wo die Bausteine-Leiste keinen Platz mehr dafür hat und der
+ * Schalter dort ausgeblendet wird (siehe layout.tsx). Im Querformat bleibt
+ * er in der Leiste, dieser Eintrag ist dann per CSS unsichtbar.
  */
 export function BenutzerMenu({
   name,
   istAdmin = false,
   adminModusAktiv = false,
+  adminModusSchalterImMenu = false,
 }: {
   name: string
   istAdmin?: boolean
   adminModusAktiv?: boolean
+  adminModusSchalterImMenu?: boolean
 }) {
   const [offen, setOffen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -118,6 +127,12 @@ export function BenutzerMenu({
           >
             Kontaktstelle
           </Link>
+
+          {adminModusSchalterImMenu && (
+            <div className="hidden border-t border-rand px-2 py-2.5 portrait:block">
+              <AdminModusSchalter aktiv={adminModusAktiv} />
+            </div>
+          )}
 
           <form action={abmelden}>
             <button

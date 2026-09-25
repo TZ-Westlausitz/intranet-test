@@ -97,7 +97,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full font-sans">
         {/*
           Ab `md:` wird dieser Wrapper zur Flex-Spalte über genau eine
-          Bildschirmhöhe (h-screen, overflow-hidden) — Kopfzeile behält ihre
+          Bildschirmhöhe (h-dvh, overflow-hidden — dvh statt vh, damit im Safari-Tab die ein-/ausfahrende Adressleiste die Unterkante nicht abschneidet) — Kopfzeile behält ihre
           natürliche Höhe, der Seiteninhalt darunter bekommt den Rest
           (flex-1) und scrollt bei Bedarf nur INNERHALB dieses Bereichs statt
           die ganze Seite zu verlängern. Auf dem Handy bleibt der Wrapper ein
@@ -105,7 +105,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           das unveränderte Verhalten, das die mx-auto-Container der mobilen
           Seiten brauchen (siehe Kommentar unten zu body selbst).
         */}
-        <div className="md:flex md:h-screen md:flex-col md:overflow-hidden">
+        <div className="md:flex md:h-dvh md:flex-col md:overflow-hidden">
           {/* Grüner Akzentbalken ganz oben — auf dem Handy hier statt in
               Kopfleiste, damit er wie auf dem Desktop randlos über die volle
               Breite geht und nicht durch das "px-5" der Seiten eingerückt
@@ -124,7 +124,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             <div className="hidden shrink-0 md:block">
               <div className="h-1.5 bg-gradient-to-r from-marke-gruen via-marke-gruen-dunkel to-marke-orange dark:bg-none dark:bg-background" />
 
-              <div className="flex items-center justify-between border-b border-rand px-8 py-4">
+              <div className="flex items-center justify-between border-b border-rand px-8 py-4 portrait:px-5 portrait:py-2.5">
                 <Link href="/" aria-label="Zur Startseite">
                   {/* Zwei Bilder statt eines umgefärbten: das weiße Logo ist eine
                       eigene Datei (von Jonas bereitgestellt), keine reine
@@ -161,18 +161,24 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                     name={kontext.name}
                     istAdmin={kontext.berechtigungen.includes("Adminbereich")}
                     adminModusAktiv={kontext.adminModusAktiv}
+                    adminModusSchalterImMenu={kontext.berechtigungen.includes("Admin")}
                   />
                 </div>
               </div>
 
               <nav
                 aria-label="Bausteine"
-                className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-rand bg-flaeche-schwach px-8 py-3"
+                className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-rand bg-flaeche-schwach px-8 py-3 portrait:px-3 portrait:py-1.5"
               >
                 <BausteineLeiste adminModusAktiv={kontext.adminModusAktiv} />
 
+                {/* Im Hochformat sitzt der Schalter stattdessen im
+                    Benutzermenü (BenutzerMenu, adminModusSchalterImMenu) —
+                    hier würde er die Leiste in eine zweite Zeile drücken. */}
                 {kontext.berechtigungen.includes("Admin") && (
-                  <AdminModusSchalter aktiv={kontext.adminModusAktiv} />
+                  <div className="portrait:hidden">
+                    <AdminModusSchalter aktiv={kontext.adminModusAktiv} />
+                  </div>
                 )}
               </nav>
             </div>

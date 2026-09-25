@@ -22,8 +22,11 @@ import { abteilungErstellen, abteilungUmbenennen, abteilungAktivSetzen } from "@
  * Mitgliedschaften bzw. Zugehörigkeiten müssen ihre Gruppe/Abteilung
  * behalten.
  *
- * Nebeneinander statt untereinander (zwei Spalten ab `md:`) — so wie jede
- * Kachel mit zwei Inhalten ihre Unterseite aufbauen soll.
+ * Nebeneinander statt untereinander (zwei Spalten ab `md:` im Querformat) —
+ * so wie jede Kachel mit zwei Inhalten ihre Unterseite aufbauen soll. Im
+ * Hochformat (Tablet aufrecht) untereinander: die Abteilungs-Zeilen
+ * (Name, Kürzel, Speichern, Deaktivieren) brauchen mehr Breite, als eine
+ * halbe Spalte dort hat.
  *
  * `automatisch: false` filtert die eine Sonder-Gruppe "Alle" (siehe
  * Kommentar am Model Gruppe) aus dieser Verwaltungsliste heraus — die
@@ -42,7 +45,7 @@ export default async function GruppenUndAbteilungenSeite() {
       <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Gruppen &amp; Abteilungen</h1>
 
-      <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-8 md:landscape:grid-cols-2">
         <section>
           <h2 className="text-sm font-semibold text-primaer">Gruppen</h2>
 

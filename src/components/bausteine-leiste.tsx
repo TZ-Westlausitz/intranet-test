@@ -28,7 +28,7 @@ export function BausteineLeiste({ adminModusAktiv }: { adminModusAktiv: boolean 
   const bubbleHover = adminModusAktiv ? "hover:bg-marke-orange/10" : "hover:bg-marke-gruen/10"
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 portrait:gap-x-0.5">
       {BAUSTEINE.map((baustein) => {
         if (baustein.unterpunkte) {
           return (
@@ -60,7 +60,7 @@ export function BausteineLeiste({ adminModusAktiv }: { adminModusAktiv: boolean 
             key={baustein.name}
             href={baustein.href}
             className={
-              "rounded-full px-3 py-1 text-sm font-semibold transition " +
+              "rounded-full px-3 py-1 text-sm font-semibold transition portrait:px-2.5 " +
               textFarbe +
               " " +
               (aktiv ? bubbleAktiv : bubbleHover)

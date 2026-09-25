@@ -87,7 +87,11 @@ export default async function ChatKonversationSeite({ params }: { params: Promis
     : automatischeMitglieder
 
   return (
-    <main className="mx-auto flex h-[calc(100vh-2.5rem)] max-w-2xl flex-col px-5 py-10">
+    // Ab `md:` (Tablet/Desktop) füllt die Seite genau den Platz unter der
+    // festen Kopfzeile (`h-full` der Scrollfläche im Root-Layout). Die
+    // Handy-Höhe `100vh - 2.5rem` wäre dort um die Kopfzeile zu hoch — die
+    // Seite scrollte unnötig und die Eingabezeile saß knapp am Rand.
+    <main className="mx-auto flex h-[calc(100vh-2.5rem)] max-w-2xl flex-col px-5 py-10 md:h-full md:py-6">
       <Kopfleiste />
       <ChatKonversationMenuDialog
         titel={titel}
