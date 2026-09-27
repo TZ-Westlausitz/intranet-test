@@ -28,6 +28,23 @@ wann damit gefahren" bleibt außerhalb. Rechte: bearbeiten nur
 „Fahrzeuge lesen" (Verwaltung/Geschäftsführung), jede andere Person sieht
 nur die Fahrzeuge, bei denen sie Halter ist (`src/lib/fuhrpark/zugriff.ts`).
 
+*Erweiterung seit 2026-09-27:* TÜV-/Service-/Reifenwechsel-Termine laufen
+über einen Vorschlag-und-Annahme-Weg (Model `Fahrzeugterminvorschlag`,
+`src/lib/fuhrpark/aktionen.ts`) statt direkt gesetzter Daten: Die Werkstatt
+schlägt einen Termin vor, der Halter bekommt eine Benachrichtigung und nimmt
+an oder bittet um einen neuen Termin. Angenommene Termine bekommen einen
+echten Kalendereintrag (`Termin`/`TerminTeilnehmer`) für beide Seiten. Kein
+eigener „erledigt"-Knopf: Ein angenommener Termin gilt automatisch als
+durchgeführt, sobald die Werkstatt danach das nächste Fälligkeitsdatum
+einträgt (TÜV/Service) bzw. die Reifenart ändert (Reifenwechsel) — dieselbe
+Zeile ist dann zugleich der Historieneintrag ("letzter TÜV/Service/
+Reifenwechsel" im Fahrzeugprofil). Hat ein Fahrzeug keinen Halter (z. B. ein
+Praxisfahrzeug), regelt die Werkstatt Termine weiterhin direkt im
+Fahrzeug-bearbeiten-Formular, ohne diesen Abstimmungsweg. Personen ohne
+Fuhrpark-Berechtigung, aber mit eigenem Fahrzeug (Halter), sehen den
+Menüpunkt als „Mein Fahrzeug" statt „Fuhrpark" — bei genau einem Fahrzeug
+führt er direkt ins Profil (`fuhrparkNavigation()`).
+
 Abgebildet wird ausschließlich der Sonderfall: Ein Kollege, der sonst kein
 Fahrzeugführer ist, möchte ein Fahrzeug **privat** ausleihen — Umzug,
 Familienfeier, ein Wochenende. Er fragt den Werkstattleiter. Sagt der zu,

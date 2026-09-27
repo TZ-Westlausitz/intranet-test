@@ -53,7 +53,7 @@ export async function fahrzeugProfil(kontext: FuhrparkKontext, fahrzeugId: strin
   if (!fahrzeug) return null
   if (!darfAlleSehen && fahrzeug.halterId !== kontext.personId) return null
 
-  const [protokollSchaeden, ausleihen] = await Promise.all([
+  const [protokollSchaeden, ausleihen, terminvorschlaege] = await Promise.all([
     prisma.schaden.findMany({
       where: { protokoll: { ausleihe: { fahrzeugId } } },
       include: {
@@ -70,6 +70,14 @@ export async function fahrzeugProfil(kontext: FuhrparkKontext, fahrzeugId: strin
           orderBy: { geplantVon: "desc" },
         })
       : Promise.resolve([]),
+    prisma.fahrzeugterminvorschlag.findMany({
+      where: { fahrzeugId },
+      include: {
+        vorgeschlagenVon: { select: { vorname: true, nachname: true } },
+        empfaenger: { select: { vorname: true, nachname: true } },
+      },
+      orderBy: { datum: "desc" },
+    }),
   ])
 
   return {
@@ -86,6 +94,16 @@ export async function fahrzeugProfil(kontext: FuhrparkKontext, fahrzeugId: strin
       // Verweis auf die Ausleihe nur für die Werkstatt — sie darf den Vorgang öffnen.
       ausleiheId: darfBearbeiten ? s.protokoll.ausleihe.id : null,
       vorgangsnummer: darfBearbeiten ? s.protokoll.ausleihe.vorgangsnummer : null,
+    })),
+    // Offen (VORGESCHLAGEN): für Werkstatt und Halter sichtbar, damit die
+    // Entscheidung nicht verloren geht, falls die Benachrichtigung
+    // übersehen oder das Pop-up weggeklickt wurde.
+    offeneTerminvorschlaege: terminvorschlaege.filter((v) => v.status === "VORGESCHLAGEN"),
+    // Historie (ERLEDIGT): "letzter TÜV/Service/Reifenwechsel" — je Art nur
+    // der jüngste, weil genau danach gefragt wird (siehe Kommentar am Model).
+    terminHistorie: (["TUEV", "SERVICE", "REIFENWECHSEL"] as const).map((art) => ({
+      art,
+      letzter: terminvorschlaege.find((v) => v.art === art && v.status === "ERLEDIGT") ?? null,
     })),
   }
 }
@@ -124,17 +142,36 @@ export async function fuhrparkFristenWarnungen(kontext: FuhrparkKontext, grenze:
 
 /**
  * Für die Navigation: gibt es für diese Person überhaupt etwas im Fuhrpark
- * zu sehen (alle Fahrzeuge oder mindestens ein eigenes), und wie viele ihrer
- * sichtbaren Fahrzeuge haben eine überfällige oder bald fällige Frist.
- * Wer nichts sehen darf, bekommt den Menüpunkt gar nicht erst angezeigt.
+ * zu sehen, und wenn ja, wie soll der Menüpunkt heißen und wohin soll er
+ * führen? Wer alle Fahrzeuge sehen darf (Werkstatt, Lesende), bekommt
+ * "Fuhrpark" → die Liste. Wer nur als Halter eingetragen ist, aber keine
+ * der beiden Berechtigungen hat, bekommt stattdessen "Mein Fahrzeug" — bei
+ * genau einem Fahrzeug direkt dessen Profil, bei mehreren die (dann
+ * automatisch auf die eigenen gefilterte) Liste. Wer nichts von beidem hat,
+ * bekommt gar keinen Menüpunkt (`zugang: false`).
  */
 export async function fuhrparkNavigation(kontext: FuhrparkKontext) {
   const { darfAlleSehen } = fuhrparkRechte(kontext)
   const grenze = new Date(berlinerTagesbeginn().getTime() + FRIST_BALD_TAGE * 24 * 60 * 60 * 1000)
 
-  const [warnungen, eigene] = await Promise.all([
-    fuhrparkFristenWarnungen(kontext, grenze),
-    darfAlleSehen ? Promise.resolve(1) : prisma.fahrzeug.count({ where: { aktiv: true, halterId: kontext.personId } }),
-  ])
-  return { zugang: darfAlleSehen || eigene > 0, warnungen }
+  if (darfAlleSehen) {
+    const warnungen = await fuhrparkFristenWarnungen(kontext, grenze)
+    return { zugang: true, warnungen, label: "Fuhrpark", href: "/fuhrpark" }
+  }
+
+  const eigene = await prisma.fahrzeug.findMany({
+    where: { aktiv: true, halterId: kontext.personId },
+    select: { id: true, huFaelligAm: true, serviceFaelligAm: true },
+  })
+  if (eigene.length === 0) return { zugang: false, warnungen: 0, label: "Fuhrpark", href: "/fuhrpark" }
+
+  const warnungen = eigene.filter(
+    (f) => (f.huFaelligAm && f.huFaelligAm <= grenze) || (f.serviceFaelligAm && f.serviceFaelligAm <= grenze),
+  ).length
+  return {
+    zugang: true,
+    warnungen,
+    label: "Mein Fahrzeug",
+    href: eigene.length === 1 ? `/fuhrpark/${eigene[0].id}` : "/fuhrpark",
+  }
 }

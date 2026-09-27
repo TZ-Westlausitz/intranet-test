@@ -10,11 +10,17 @@ import {
   fahrzeugAktualisieren,
   fahrzeugschadenBehobenSetzen,
   fahrzeugschadenErfassen,
+  fahrzeugTerminVorschlagen,
+  fahrzeugTerminAnnehmen,
+  fahrzeugTerminNeuenSuchen,
 } from "@/lib/fuhrpark/aktionen"
-import { reifenHinweis, REIFENART_TEXT } from "@/lib/fuhrpark/fristen"
+import { reifenHinweis, REIFENART_TEXT, FAHRZEUGTERMIN_ART_TEXT } from "@/lib/fuhrpark/fristen"
 import { fuhrparkRechte } from "@/lib/fuhrpark/zugriff"
 import { FristAnzeige } from "@/components/fuhrpark/frist-anzeige"
+import { Schadensskizze } from "@/components/schadensskizze"
 import { FahrzeugFormularFelder } from "@/components/fuhrpark/fahrzeug-formular"
+import { TerminVorschlagenDialog } from "@/components/fuhrpark/termin-vorschlagen-dialog"
+import { TerminvorschlagKarte } from "@/components/fuhrpark/terminvorschlag-karte"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 
@@ -23,7 +29,9 @@ const FEHLER_TEXTE: Record<string, string> = {
   kennzeichenVergeben: "Dieses Kennzeichen gibt es bereits im Fuhrpark.",
   standortUngueltig: "Der gewählte Standort existiert nicht (mehr).",
   halterUngueltig: "Der gewählte Halter ist nicht (mehr) aktiv.",
-  schadenPflichtfeld: "Bitte Stelle und Beschreibung des Schadens angeben.",
+  schadenPflichtfeld: "Bitte mindestens eine Schadensstelle in der Skizze markieren und beschreiben.",
+  keinHalter: "Dieses Fahrzeug hat keinen Halter — bitte das Datum direkt unten in „Fahrzeug bearbeiten“ eintragen.",
+  terminPflichtfeld: "Bitte Art und Datum des Termins angeben.",
 }
 
 const RICHTUNG_TEXT: Record<string, string> = { AUSGABE: "Übergabe", RUECKNAHME: "Rücknahme" }
@@ -44,16 +52,17 @@ export default async function FahrzeugProfilSeite({
   searchParams,
 }: {
   params: Promise<{ fahrzeugId: string }>
-  searchParams: Promise<{ fehler?: string }>
+  searchParams: Promise<{ fehler?: string; vorschlag?: string }>
 }) {
   const kontext = await berechtigung()
   const { fahrzeugId } = await params
-  const { fehler } = await searchParams
+  const { fehler, vorschlag: hervorgehobenerVorschlagId } = await searchParams
 
   const profil = await fahrzeugProfil(kontext, fahrzeugId)
   if (!profil) notFound()
 
-  const { fahrzeug, ausleihen, protokollSchaeden, darfMietverlaufSehen } = profil
+  const { fahrzeug, ausleihen, protokollSchaeden, darfMietverlaufSehen, offeneTerminvorschlaege, terminHistorie } =
+    profil
   const { darfBearbeiten } = fuhrparkRechte(kontext)
   const eigenerHalter = fahrzeug.halterId === kontext.personId
   const darfSchadenErfassen = darfBearbeiten || eigenerHalter
@@ -139,7 +148,12 @@ export default async function FahrzeugProfilSeite({
       </section>
 
       <section className="mt-4 rounded-xl border border-rand bg-flaeche p-4">
-        <h2 className="text-sm font-semibold text-ueberschrift">Fristen und Reifen</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-sm font-semibold text-ueberschrift">Termine und Reifen</h2>
+          {darfBearbeiten && fahrzeug.halterId && (
+            <TerminVorschlagenDialog aktion={fahrzeugTerminVorschlagen.bind(null, fahrzeug.id)} />
+          )}
+        </div>
         <div className="mt-2 flex flex-wrap gap-2">
           <FristAnzeige label="TÜV" faelligAm={fahrzeug.huFaelligAm} heute={heute} />
           <FristAnzeige label="Service" faelligAm={fahrzeug.serviceFaelligAm} heute={heute} />
@@ -148,6 +162,52 @@ export default async function FahrzeugProfilSeite({
           </span>
         </div>
         {hinweis && <p className="mt-2 text-xs text-sekundaer">{hinweis}</p>}
+        {darfBearbeiten && !fahrzeug.halterId && (
+          <p className="mt-2 text-xs text-tertiaer">
+            Kein Halter eingetragen — Termine bitte direkt unten in „Fahrzeug bearbeiten“ eintragen.
+          </p>
+        )}
+
+        {offeneTerminvorschlaege.length > 0 && (
+          <>
+            <h3 className="mt-4 text-xs font-semibold tracking-wide text-sekundaer uppercase">Offene Terminvorschläge</h3>
+            <ul className="mt-2 flex flex-col gap-2">
+              {offeneTerminvorschlaege.map((v) => (
+                <TerminvorschlagKarte
+                  key={v.id}
+                  vorschlag={{
+                    id: v.id,
+                    art: v.art,
+                    artText: FAHRZEUGTERMIN_ART_TEXT[v.art] ?? v.art,
+                    datum: v.datum,
+                    fahrzeugText: `${fahrzeug.bezeichnung} (${fahrzeug.kennzeichen})`,
+                    vorgeschlagenVonName: `${v.vorgeschlagenVon.vorname} ${v.vorgeschlagenVon.nachname}`,
+                    darfEntscheiden: v.empfaengerId === kontext.personId,
+                  }}
+                  annehmenAktion={fahrzeugTerminAnnehmen}
+                  neuenTerminAktion={fahrzeugTerminNeuenSuchen}
+                  autoOeffnen={v.id === hervorgehobenerVorschlagId}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+
+        <h3 className="mt-4 text-xs font-semibold tracking-wide text-sekundaer uppercase">Letzte Termine</h3>
+        <table className="mt-2 w-full text-left text-sm">
+          <tbody>
+            {terminHistorie.map(({ art, letzter }) => (
+              <tr key={art} className="border-b border-flaeche-100 last:border-0">
+                <th scope="row" className="py-1.5 pr-3 font-medium text-primaer">
+                  {FAHRZEUGTERMIN_ART_TEXT[art]}
+                </th>
+                <td className="py-1.5 text-sekundaer">
+                  {letzter ? formatiereDatumAusDate(letzter.datum) : "noch keiner dokumentiert"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
 
       <section className="mt-4 rounded-xl border border-rand bg-flaeche p-4">
@@ -233,17 +293,13 @@ export default async function FahrzeugProfilSeite({
         )}
 
         {darfSchadenErfassen && (
-          <details className="mt-4 rounded-lg border border-rand px-3 py-2">
+          <details className="mt-4 rounded-lg border border-rand px-3 py-2" open={fehler === "schadenPflichtfeld"}>
             <summary className="cursor-pointer text-sm font-medium text-primaer">Schaden erfassen</summary>
             <form action={fahrzeugschadenErfassen.bind(null, fahrzeug.id)} className="mt-3 flex flex-col gap-3">
-              <label className="flex flex-col gap-1 text-sm font-medium text-primaer">
-                Stelle am Fahrzeug
-                <input name="position" required placeholder="z. B. Stoßstange hinten links" className="h-10 rounded-lg border border-flaeche-300 bg-flaeche px-3 text-sm" />
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-primaer">
-                Beschreibung
-                <textarea name="beschreibung" required rows={3} className="rounded-lg border border-flaeche-300 bg-flaeche px-3 py-2 text-sm" />
-              </label>
+              <p className="text-sm text-sekundaer">
+                Auf die Skizze tippen, um eine Schadensstelle zu markieren — wie beim Übergabeprotokoll.
+              </p>
+              <Schadensskizze name="schadenspunkte" />
               <label className="flex flex-col gap-1 text-sm font-medium text-primaer">
                 Festgestellt am
                 <input type="date" name="festgestelltAm" defaultValue={datumIsoAusDate(heute)} className="h-10 rounded-lg border border-flaeche-300 bg-flaeche px-3 text-sm" />

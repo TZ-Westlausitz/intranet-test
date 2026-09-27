@@ -73,10 +73,10 @@ export default async function MenuSeite() {
         </Link>
         {fuhrpark.zugang && (
           <Link
-            href="/fuhrpark"
+            href={fuhrpark.href}
             className="flex items-center justify-between border-b border-rand px-4 py-3 text-sm text-primaer transition hover:bg-marke-gruen/5"
           >
-            Fuhrpark
+            {fuhrpark.label}
             {fuhrpark.warnungen > 0 && (
               <span
                 aria-label={`${fuhrpark.warnungen} anstehende Fristen`}

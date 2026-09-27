@@ -1,8 +1,14 @@
 export type BausteinUnterpunkt = {
   name: string
   href: string
-  /** Nur anzeigen, wenn die Person im Fuhrpark etwas sehen darf (siehe fuhrparkNavigation). */
-  nurMitFuhrpark?: boolean
+  /**
+   * Dieser Eintrag ist der Fuhrpark-Punkt: Name, Ziel und Zähler kommen zur
+   * Laufzeit aus fuhrparkNavigation() statt aus dieser festen Liste — je
+   * nach Berechtigung heißt er "Fuhrpark" (alle Fahrzeuge) oder "Mein
+   * Fahrzeug" (nur der eigene Halter-Bezug), und fehlt ganz, wenn die
+   * Person nichts von beidem hat.
+   */
+  istFuhrparkPunkt?: boolean
   /** Laufzeitwert für einen kleinen Zähler (z. B. fällige Fristen) — kommt nicht aus BAUSTEINE selbst. */
   badge?: number
 }
@@ -53,7 +59,7 @@ export const BAUSTEINE: BausteinEintrag[] = [
     name: "Weiteres",
     unterpunkte: [
       { name: "Fahrzeuge", href: "/fahrzeug-mieten" },
-      { name: "Fuhrpark", href: "/fuhrpark", nurMitFuhrpark: true },
+      { name: "Fuhrpark", href: "/fuhrpark", istFuhrparkPunkt: true },
       { name: "Geplante Aktionen", href: "/geplante-aktionen" },
     ],
   },

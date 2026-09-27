@@ -80,3 +80,9 @@ export const REIFENART_TEXT: Record<string, string> = {
   WINTER: "Winterreifen",
   GANZJAHR: "Ganzjahresreifen",
 }
+
+export const FAHRZEUGTERMIN_ART_TEXT: Record<string, string> = {
+  TUEV: "TÜV",
+  SERVICE: "Service",
+  REIFENWECHSEL: "Reifenwechsel",
+}

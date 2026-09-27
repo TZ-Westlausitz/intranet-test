@@ -26,8 +26,8 @@ export function BausteineLeiste({
   fuhrpark,
 }: {
   adminModusAktiv: boolean
-  /** Ob der Fuhrpark-Punkt erscheint und wie viele Fristen anstehen (siehe fuhrparkNavigation). */
-  fuhrpark: { zugang: boolean; warnungen: number }
+  /** Name/Ziel/Zähler für den Fuhrpark-Punkt (siehe fuhrparkNavigation) — fehlt der Punkt ganz, wenn `zugang` false ist. */
+  fuhrpark: { zugang: boolean; warnungen: number; label: string; href: string }
 }) {
   const pathname = usePathname()
   const textFarbe = adminModusAktiv ? "text-marke-orange" : "text-marke-gruen-dunkel"
@@ -43,8 +43,12 @@ export function BausteineLeiste({
               key={baustein.name}
               name={baustein.name}
               unterpunkte={baustein.unterpunkte
-                .filter((punkt) => !punkt.nurMitFuhrpark || fuhrpark.zugang)
-                .map((punkt) => (punkt.nurMitFuhrpark ? { ...punkt, badge: fuhrpark.warnungen } : punkt))}
+                .filter((punkt) => !punkt.istFuhrparkPunkt || fuhrpark.zugang)
+                .map((punkt) =>
+                  punkt.istFuhrparkPunkt
+                    ? { ...punkt, name: fuhrpark.label, href: fuhrpark.href, badge: fuhrpark.warnungen }
+                    : punkt,
+                )}
               aktiv={baustein.unterpunkte.some((punkt) => istAktiv(punkt.href, pathname))}
               adminModusAktiv={adminModusAktiv}
             />

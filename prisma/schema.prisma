@@ -215,28 +215,30 @@ model Person {
   erstelltAm     DateTime @default(now())
   aktualisiertAm DateTime @updatedAt
 
-  zugehoerigkeiten          Zugehoerigkeit[]
-  ausleihenAlsEntleiher     Ausleihe[]               @relation("Entleiher")
-  ausleihenEntschieden      Ausleihe[]               @relation("Entscheider")
-  fahrzeugeAlsHalter        Fahrzeug[]               @relation("FahrzeugHalter")
-  fahrzeugschaedenGemeldet  Fahrzeugschaden[]        @relation("FahrzeugschadenMelder")
-  vereinbarungen            Vereinbarung[]           @relation("VereinbarungFirma")
-  protokolle                Uebergabeprotokoll[]     @relation("ProtokollDurchfuehrer")
-  fuehrerscheinpruefungen   Fuehrerscheinkontrolle[] @relation("FsPruefer")
-  freigaben                 Dokumentversion[]        @relation("Freigeber")
-  abrechnungsposten         Abrechnungsposten[]      @relation("PostenErsteller")
-  protokolleintraege        Protokoll[]              @relation("Akteur")
-  termineErstellt           Termin[]                 @relation("TerminErsteller")
-  terminTeilnahmen          TerminTeilnehmer[]
-  benachrichtigungen        Benachrichtigung[]
-  terminAnhaengeHochgeladen TerminAnhang[]           @relation("TerminAnhangHochlader")
-  terminKommentare          TerminKommentar[]        @relation("TerminKommentarAutor")
-  aufgaben                  Aufgabe[]                @relation("AufgabePerson")
-  auftraegeErstellt         Auftrag[]                @relation("AuftragErsteller")
-  auftraegeZugewiesen       Auftrag[]                @relation("AuftragZugewiesen")
-  auftragKommentare         AuftragKommentar[]       @relation("AuftragKommentarAutor")
-  gruppen                   PersonGruppe[]
-  berechtigungen            PersonBerechtigung[]
+  zugehoerigkeiten             Zugehoerigkeit[]
+  ausleihenAlsEntleiher        Ausleihe[]                @relation("Entleiher")
+  ausleihenEntschieden         Ausleihe[]                @relation("Entscheider")
+  fahrzeugeAlsHalter           Fahrzeug[]                @relation("FahrzeugHalter")
+  fahrzeugschaedenGemeldet     Fahrzeugschaden[]         @relation("FahrzeugschadenMelder")
+  fahrzeugTermineVorgeschlagen Fahrzeugterminvorschlag[] @relation("FahrzeugterminVorschlagend")
+  fahrzeugTermineEmpfangen     Fahrzeugterminvorschlag[] @relation("FahrzeugterminEmpfaenger")
+  vereinbarungen               Vereinbarung[]            @relation("VereinbarungFirma")
+  protokolle                   Uebergabeprotokoll[]      @relation("ProtokollDurchfuehrer")
+  fuehrerscheinpruefungen      Fuehrerscheinkontrolle[]  @relation("FsPruefer")
+  freigaben                    Dokumentversion[]         @relation("Freigeber")
+  abrechnungsposten            Abrechnungsposten[]       @relation("PostenErsteller")
+  protokolleintraege           Protokoll[]               @relation("Akteur")
+  termineErstellt              Termin[]                  @relation("TerminErsteller")
+  terminTeilnahmen             TerminTeilnehmer[]
+  benachrichtigungen           Benachrichtigung[]
+  terminAnhaengeHochgeladen    TerminAnhang[]            @relation("TerminAnhangHochlader")
+  terminKommentare             TerminKommentar[]         @relation("TerminKommentarAutor")
+  aufgaben                     Aufgabe[]                 @relation("AufgabePerson")
+  auftraegeErstellt            Auftrag[]                 @relation("AuftragErsteller")
+  auftraegeZugewiesen          Auftrag[]                 @relation("AuftragZugewiesen")
+  auftragKommentare            AuftragKommentar[]        @relation("AuftragKommentarAutor")
+  gruppen                      PersonGruppe[]
+  berechtigungen               PersonBerechtigung[]
 
   // --- Projekte (dritter Unterbereich von "Aufgaben") ----------------------
   aufgabenErstelltImProjekt   Aufgabe[]          @relation("AufgabeErstellerProjekt")
@@ -544,10 +546,11 @@ model Fahrzeug {
   /// Aktuell montierte Reifen. Reine Angabe, keine Wechsel-Historie.
   reifenart Reifenart?
 
-  standort  Standort?         @relation(fields: [standortId], references: [id])
-  halter    Person?           @relation("FahrzeugHalter", fields: [halterId], references: [benutzername])
-  ausleihen Ausleihe[]
-  schaeden  Fahrzeugschaden[]
+  standort          Standort?                 @relation(fields: [standortId], references: [id])
+  halter            Person?                   @relation("FahrzeugHalter", fields: [halterId], references: [benutzername])
+  ausleihen         Ausleihe[]
+  schaeden          Fahrzeugschaden[]
+  terminvorschlaege Fahrzeugterminvorschlag[]
 
   @@index([fuerPrivatausleiheFreigegeben, aktiv])
   @@index([halterId])
@@ -582,6 +585,58 @@ model Fahrzeugschaden {
   gemeldetVon Person   @relation("FahrzeugschadenMelder", fields: [gemeldetVonId], references: [benutzername])
 
   @@index([fahrzeugId, behobenAm])
+}
+
+enum FahrzeugterminArt {
+  TUEV
+  SERVICE
+  REIFENWECHSEL
+}
+
+enum FahrzeugterminStatus {
+  /// Benachrichtigung ist raus, wartet auf Reaktion des Halters.
+  VORGESCHLAGEN
+  /// Halter wollte diesen Termin nicht — die Werkstatt schlägt einen neuen vor.
+  ABGELEHNT
+  /// Beide Seiten haben sich auf `datum` geeinigt — dafür existiert `terminId`.
+  ANGENOMMEN
+  /// Das entsprechende Fahrzeugfeld wurde seither neu gepflegt (siehe
+  /// fahrzeugAktualisieren) — gilt damit als durchgeführt und zählt in der
+  /// Terminhistorie ("letzter TÜV/Service/Reifenwechsel").
+  ERLEDIGT
+}
+
+/// Ein von der Werkstatt vorgeschlagener TÜV-/Service-/Reifenwechsel-Termin
+/// für ein Fahrzeug mit Halter — der Halter nimmt an oder bittet um einen
+/// neuen Termin. Angenommene Termine bekommen einen echten Kalendereintrag
+/// (`terminId`), an dem beide Seiten teilnehmen. `erledigtAm` wird NICHT
+/// manuell gesetzt, sondern automatisch, sobald jemand das betroffene
+/// Fahrzeugfeld neu einträgt (nächstes Fälligkeitsdatum bzw. geänderte
+/// Reifenart, siehe fahrzeugAktualisieren) — dieselbe Vorschlagszeile ist
+/// damit zugleich der Historieneintrag, kein separates Modell nötig.
+model Fahrzeugterminvorschlag {
+  id         String               @id @default(cuid())
+  fahrzeugId String
+  art        FahrzeugterminArt
+  /// Vorgeschlagener bzw. (nach Annahme) verbindlicher Kalendertag.
+  datum      DateTime
+  status     FahrzeugterminStatus @default(VORGESCHLAGEN)
+
+  vorgeschlagenVonId String
+  empfaengerId       String
+  /// Gesetzt, sobald angenommen.
+  terminId           String?   @unique
+  erstelltAm         DateTime  @default(now())
+  entschiedenAm      DateTime?
+  erledigtAm         DateTime?
+
+  fahrzeug         Fahrzeug @relation(fields: [fahrzeugId], references: [id])
+  vorgeschlagenVon Person   @relation("FahrzeugterminVorschlagend", fields: [vorgeschlagenVonId], references: [benutzername])
+  empfaenger       Person   @relation("FahrzeugterminEmpfaenger", fields: [empfaengerId], references: [benutzername])
+  termin           Termin?  @relation(fields: [terminId], references: [id])
+
+  @@index([fahrzeugId, art, status])
+  @@index([empfaengerId, status])
 }
 
 // =============================================================================
@@ -880,11 +935,12 @@ model Termin {
   erstelltVonId String
   erstelltAm    DateTime @default(now())
 
-  erstelltVon  Person             @relation("TerminErsteller", fields: [erstelltVonId], references: [benutzername])
-  teilnehmer   TerminTeilnehmer[]
-  erinnerungen TerminErinnerung[]
-  anhaenge     TerminAnhang[]
-  kommentare   TerminKommentar[]
+  erstelltVon             Person                   @relation("TerminErsteller", fields: [erstelltVonId], references: [benutzername])
+  teilnehmer              TerminTeilnehmer[]
+  erinnerungen            TerminErinnerung[]
+  anhaenge                TerminAnhang[]
+  kommentare              TerminKommentar[]
+  fahrzeugterminvorschlag Fahrzeugterminvorschlag?
 
   @@index([erstelltVonId])
   @@index([beginn])

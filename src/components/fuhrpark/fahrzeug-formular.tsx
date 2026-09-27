@@ -24,6 +24,8 @@ export type FahrzeugStandardwerte = {
   aktiv: boolean
 }
 
+const KRAFTSTOFFARTEN = ["Super", "Super Plus", "Diesel", "Elektro"]
+
 const FELD = "h-10 w-full rounded-lg border border-flaeche-300 bg-flaeche px-3 text-sm"
 const LABEL = "flex flex-col gap-1 text-sm font-medium text-primaer"
 
@@ -134,11 +136,19 @@ export function FahrzeugFormularFelder({
           </label>
           <label className={LABEL}>
             Kraftstoff
-            <input name="kraftstoffart" defaultValue={standard?.kraftstoffart ?? ""} placeholder="z. B. Diesel" className={FELD} />
+            <select name="kraftstoffart" defaultValue={standard?.kraftstoffart ?? ""} className={FELD}>
+              <option value="">— nicht angegeben —</option>
+              {KRAFTSTOFFARTEN.map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+            </select>
           </label>
           <label className={LABEL}>
             Tankgröße (Liter)
             <input type="number" min={1} name="tankgroesseLiter" defaultValue={standard?.tankgroesseLiter ?? ""} className={FELD} />
+            <span className="text-xs font-normal text-tertiaer">Bei Elektrofahrzeugen leer lassen.</span>
           </label>
         </div>
         <label className={LABEL}>

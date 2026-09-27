@@ -65,7 +65,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         meineKonversationen(kontext),
         fuhrparkNavigation(kontext),
       ])
-    : [[], 0, [], { zugang: false, warnungen: 0 }];
+    : [[], 0, [], { zugang: false, warnungen: 0, label: "Fuhrpark", href: "/fuhrpark" }];
   // Archivierte Konversationen (Rückmeldung 2026-09-24) gehören nicht ins
   // Schnellzugriffs-Widget — wer sie aus der Liste geräumt hat, soll sie
   // hier nicht wiedersehen, solange keine neue Nachricht eintrifft (siehe
