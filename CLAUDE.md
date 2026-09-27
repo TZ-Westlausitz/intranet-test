@@ -12,7 +12,21 @@ Wenn eine Abkürzung Verständlichkeit kostet, nimm die Abkürzung nicht.
 
 Die Firma hat Transporter (VW Multivan, Crafter), die unter der Woche
 betrieblich für Personen-, Material- und Rollstuhltransport laufen.
-**Dieser betriebliche Betrieb ist nicht Teil dieses Systems.**
+**Dieser betriebliche Betrieb (wer fährt wann) ist nicht Teil dieses Systems.**
+
+*Erweiterung seit 2026-09-26 („Fuhrpark", `/fuhrpark`):* Zusätzlich zur
+privaten Ausleihe verwaltet das System jetzt **alle Firmenfahrzeuge als
+Stammdaten** — Zuordnung (Standort, Halter/Verantwortliche Person, Hinweis
+wie „1-%-Regelung"), Fristen (TÜV, Service, Reifenart) und Schäden, auch
+außerhalb von Mietfahrten. Anlass: in der Vergangenheit gab es Probleme mit
+der Zuordnung und versäumten TÜV-/Service-Terminen. Die Checkbox
+`Fahrzeug.fuerPrivatausleiheFreigegeben` entscheidet, ob ein Fahrzeug zum
+Mietpark gehört. **Weiterhin ausgeschlossen:** Fahrtenbuch, Fahrten, Zeiten
+und Orte (Regel 10) — „wem gehört das Fahrzeug" ist ein Stammdatum, „wer ist
+wann damit gefahren" bleibt außerhalb. Rechte: bearbeiten nur
+„Werkstattleiter" (und „Adminbereich"), alle Fahrzeuge lesen zusätzlich mit
+„Fahrzeuge lesen" (Verwaltung/Geschäftsführung), jede andere Person sieht
+nur die Fahrzeuge, bei denen sie Halter ist (`src/lib/fuhrpark/zugriff.ts`).
 
 Abgebildet wird ausschließlich der Sonderfall: Ein Kollege, der sonst kein
 Fahrzeugführer ist, möchte ein Fahrzeug **privat** ausleihen — Umzug,

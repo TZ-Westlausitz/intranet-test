@@ -60,6 +60,9 @@ export function BausteinMehrMenu({
         }
       >
         {name}
+        {unterpunkte.some((punkt) => (punkt.badge ?? 0) > 0) && (
+          <span aria-hidden className="h-2 w-2 rounded-full bg-marke-orange" />
+        )}
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -88,6 +91,14 @@ export function BausteinMehrMenu({
               className="block px-4 py-2 text-sm font-medium text-primaer transition hover:bg-marke-gruen/10"
             >
               {punkt.name}
+              {(punkt.badge ?? 0) > 0 && (
+                <span
+                  aria-label={`${punkt.badge} anstehende Fristen`}
+                  className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
+                >
+                  {punkt.badge}
+                </span>
+              )}
             </Link>
           ))}
         </div>

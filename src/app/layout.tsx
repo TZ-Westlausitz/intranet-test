@@ -10,6 +10,7 @@ import { ChatWidget } from "@/components/chat-widget";
 import { DesktopSchnellmenu } from "@/components/desktop-schnellmenu";
 import { AdminModusSchalter } from "@/components/admin-modus-schalter";
 import { BausteineLeiste } from "@/components/bausteine-leiste";
+import { fuhrparkNavigation } from "@/lib/fuhrpark/abfragen";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
 import { MobileSchnellmenu } from "@/components/mobile-schnellmenu";
 import { neuesteBenachrichtigungen, ungeleseneAnzahl } from "@/lib/benachrichtigungen/abfragen";
@@ -57,13 +58,14 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // fällt dann einfach weg, statt die Seite mit einem Fehler abzubrechen.
   const kontext = await kontextOderNull();
 
-  const [benachrichtigungenRoh, anzahlUngelesen, chatKonversationenRoh] = kontext
+  const [benachrichtigungenRoh, anzahlUngelesen, chatKonversationenRoh, fuhrpark] = kontext
     ? await Promise.all([
         neuesteBenachrichtigungen(kontext.personId),
         ungeleseneAnzahl(kontext.personId),
         meineKonversationen(kontext),
+        fuhrparkNavigation(kontext),
       ])
-    : [[], 0, []];
+    : [[], 0, [], { zugang: false, warnungen: 0 }];
   // Archivierte Konversationen (Rückmeldung 2026-09-24) gehören nicht ins
   // Schnellzugriffs-Widget — wer sie aus der Liste geräumt hat, soll sie
   // hier nicht wiedersehen, solange keine neue Nachricht eintrifft (siehe
@@ -170,7 +172,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
                 aria-label="Bausteine"
                 className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-rand bg-flaeche-schwach px-8 py-3 portrait:px-3 portrait:py-1.5"
               >
-                <BausteineLeiste adminModusAktiv={kontext.adminModusAktiv} />
+                <BausteineLeiste adminModusAktiv={kontext.adminModusAktiv} fuhrpark={fuhrpark} />
 
                 {/* Im Hochformat sitzt der Schalter stattdessen im
                     Benutzermenü (BenutzerMenu, adminModusSchalterImMenu) —

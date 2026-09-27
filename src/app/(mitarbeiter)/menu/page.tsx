@@ -7,6 +7,7 @@ import { BenachrichtigungenListe } from "@/components/benachrichtigungen-liste"
 import { neuesteBenachrichtigungen, ungeleseneAnzahl } from "@/lib/benachrichtigungen/abfragen"
 import { benachrichtigungenAlsGelesenMarkieren } from "@/lib/benachrichtigungen/aktionen"
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
+import { fuhrparkNavigation } from "@/lib/fuhrpark/abfragen"
 
 /**
  * Vollseiten-Menü für das Handy (Rückmeldung 2026-09-15, mobile
@@ -26,9 +27,10 @@ import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
 export default async function MenuSeite() {
   const kontext = await berechtigung()
 
-  const [benachrichtigungenRoh, anzahlUngelesen] = await Promise.all([
+  const [benachrichtigungenRoh, anzahlUngelesen, fuhrpark] = await Promise.all([
     neuesteBenachrichtigungen(kontext.personId),
     ungeleseneAnzahl(kontext.personId),
+    fuhrparkNavigation(kontext),
   ])
 
   const benachrichtigungen = benachrichtigungenRoh.map((b) => ({
@@ -69,6 +71,22 @@ export default async function MenuSeite() {
         <Link href="/wissen" className="border-b border-rand px-4 py-3 text-sm text-primaer transition hover:bg-marke-gruen/5">
           Wissen
         </Link>
+        {fuhrpark.zugang && (
+          <Link
+            href="/fuhrpark"
+            className="flex items-center justify-between border-b border-rand px-4 py-3 text-sm text-primaer transition hover:bg-marke-gruen/5"
+          >
+            Fuhrpark
+            {fuhrpark.warnungen > 0 && (
+              <span
+                aria-label={`${fuhrpark.warnungen} anstehende Fristen`}
+                className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
+              >
+                {fuhrpark.warnungen}
+              </span>
+            )}
+          </Link>
+        )}
         <Link
           href="/einstellungen"
           className="border-b border-rand px-4 py-3 text-sm text-primaer transition hover:bg-marke-gruen/5"

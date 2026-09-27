@@ -21,7 +21,14 @@ function istAktiv(href: string, pathname: string): boolean {
  * 2026-09-11). `adminModusAktiv` färbt Schrift/Bubble orange statt grün,
  * dieselbe Erinnerung wie überall sonst im Admin-Modus.
  */
-export function BausteineLeiste({ adminModusAktiv }: { adminModusAktiv: boolean }) {
+export function BausteineLeiste({
+  adminModusAktiv,
+  fuhrpark,
+}: {
+  adminModusAktiv: boolean
+  /** Ob der Fuhrpark-Punkt erscheint und wie viele Fristen anstehen (siehe fuhrparkNavigation). */
+  fuhrpark: { zugang: boolean; warnungen: number }
+}) {
   const pathname = usePathname()
   const textFarbe = adminModusAktiv ? "text-marke-orange" : "text-marke-gruen-dunkel"
   const bubbleAktiv = adminModusAktiv ? "bg-marke-orange/20" : "bg-marke-gruen/15"
@@ -35,7 +42,9 @@ export function BausteineLeiste({ adminModusAktiv }: { adminModusAktiv: boolean 
             <BausteinMehrMenu
               key={baustein.name}
               name={baustein.name}
-              unterpunkte={baustein.unterpunkte}
+              unterpunkte={baustein.unterpunkte
+                .filter((punkt) => !punkt.nurMitFuhrpark || fuhrpark.zugang)
+                .map((punkt) => (punkt.nurMitFuhrpark ? { ...punkt, badge: fuhrpark.warnungen } : punkt))}
               aktiv={baustein.unterpunkte.some((punkt) => istAktiv(punkt.href, pathname))}
               adminModusAktiv={adminModusAktiv}
             />

@@ -102,6 +102,10 @@ const BERECHTIGUNGEN = [
   "Adminbereich",
   "Aufgaben",
   "Bearbeiten",
+  // Rein lesender Zugriff auf den gesamten Fuhrpark (alle Fahrzeuge, Fristen,
+  // Schäden, Mietverlauf) — für Verwaltung und Geschäftsführung. Bearbeiten
+  // darf weiterhin nur "Werkstattleiter".
+  "Fahrzeuge lesen",
   "Infos",
   "Löschen & Bearbeiten",
   "Meldestelle",

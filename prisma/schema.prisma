@@ -218,6 +218,8 @@ model Person {
   zugehoerigkeiten          Zugehoerigkeit[]
   ausleihenAlsEntleiher     Ausleihe[]               @relation("Entleiher")
   ausleihenEntschieden      Ausleihe[]               @relation("Entscheider")
+  fahrzeugeAlsHalter        Fahrzeug[]               @relation("FahrzeugHalter")
+  fahrzeugschaedenGemeldet  Fahrzeugschaden[]        @relation("FahrzeugschadenMelder")
   vereinbarungen            Vereinbarung[]           @relation("VereinbarungFirma")
   protokolle                Uebergabeprotokoll[]     @relation("ProtokollDurchfuehrer")
   fuehrerscheinpruefungen   Fuehrerscheinkontrolle[] @relation("FsPruefer")
@@ -516,10 +518,70 @@ model Fahrzeug {
   standortId String?
   aktiv      Boolean @default(true)
 
-  standort  Standort?  @relation(fields: [standortId], references: [id])
+  // --- Fuhrpark (Ausbau 2026-09-26) -----------------------------------------
+  // Alle Firmenfahrzeuge sollen im System stehen, nicht nur die privat
+  // ausleihbaren (Checkbox `fuerPrivatausleiheFreigegeben` oben). Zuordnung
+  // bewusst nur als STAMMDATUM: wem das Fahrzeug gehört bzw. wo es steht.
+  // KEIN Fahrtenbuch, keine Fahrten, keine Zeiten — Regel 10.
+
+  /// Halter bzw. verantwortliche Person (z. B. die Praxisleitung bei einem
+  /// Standort-Fahrzeug). Sieht "ihr" Fahrzeug im Fuhrpark und bekommt
+  /// später die Erinnerungen zu TÜV/Service. Leer, wenn niemand fest
+  /// zuständig ist — dann gilt nur der Standort.
+  halterId         String?
+  /// Freitext zur Zuordnung, z. B. "1-%-Regelung" oder "Praxisfahrzeug
+  /// für alle Therapeuten (Hausbesuche)". Personenbezogen (Steuerthema) —
+  /// nur für Werkstattleiter/Lesende und den Halter sichtbar.
+  zuordnungHinweis String?
+
+  /// Nächster Termin der Hauptuntersuchung (TÜV) bzw. der Inspektion — als
+  /// Kalendertag, wie überall im Projekt als UTC-Mitternacht des Berliner
+  /// Tages gespeichert (siehe src/lib/datum.ts). Kein Verlauf: nach dem
+  /// Termin wird das neue Datum eingetragen.
+  huFaelligAm      DateTime?
+  serviceFaelligAm DateTime?
+
+  /// Aktuell montierte Reifen. Reine Angabe, keine Wechsel-Historie.
+  reifenart Reifenart?
+
+  standort  Standort?         @relation(fields: [standortId], references: [id])
+  halter    Person?           @relation("FahrzeugHalter", fields: [halterId], references: [benutzername])
   ausleihen Ausleihe[]
+  schaeden  Fahrzeugschaden[]
 
   @@index([fuerPrivatausleiheFreigegeben, aktiv])
+  @@index([halterId])
+  @@index([standortId])
+}
+
+enum Reifenart {
+  SOMMER
+  WINTER
+  GANZJAHR
+}
+
+/// Schaden am Fahrzeug, unabhängig von einer Mietfahrt (Parkrempler,
+/// Steinschlag, Wildschaden …). Die Schäden AUS Übergabeprotokollen
+/// (Model Schaden) bleiben unverändert dort, append-only — das Fahrzeugprofil
+/// zeigt beide Arten gemeinsam an. Dieses Model ist dagegen normal
+/// bearbeitbar (z. B. "behoben" setzen), es ist keine Protokoll-Nachweis-
+/// Tabelle im Sinn der Regel 2.
+model Fahrzeugschaden {
+  id             String    @id @default(cuid())
+  fahrzeugId     String
+  /// "Stoßstange hinten links", "Windschutzscheibe"
+  position       String
+  beschreibung   String
+  festgestelltAm DateTime
+  gemeldetVonId  String
+  erfasstAm      DateTime  @default(now())
+  /// Gesetzt, sobald der Schaden repariert ist.
+  behobenAm      DateTime?
+
+  fahrzeug    Fahrzeug @relation(fields: [fahrzeugId], references: [id])
+  gemeldetVon Person   @relation("FahrzeugschadenMelder", fields: [gemeldetVonId], references: [benutzername])
+
+  @@index([fahrzeugId, behobenAm])
 }
 
 // =============================================================================
