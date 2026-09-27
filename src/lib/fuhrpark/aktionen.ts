@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Prisma } from "@/generated/prisma/client"
-import { Reifenart, FahrzeugterminArt } from "@/generated/prisma/enums"
+import { Reifenart, Fahrzeugtyp, FahrzeugterminArt } from "@/generated/prisma/enums"
 import { berlinerTagesbeginn, formatiereDatumAusDate } from "@/lib/datum"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
 import { FAHRZEUGTERMIN_ART_TEXT } from "./fristen"
@@ -61,10 +61,16 @@ async function fahrzeugDatenAusFormular(formData: FormData) {
   const reifen = String(formData.get("reifenart") ?? "")
   const reifenart = (Object.values(Reifenart) as string[]).includes(reifen) ? (reifen as Reifenart) : null
 
+  const typEingabe = String(formData.get("fahrzeugtyp") ?? "")
+  const fahrzeugtyp = (Object.values(Fahrzeugtyp) as string[]).includes(typEingabe)
+    ? (typEingabe as Fahrzeugtyp)
+    : Fahrzeugtyp.TRANSPORTER
+
   return {
     daten: {
       kennzeichen,
       bezeichnung,
+      fahrzeugtyp,
       sitzplaetze: ganzzahlAusEingabe(formData.get("sitzplaetze")),
       merkmale: textOderNull(formData.get("merkmale")),
       standortId,

@@ -496,6 +496,12 @@ model Dokumentversion {
 //  MODUL — Fahrzeuge
 // =============================================================================
 
+enum Fahrzeugtyp {
+  PKW
+  TRANSPORTER
+  BUS
+}
+
 model Fahrzeug {
   id          String @id @default(cuid())
   kennzeichen String @unique
@@ -519,6 +525,13 @@ model Fahrzeug {
 
   standortId String?
   aktiv      Boolean @default(true)
+
+  /// Steuert u. a., welche Fahrzeug-Skizze beim Schaden-Erfassen gezeichnet
+  /// wird (PKW = Kombi-Umriss, TRANSPORTER/BUS = die bestehende
+  /// Transporter-Skizze aus der privaten Ausleihe, siehe Schadensskizze).
+  /// Default TRANSPORTER, weil der bestehende Fuhrpark (Multivan, Caddy,
+  /// Crafter) ausschließlich daraus besteht.
+  fahrzeugtyp Fahrzeugtyp @default(TRANSPORTER)
 
   // --- Fuhrpark (Ausbau 2026-09-26) -----------------------------------------
   // Alle Firmenfahrzeuge sollen im System stehen, nicht nur die privat

@@ -55,6 +55,34 @@ const RAEDER = [
   { x: 480, y: 243, breite: 46, hoehe: 14, zone: "Reifen/Felge links hinten" },
 ] as const
 
+// --- PKW (Kombi) — eigene Umriss/Zonen-Variante -----------------------------
+// Nur für den Fuhrpark-Schaden (src/app/(mitarbeiter)/fuhrpark/…), NICHT für
+// die private Ausleihe: Der Fahrzeugpool der Ausleihe (Baustein 1, siehe
+// CLAUDE.md) besteht ausschließlich aus Transportern (Multivan/Crafter),
+// deshalb bleiben ZUSTAND_PUNKTE, ZEILEN, RAEDER, DACHFENSTER und die
+// Zeichnung oben unverändert die Standardvariante (Prop `fahrzeugtyp`
+// standardmäßig weggelassen bzw. "TRANSPORTER"/"BUS").
+const ZEILEN_PKW = [
+  { bis: 80, name: "Front" },
+  { bis: 175, name: "Motorhaube" },
+  { bis: 215, name: "Frontscheibe" },
+  { bis: 340, name: "Fahrgastraum vorn" },
+  { bis: 470, name: "Fahrgastraum hinten" },
+  { bis: 600, name: "Kofferraum" },
+  { bis: Infinity, name: "Heck" },
+] as const
+
+const RAEDER_PKW = [
+  { x: 168, y: 43, breite: 42, hoehe: 14, zone: "Reifen/Felge rechts vorn" },
+  { x: 168, y: 243, breite: 42, hoehe: 14, zone: "Reifen/Felge links vorn" },
+  { x: 448, y: 43, breite: 42, hoehe: 14, zone: "Reifen/Felge rechts hinten" },
+  { x: 448, y: 243, breite: 42, hoehe: 14, zone: "Reifen/Felge links hinten" },
+] as const
+
+const DACHFENSTER_PKW = { x: 285, y: 113, breite: 55, hoehe: 74 }
+
+export type Fahrzeugtyp = "PKW" | "TRANSPORTER" | "BUS"
+
 const ARTEN = [
   "Kratzer",
   "Delle",
@@ -109,8 +137,25 @@ export type Schadenspunkt = {
   istVorschaden?: boolean
 }
 
-function zoneFuer(x: number, y: number): string {
-  const rad = RAEDER.find(
+type SkizzenLayout = {
+  zeilen: readonly { bis: number; name: string }[]
+  raeder: readonly { x: number; y: number; breite: number; hoehe: number; zone: string }[]
+  dachfenster: { x: number; y: number; breite: number; hoehe: number }
+  /** Zeile, deren "mittig"-Treffer stattdessen "Dach" heißen soll (nur Transporter/Bus — von oben gesehen reine Dachfläche ohne Fenster). */
+  dachZeileName?: string
+}
+
+const LAYOUTS: Record<Fahrzeugtyp, SkizzenLayout> = {
+  // Baustein 1 (private Ausleihe) kennt nur Transporter — diese beiden
+  // Typen teilen sich deshalb bewusst dieselbe, längst eingeführte
+  // Zeichnung/Zonen statt einer eigenen Bus-Variante.
+  TRANSPORTER: { zeilen: ZEILEN, raeder: RAEDER, dachfenster: DACHFENSTER, dachZeileName: "Laderaum hinten" },
+  BUS: { zeilen: ZEILEN, raeder: RAEDER, dachfenster: DACHFENSTER, dachZeileName: "Laderaum hinten" },
+  PKW: { zeilen: ZEILEN_PKW, raeder: RAEDER_PKW, dachfenster: DACHFENSTER_PKW },
+}
+
+function zoneFuer(x: number, y: number, layout: SkizzenLayout): string {
+  const rad = layout.raeder.find(
     (r) =>
       x >= r.x - RAD_POLSTER &&
       x <= r.x + r.breite + RAD_POLSTER &&
@@ -123,8 +168,10 @@ function zoneFuer(x: number, y: number): string {
   // andersherum, als man auf den ersten Blick denkt: Die Zeichnung zeigt das
   // Fahrzeug von oben mit der Front nach links. Fährt es in diese Richtung
   // los, zeigt die eigene rechte Hand nach oben im Bild (kleines y) und die
-  // linke nach unten (großes y) — nicht umgekehrt.
-  const zeile = ZEILEN.find((z) => x < z.bis)?.name ?? "Heck"
+  // linke nach unten (großes y) — nicht umgekehrt. Dieselben y-Schwellen
+  // gelten für jede Fahrzeugtyp-Variante, nur die Zeilen (x) und Räder
+  // unterscheiden sich.
+  const zeile = layout.zeilen.find((z) => x < z.bis)?.name ?? "Heck"
   let seite: string
   if (y < 55) seite = "rechte Außenkante"
   else if (y > 245) seite = "linke Außenkante"
@@ -133,7 +180,7 @@ function zoneFuer(x: number, y: number): string {
   else seite = "mittig"
   // Mittig im hinteren Laderaum ist von oben gesehen die Dachfläche, kein
   // "Laderaum hinten mittig" — das benennt den tatsächlichen Ort genauer.
-  if (zeile === "Laderaum hinten" && seite === "mittig") return "Dach"
+  if (layout.dachZeileName && zeile === layout.dachZeileName && seite === "mittig") return "Dach"
   return `${zeile} ${seite}`
 }
 
@@ -142,12 +189,21 @@ export function Schadensskizze({
   autoInnenraum,
   anfangsPunkte,
   onStatusChange,
+  fahrzeugtyp = "TRANSPORTER",
 }: {
   name: string
   autoInnenraum?: boolean
   anfangsPunkte?: Omit<Schadenspunkt, "id">[]
   onStatusChange?: (status: { anzahl: number; hatNeue: boolean }) => void
+  /**
+   * Steuert Umriss/Zonen der Skizze. Default TRANSPORTER — die private
+   * Ausleihe (Baustein 1) ruft diese Komponente ohne diese Prop auf und
+   * bleibt damit unverändert bei der bisherigen Transporter-Zeichnung; nur
+   * der Fuhrpark übergibt hier den tatsächlichen Fahrzeugtyp.
+   */
+  fahrzeugtyp?: Fahrzeugtyp
 }) {
+  const layout = LAYOUTS[fahrzeugtyp]
   const svgRef = useRef<SVGSVGElement>(null)
   const naechsteId = useRef(anfangsPunkte?.length ?? 0)
   // Nach dem Loslassen eines gezogenen Markers folgt ein click-Event auf
@@ -191,8 +247,8 @@ export function Schadensskizze({
     naechsteId.current += 1
     const neu: Schadenspunkt = {
       id: `s${naechsteId.current}`,
-      x: (DACHFENSTER.x + DACHFENSTER.breite / 2) / VB_BREITE,
-      y: (DACHFENSTER.y + DACHFENSTER.hoehe / 2) / VB_HOEHE,
+      x: (layout.dachfenster.x + layout.dachfenster.breite / 2) / VB_BREITE,
+      y: (layout.dachfenster.y + layout.dachfenster.hoehe / 2) / VB_HOEHE,
       zone: "Innenraum",
       art: "",
       beschreibung: "",
@@ -230,7 +286,7 @@ export function Schadensskizze({
     const p = svgPunktAus(ev)
     if (!p) return
     naechsteId.current += 1
-    const zone = zoneFuer(p.x, p.y)
+    const zone = zoneFuer(p.x, p.y, layout)
     const neu: Schadenspunkt = {
       id: `s${naechsteId.current}`,
       x: Math.max(0, Math.min(1, +(p.x / VB_BREITE).toFixed(4))),
@@ -275,7 +331,7 @@ export function Schadensskizze({
     ziehenAktivRef.current = true
     const x = Math.max(0, Math.min(1, p.x / VB_BREITE))
     const y = Math.max(0, Math.min(1, p.y / VB_HOEHE))
-    const zone = zoneFuer(x * VB_BREITE, y * VB_HOEHE)
+    const zone = zoneFuer(x * VB_BREITE, y * VB_HOEHE, layout)
     setPunkte((vorherige) =>
       vorherige.map((punkt) => {
         if (punkt.id !== id) return punkt
@@ -339,33 +395,47 @@ export function Schadensskizze({
           </text>
 
           <g fill="#6F7466">
-            <rect x="184" y="43" width="46" height="14" rx="4" />
-            <rect x="184" y="243" width="46" height="14" rx="4" />
-            <rect x="480" y="43" width="46" height="14" rx="4" />
-            <rect x="480" y="243" width="46" height="14" rx="4" />
+            {layout.raeder.map((r) => (
+              <rect key={r.zone} x={r.x} y={r.y} width={r.breite} height={r.hoehe} rx="4" />
+            ))}
           </g>
 
-          <path
-            d="M 55,83 L 55,217 Q 55,245 92,245 L 600,245 Q 615,245 615,230 L 615,70 Q 615,55 600,55 L 92,55 Q 55,55 55,83 Z"
-            fill="#E4E5DA"
-            stroke="#9AA08D"
-            strokeWidth="2.5"
-          />
-          <path
-            d="M 86,60 Q 62,60 62,86 L 62,214 Q 62,240 86,240"
-            fill="none"
-            stroke="#9AA08D"
-            strokeWidth="2"
-          />
-          <rect x="90" y="74" width="36" height="152" rx="8" fill="#EFEFE7" stroke="#9AA08D" strokeWidth="1.6" />
-          <polygon points="128,68 128,232 170,226 170,74" fill="#CFD8D3" stroke="#9AA08D" strokeWidth="1.6" />
-          <rect x="178" y="68" width="428" height="164" rx="8" fill="#EFEFE7" stroke="#9AA08D" strokeWidth="1.6" />
+          {fahrzeugtyp === "PKW" ? (
+            // PKW-Kombi: kürzere Haube/Kofferraum, dafür längere
+            // Fahrgastzelle als beim Transporter — Karosserie als einfache
+            // abgerundete Form, Front-/Heckscheibe als Trapez wie beim
+            // Transporter, nur mit anderen Maßen (siehe ZEILEN_PKW oben).
+            <>
+              <rect x="60" y="55" width="555" height="190" rx="42" fill="#E4E5DA" stroke="#9AA08D" strokeWidth="2.5" />
+              <polygon points="175,60 175,240 215,215 215,85" fill="#CFD8D3" stroke="#9AA08D" strokeWidth="1.6" />
+              <rect x="215" y="82" width="255" height="136" rx="14" fill="#EFEFE7" stroke="#9AA08D" strokeWidth="1.6" />
+              <polygon points="470,88 470,212 505,225 505,75" fill="#CFD8D3" stroke="#9AA08D" strokeWidth="1.6" />
+            </>
+          ) : (
+            <>
+              <path
+                d="M 55,83 L 55,217 Q 55,245 92,245 L 600,245 Q 615,245 615,230 L 615,70 Q 615,55 600,55 L 92,55 Q 55,55 55,83 Z"
+                fill="#E4E5DA"
+                stroke="#9AA08D"
+                strokeWidth="2.5"
+              />
+              <path
+                d="M 86,60 Q 62,60 62,86 L 62,214 Q 62,240 86,240"
+                fill="none"
+                stroke="#9AA08D"
+                strokeWidth="2"
+              />
+              <rect x="90" y="74" width="36" height="152" rx="8" fill="#EFEFE7" stroke="#9AA08D" strokeWidth="1.6" />
+              <polygon points="128,68 128,232 170,226 170,74" fill="#CFD8D3" stroke="#9AA08D" strokeWidth="1.6" />
+              <rect x="178" y="68" width="428" height="164" rx="8" fill="#EFEFE7" stroke="#9AA08D" strokeWidth="1.6" />
+            </>
+          )}
 
           <rect
-            x={DACHFENSTER.x}
-            y={DACHFENSTER.y}
-            width={DACHFENSTER.breite}
-            height={DACHFENSTER.hoehe}
+            x={layout.dachfenster.x}
+            y={layout.dachfenster.y}
+            width={layout.dachfenster.breite}
+            height={layout.dachfenster.hoehe}
             rx="10"
             fill="#CFD8D3"
             stroke="#8FA79E"

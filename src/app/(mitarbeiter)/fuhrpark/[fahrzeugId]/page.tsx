@@ -299,7 +299,7 @@ export default async function FahrzeugProfilSeite({
               <p className="text-sm text-sekundaer">
                 Auf die Skizze tippen, um eine Schadensstelle zu markieren — wie beim Übergabeprotokoll.
               </p>
-              <Schadensskizze name="schadenspunkte" />
+              <Schadensskizze name="schadenspunkte" fahrzeugtyp={fahrzeug.fahrzeugtyp} />
               <label className="flex flex-col gap-1 text-sm font-medium text-primaer">
                 Festgestellt am
                 <input type="date" name="festgestelltAm" defaultValue={datumIsoAusDate(heute)} className="h-10 rounded-lg border border-flaeche-300 bg-flaeche px-3 text-sm" />

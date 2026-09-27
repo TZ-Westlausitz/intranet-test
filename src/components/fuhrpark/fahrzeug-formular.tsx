@@ -9,6 +9,7 @@ type Optionen = {
 export type FahrzeugStandardwerte = {
   kennzeichen: string
   bezeichnung: string
+  fahrzeugtyp: "PKW" | "TRANSPORTER" | "BUS"
   sitzplaetze: number | null
   merkmale: string | null
   standortId: string | null
@@ -25,6 +26,12 @@ export type FahrzeugStandardwerte = {
 }
 
 const KRAFTSTOFFARTEN = ["Super", "Super Plus", "Diesel", "Elektro"]
+
+const FAHRZEUGTYPEN = [
+  { value: "PKW", label: "PKW" },
+  { value: "TRANSPORTER", label: "Transporter" },
+  { value: "BUS", label: "Bus" },
+] as const
 
 const FELD = "h-10 w-full rounded-lg border border-flaeche-300 bg-flaeche px-3 text-sm"
 const LABEL = "flex flex-col gap-1 text-sm font-medium text-primaer"
@@ -49,7 +56,7 @@ export function FahrzeugFormularFelder({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <label className={LABEL}>
           Kennzeichen
           <input name="kennzeichen" required defaultValue={standard?.kennzeichen} placeholder="z. B. KM-TZ 123" className={FELD} />
@@ -57,6 +64,17 @@ export function FahrzeugFormularFelder({
         <label className={LABEL}>
           Bezeichnung
           <input name="bezeichnung" required defaultValue={standard?.bezeichnung} placeholder="z. B. VW Multivan, 8 Sitze" className={FELD} />
+        </label>
+        <label className={LABEL}>
+          Fahrzeugtyp
+          <select name="fahrzeugtyp" defaultValue={standard?.fahrzeugtyp ?? "TRANSPORTER"} className={FELD}>
+            {FAHRZEUGTYPEN.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs font-normal text-tertiaer">Bestimmt u. a. die Skizze beim Schaden erfassen.</span>
         </label>
       </div>
 
