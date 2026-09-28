@@ -219,13 +219,23 @@ export function FormularAenderungenSchutz() {
  * etwas geändert"-Test. Datei-Eingaben (z. B. Anhänge) gehen über
  * Name/Größe/Änderungsdatum ein, nicht über den Dateiinhalt — genug, um
  * "eine andere/neue Datei gewählt" zu erkennen, ohne die Datei zu lesen.
+ *
+ * Ein LEERES `<input type="file">` (keine Datei gewählt) liefert bei jedem
+ * `new FormData(form)`-Aufruf ein NEUES File-Objekt mit
+ * `lastModified = jetzt` — reines Browser-Verhalten, keine echte Änderung.
+ * Ohne den Sonderfall unten würde `istSchmutzig()` bei jedem Formular mit
+ * einem Datei-Feld schon Sekunden nach dem Laden fälschlich "true" liefern
+ * (Rückmeldung 2026-09-28, beobachtet auf /aufgaben). Nur eine wirklich
+ * gewählte Datei (Größe > 0) geht mit Name/Größe/Änderungsdatum ein.
  */
 function serialisiere(form: HTMLFormElement): string {
   const teile: string[] = []
   for (const [schluessel, wert] of new FormData(form)) {
-    teile.push(
-      wert instanceof File ? `${schluessel}=${wert.name}:${wert.size}:${wert.lastModified}` : `${schluessel}=${wert}`,
-    )
+    if (wert instanceof File) {
+      teile.push(wert.size > 0 ? `${schluessel}=${wert.name}:${wert.size}:${wert.lastModified}` : `${schluessel}=`)
+    } else {
+      teile.push(`${schluessel}=${wert}`)
+    }
   }
   return teile.join("&")
 }
