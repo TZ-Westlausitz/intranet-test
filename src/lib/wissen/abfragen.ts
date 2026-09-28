@@ -11,13 +11,32 @@ const EMPFAENGER_INCLUDE = {
   empfaengerAbteilungen: { select: { abteilungId: true } },
 } as const
 
-/** Alle aktiven Ordner fürs Kachel-Grid auf /wissen — Artikel-Anzahl ist die GESAMTZAHL, unabhängig von der Sichtbarkeit für die anzeigende Person (wie im Altsystem-Vorbild). */
+/** Alle aktiven Ordner fürs Kachel-Grid auf /wissen — Artikel-Anzahl ist die GESAMTZAHL, unabhängig von der Sichtbarkeit für die anzeigende Person (wie im Altsystem-Vorbild). Dieselbe Liste dient auch als Auswahl für die Startseiten-Wissensbereich-Kachel. */
 export async function ordnerUebersicht() {
   return prisma.wissensOrdner.findMany({
     where: { aktiv: true },
     include: { _count: { select: { unterordner: { where: { aktiv: true } }, artikel: true } } },
     orderBy: { name: "asc" },
   })
+}
+
+/** Für die Wissensbereich-Kachel auf der Startseite — Name + ein paar für die Person sichtbare Artikel je gewähltem Ordner, in Auswahl-Reihenfolge. Deaktivierte Ordner fallen dabei still raus (Muster: personenFuerKachel). */
+export async function ordnerVorschauFuerKachel(ordnerIds: string[], kontext: WissenKontext, artikelProOrdner = 4) {
+  if (ordnerIds.length === 0) return []
+  const ordner = await prisma.wissensOrdner.findMany({
+    where: { id: { in: ordnerIds }, aktiv: true },
+    include: {
+      artikel: {
+        where: wissenSichtbarFuer(kontext.personId),
+        orderBy: { titel: "asc" },
+        take: artikelProOrdner,
+        select: { id: true, titel: true },
+      },
+      _count: { select: { artikel: { where: wissenSichtbarFuer(kontext.personId) } } },
+    },
+  })
+  const nachId = new Map(ordner.map((o) => [o.id, o]))
+  return ordnerIds.map((id) => nachId.get(id)).filter((o): o is NonNullable<typeof o> => o !== undefined)
 }
 
 /** Ein Ordner + seine aktiven Unterordner (mit Artikel-Zähler) + die für diese Person sichtbaren Artikel direkt im Ordner. */

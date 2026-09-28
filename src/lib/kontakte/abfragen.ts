@@ -44,3 +44,23 @@ export async function personKontaktDetail(personId: string) {
     },
   })
 }
+
+/** Schlanke Liste für die Personen-Auswahl (Startseiten-Einstellungen, Kontakte-Kachel) — nur Name, kein voller Datensatz wie aktivePersonenUebersicht. */
+export async function personenAuswahlListe() {
+  return prisma.person.findMany({
+    where: { aktiv: true },
+    select: { benutzername: true, vorname: true, nachname: true },
+    orderBy: [{ nachname: "asc" }, { vorname: "asc" }],
+  })
+}
+
+/** Für die Kontakte-Kachel auf der Startseite — die gewählten Personen in der ausgewählten Reihenfolge, deaktivierte Personen fallen dabei still raus (Regel 4). */
+export async function personenFuerKachel(personenIds: string[]) {
+  if (personenIds.length === 0) return []
+  const personen = await prisma.person.findMany({
+    where: { benutzername: { in: personenIds }, aktiv: true },
+    select: { benutzername: true, vorname: true, nachname: true, profilbildPfad: true },
+  })
+  const nachId = new Map(personen.map((p) => [p.benutzername, p]))
+  return personenIds.map((id) => nachId.get(id)).filter((p): p is NonNullable<typeof p> => p !== undefined)
+}

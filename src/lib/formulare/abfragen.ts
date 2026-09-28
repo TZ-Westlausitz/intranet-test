@@ -36,6 +36,23 @@ export async function anMichAdressierteEinreichungen(kontext: FormularKontext) {
   })
 }
 
+/** Für die Formulare-Kachel auf der Startseite — was sich seit dem letzten Blick geändert haben könnte: eigene noch nicht erledigte Einreichungen + an die Person adressierte, noch gar nicht angefasste Einreichungen (Rückmeldung 2026-09-28, "Stand statt Katalog"). */
+export async function formulareStartseitenStand(kontext: FormularKontext) {
+  const [eigeneOffen, adressiertOffen] = await Promise.all([
+    prisma.formularEinreichung.findMany({
+      where: { eingereichtVonId: kontext.personId, status: { not: "ERLEDIGT" } },
+      include: { vorlage: { select: { titel: true } } },
+      orderBy: { eingereichtAm: "desc" },
+    }),
+    prisma.formularEinreichung.findMany({
+      where: { vorlage: formularEmpfaengerFuer(kontext.personId), status: "OFFEN" },
+      include: { vorlage: { select: { titel: true } } },
+      orderBy: { eingereichtAm: "desc" },
+    }),
+  ])
+  return { eigeneOffen, adressiertOffen }
+}
+
 /** Vorlage + Elemente (+ Optionen) zum Ausfüllen — `null`, wenn für die Person nicht sichtbar. */
 export async function formularZumAusfuellen(vorlageId: string, kontext: FormularKontext) {
   return prisma.formularVorlage.findFirst({

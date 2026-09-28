@@ -24,8 +24,13 @@ import { WissensbereichKachel } from "@/components/startseite/wissensbereich-kac
 import { FahrzeugeKachel } from "@/components/startseite/fahrzeuge-kachel"
 import { TodoListeKachel } from "@/components/startseite/todo-liste-kachel"
 import { GeplanteAktionenKachel } from "@/components/startseite/geplante-aktionen-kachel"
+import { FormulareKachel } from "@/components/startseite/formulare-kachel"
+import { KontakteKachel } from "@/components/startseite/kontakte-kachel"
 import { parseRaster } from "@/lib/startseite/raster"
 import { gitterKlassen, portraitZeilenVorlage } from "@/lib/startseite/gitter-klassen"
+import { formulareStartseitenStand } from "@/lib/formulare/abfragen"
+import { personenFuerKachel } from "@/lib/kontakte/abfragen"
+import { ordnerVorschauFuerKachel } from "@/lib/wissen/abfragen"
 
 /**
  * DIE ZWEI STUNDEN VERSICHERUNG — Fortsetzung.
@@ -93,6 +98,22 @@ export default async function Startseite() {
   const raster = parseRaster(person.startseiteRaster)
   const gitterKlassenNachModul = gitterKlassen(raster)
   const portraitZeilen = portraitZeilenVorlage(raster)
+
+  // Nur abfragen, wenn tatsächlich platziert — anders als bei Fahrzeuge
+  // (siehe unten) lohnt sich das hier, weil diese drei Abfragen echte
+  // Zusatzarbeit machen (Formular-Status berechnen, Personen/Ordner nach
+  // Auswahl-Reihenfolge nachladen), nicht nur ein günstiger Zähler.
+  const formularePlatzierung = raster.find((p) => p.modul === "FORMULARE")
+  const kontaktePlatzierung = raster.find((p) => p.modul === "KONTAKTE")
+  const wissensbereichPlatzierung = raster.find((p) => p.modul === "WISSENSBEREICH")
+
+  const [formulareStand, kontaktePersonen, wissensOrdner] = await Promise.all([
+    formularePlatzierung ? formulareStartseitenStand(kontext) : Promise.resolve({ eigeneOffen: [], adressiertOffen: [] }),
+    kontaktePlatzierung ? personenFuerKachel(kontaktePlatzierung.personenIds ?? []) : Promise.resolve([]),
+    wissensbereichPlatzierung
+      ? ordnerVorschauFuerKachel(wissensbereichPlatzierung.ordnerIds ?? [], kontext)
+      : Promise.resolve([]),
+  ])
 
   // Fahrzeuge-Vorschaudaten: auf dem Handy IMMER für Werkstatt-Rolle nötig
   // (eigene Kachel dort, unabhängig vom Desktop-Raster, siehe Rückmeldung
@@ -377,7 +398,7 @@ export default async function Startseite() {
                     />
                   )
                 case "WISSENSBEREICH":
-                  return <WissensbereichKachel key="WISSENSBEREICH" className={gitterKlasse} />
+                  return <WissensbereichKachel key="WISSENSBEREICH" className={gitterKlasse} ordner={wissensOrdner} />
                 case "FAHRZEUGE":
                   return (
                     <FahrzeugeKachel
@@ -406,6 +427,17 @@ export default async function Startseite() {
                       naechsteGeplant={naechsteGeplant}
                     />
                   )
+                case "FORMULARE":
+                  return (
+                    <FormulareKachel
+                      key="FORMULARE"
+                      className={gitterKlasse}
+                      eigeneOffen={formulareStand.eigeneOffen}
+                      adressiertOffen={formulareStand.adressiertOffen}
+                    />
+                  )
+                case "KONTAKTE":
+                  return <KontakteKachel key="KONTAKTE" className={gitterKlasse} personen={kontaktePersonen} />
                 default:
                   return null
               }

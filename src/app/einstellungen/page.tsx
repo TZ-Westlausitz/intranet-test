@@ -6,6 +6,8 @@ import { FarbschemaSchalter } from "@/components/farbschema-schalter"
 import { StartseiteRasterEinstellung } from "@/components/einstellungen/startseite-raster-einstellung"
 import { parseRaster } from "@/lib/startseite/raster"
 import { rasterAufStandardZuruecksetzen } from "@/lib/startseite/aktionen"
+import { personenAuswahlListe } from "@/lib/kontakte/abfragen"
+import { ordnerUebersicht } from "@/lib/wissen/abfragen"
 
 /**
  * Alle persönlichen Einstellungen auf einer Seite (Rückmeldung 2026-09-11:
@@ -16,11 +18,20 @@ import { rasterAufStandardZuruecksetzen } from "@/lib/startseite/aktionen"
 export default async function EinstellungenSeite() {
   const kontext = await berechtigung()
 
-  const person = await prisma.person.findUniqueOrThrow({
-    where: { benutzername: kontext.personId },
-    select: { startseiteRaster: true },
-  })
+  const [person, personenListe, ordnerListe] = await Promise.all([
+    prisma.person.findUniqueOrThrow({
+      where: { benutzername: kontext.personId },
+      select: { startseiteRaster: true },
+    }),
+    personenAuswahlListe(),
+    ordnerUebersicht(),
+  ])
   const raster = parseRaster(person.startseiteRaster)
+  // Für PersonenAuswahl (Kontakte-Kachel) und den Ordner-Picker
+  // (Wissensbereich-Kachel) — beide Baustein-Auswahlen brauchen nur Name
+  // bzw. Name + Artikelzahl, nicht die volle Datensatzform.
+  const personenFuerAuswahl = personenListe.map((p) => ({ id: p.benutzername, name: `${p.vorname} ${p.nachname}` }))
+  const ordnerFuerAuswahl = ordnerListe.map((o) => ({ id: o.id, name: o.name, artikelAnzahl: o._count.artikel }))
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
@@ -48,7 +59,7 @@ export default async function EinstellungenSeite() {
             max-w-xs war das Raster winzig und kaum als Abbild der echten,
             deutlich größeren Startseiten-Kacheln erkennbar. */}
         <div className="mt-3">
-          <StartseiteRasterEinstellung raster={raster} />
+          <StartseiteRasterEinstellung raster={raster} personen={personenFuerAuswahl} ordnerListe={ordnerFuerAuswahl} />
         </div>
 
         <form action={rasterAufStandardZuruecksetzen} className="mt-3">
