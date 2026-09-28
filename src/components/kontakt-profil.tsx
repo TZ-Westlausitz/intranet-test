@@ -1,5 +1,8 @@
+import { MessageCircle } from "lucide-react"
+
 import { InfoAvatar } from "@/components/info-avatar"
 import type { personKontaktDetail } from "@/lib/kontakte/abfragen"
+import { direktkonversationOeffnen } from "@/lib/chat/aktionen"
 
 type PersonDetail = NonNullable<Awaited<ReturnType<typeof personKontaktDetail>>>
 
@@ -8,26 +11,46 @@ type PersonDetail = NonNullable<Awaited<ReturnType<typeof personKontaktDetail>>>
  * eigenen Seite (`/kontakte/[personId]`, Sprungziel für @Erwähnungen und
  * direkte Links) und dem Lese-Pop-up (`KontaktAnzeigenDialog`, Klick aus
  * `/kontakte` heraus). Kein "use client" nötig: reine Props → JSX, keine
- * Hooks — dadurch aus beiden Kontexten sicher importierbar.
+ * Hooks — dadurch aus beiden Kontexten sicher importierbar. Das
+ * Chat-Symbol öffnet direkt (oder legt an, `direktkonversationOeffnen`
+ * per `upsert`) die Direktnachricht mit dieser Person (Rückmeldung
+ * 2026-09-28) — fehlt bei der eigenen Person (kein Chat mit sich selbst,
+ * serverseitig ohnehin abgelehnt) und bei bereits deaktivierten Personen.
  */
-export function KontaktProfil({ person }: { person: PersonDetail }) {
+export function KontaktProfil({ person, eigenePersonId }: { person: PersonDetail; eigenePersonId: string }) {
   return (
     <>
-      <div className="flex items-center gap-3">
-        <InfoAvatar
-          alsUnternehmen={false}
-          vorname={person.vorname}
-          nachname={person.nachname}
-          personId={person.benutzername}
-          profilbildPfad={person.profilbildPfad}
-          groesse="gross"
-        />
-        <div className="min-w-0">
-          <h1 className="truncate text-xl font-bold text-ueberschrift">
-            {person.vorname} {person.nachname}
-          </h1>
-          {!person.aktiv && <p className="text-xs text-tertiaer">Nicht mehr aktiv</p>}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <InfoAvatar
+            alsUnternehmen={false}
+            vorname={person.vorname}
+            nachname={person.nachname}
+            personId={person.benutzername}
+            profilbildPfad={person.profilbildPfad}
+            groesse="gross"
+          />
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-bold text-ueberschrift">
+              {person.vorname} {person.nachname}
+            </h1>
+            {!person.aktiv && <p className="text-xs text-tertiaer">Nicht mehr aktiv</p>}
+          </div>
         </div>
+
+        {person.aktiv && person.benutzername !== eigenePersonId && (
+          <form action={direktkonversationOeffnen} className="shrink-0">
+            <input type="hidden" name="andereId" value={person.benutzername} />
+            <button
+              type="submit"
+              aria-label={`Chat mit ${person.vorname} ${person.nachname}`}
+              title="Chat öffnen"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-rand text-primaer transition hover:border-marke-gruen hover:text-marke-gruen-dunkel"
+            >
+              <MessageCircle className="h-4 w-4" />
+            </button>
+          </form>
+        )}
       </div>
 
       {person.aktiv && (

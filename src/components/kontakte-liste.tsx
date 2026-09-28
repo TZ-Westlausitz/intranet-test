@@ -206,10 +206,12 @@ export function KontakteListe({
   personen,
   abteilungen,
   gruppen,
+  eigenePersonId,
 }: {
   personen: Person[]
   abteilungen: { id: string; name: string }[]
   gruppen: { id: string; name: string }[]
+  eigenePersonId: string
 }) {
   const [suchtext, setSuchtext] = useState("")
   const [filter, setFilter] = useState("")
@@ -321,7 +323,7 @@ export function KontakteListe({
         </div>
       )}
 
-      <KontaktAnzeigenDialog ref={dialogRef} personDetailLadenAktion={personDetailLaden} />
+      <KontaktAnzeigenDialog ref={dialogRef} personDetailLadenAktion={personDetailLaden} eigenePersonId={eigenePersonId} />
     </>
   )
 }

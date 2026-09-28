@@ -22,8 +22,8 @@ export type KontaktAnzeigenDialogHandle = { oeffnen: (personId: string) => void 
  */
 export const KontaktAnzeigenDialog = forwardRef<
   KontaktAnzeigenDialogHandle,
-  { personDetailLadenAktion: PersonDetailLadenAktion }
->(function KontaktAnzeigenDialog({ personDetailLadenAktion }, ref) {
+  { personDetailLadenAktion: PersonDetailLadenAktion; eigenePersonId: string }
+>(function KontaktAnzeigenDialog({ personDetailLadenAktion, eigenePersonId }, ref) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [detail, setDetail] = useState<PersonDetail | null>(null)
   const [laedt, setLaedt] = useState(false)
@@ -61,7 +61,7 @@ export const KontaktAnzeigenDialog = forwardRef<
           {laedt || !detail ? (
             <p className="py-8 text-center text-sm text-tertiaer">Lädt …</p>
           ) : (
-            <KontaktProfil person={detail} />
+            <KontaktProfil person={detail} eigenePersonId={eigenePersonId} />
           )}
         </div>
       </div>

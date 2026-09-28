@@ -15,7 +15,7 @@ import { personKontaktDetail } from "@/lib/kontakte/abfragen"
  * inzwischen ausgeschieden ist.
  */
 export default async function KontaktDetailSeite({ params }: { params: Promise<{ personId: string }> }) {
-  await berechtigung()
+  const kontext = await berechtigung()
   const { personId } = await params
   // Der Benutzername enthält ein "@" (vorname.nachname@kuerzel, siehe
   // nameNormalisieren) — anders als jede andere ID in diesem Projekt
@@ -33,7 +33,7 @@ export default async function KontaktDetailSeite({ params }: { params: Promise<{
       <Kopfleiste />
 
       <div className="rounded-xl border border-rand bg-flaeche p-5">
-        <KontaktProfil person={person} />
+        <KontaktProfil person={person} eigenePersonId={kontext.personId} />
       </div>
 
       <ZurueckButton />

@@ -15,7 +15,14 @@
  * - KLEIN: 1×1 (jede Position gültig)
  * - BREIT: 2×1 (Position braucht Platz nach rechts — Spalte 0-2)
  * - HOCH:  1×2 (Position braucht Platz nach unten — nur Zeile 0)
- * - GROSS: 2×2 (Spalte 0-2 UND Zeile 0 — Newsfeed, bisher einziger Nutzer)
+ * - GROSS: 2×2 (Spalte 0-2 UND Zeile 0 — bisher nur Newsfeed)
+ *
+ * Newsfeed bietet zusätzlich HOCH an (Rückmeldung 2026-09-28) — die
+ * Beitragsliste ist ohnehin eine schmale, scrollende Spalte, das passt gut
+ * in eine schmale hohe Zelle. BREIT (kurz und breit) passt dagegen NICHT
+ * zu Beitragskarten, die von Natur aus mehr Höhe als Breite brauchen —
+ * deshalb bewusst nicht angeboten, keine eigene "Ticker"-Darstellung dafür
+ * gebaut.
  *
  * Manche Module brauchen zusätzlich zu Position+Form eine Unterauswahl
  * (KONTAKTE: 3–5 Personen, WISSENSBEREICH: 1–3 Ordner) — siehe
@@ -46,7 +53,7 @@ export type StartseiteModulKatalogEintrag = {
 
 /** Reihenfolge hier bestimmt auch die Reihenfolge im Auswahl-Pop-up der Einstellungen-Seite. */
 export const STARTSEITE_MODUL_KATALOG: StartseiteModulKatalogEintrag[] = [
-  { id: "NEWSFEED", name: "Newsfeed", formen: ["GROSS"] },
+  { id: "NEWSFEED", name: "Newsfeed", formen: ["GROSS", "HOCH"] },
   { id: "KALENDER", name: "Kalender", formen: ["KLEIN"] },
   { id: "AUFGABEN", name: "Aufgaben", formen: ["KLEIN"] },
   { id: "WISSENSBEREICH", name: "Wissensbereich", formen: ["KLEIN", "BREIT", "HOCH"] },
