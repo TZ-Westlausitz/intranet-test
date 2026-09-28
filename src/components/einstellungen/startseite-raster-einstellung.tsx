@@ -46,11 +46,27 @@ const FORM_HINWEIS: Record<StartseiteForm, string> = {
   GROSS: "groß (2×2)",
 }
 
-function vorschauSpan(form: StartseiteForm): React.CSSProperties | undefined {
-  if (form === "GROSS") return { gridColumn: "span 2", gridRow: "span 2" }
-  if (form === "BREIT") return { gridColumn: "span 2" }
-  if (form === "HOCH") return { gridRow: "span 2" }
-  return undefined
+/**
+ * Feste Grid-Position + Ausdehnung für eine Vorschau-Zelle — ohne
+ * `gridColumnStart`/`gridRowStart` platziert der Browser die Kästchen
+ * per Auto-Flow einfach der Reihe nach (die freien "+"-Felder sind ja
+ * echte Lücken im DOM, keine leeren Platzhalter), das hat vorher an
+ * genau der Stelle belegte Nachbarzellen und die Zeilenzuordnung
+ * durcheinandergebracht (Rückmeldung 2026-09-28: HOCH/BREIT landeten an
+ * der falschen Stelle bzw. verschluckten die falschen Zellen).
+ */
+function vorschauPosition(position: number, form: StartseiteForm): React.CSSProperties {
+  const spalte = (position % 4) + 1
+  const zeile = Math.floor(position / 4) + 1
+  const spaltenSpanne = form === "GROSS" || form === "BREIT" ? 2 : 1
+  const zeilenSpanne = form === "GROSS" || form === "HOCH" ? 2 : 1
+  // Immer die Kurzform mit vollem "start / span N" setzen — nie mit
+  // gridColumnStart/gridRowStart mischen, sonst warnt React bei einem
+  // Re-Render vor widersprüchlichen Style-Werten zwischen den Renders.
+  return {
+    gridColumn: `${spalte} / span ${spaltenSpanne}`,
+    gridRow: `${zeile} / span ${zeilenSpanne}`,
+  }
 }
 
 type OrdnerAuswahlEintrag = { id: string; name: string; artikelAnzahl: number }
@@ -150,7 +166,7 @@ export function StartseiteRasterEinstellung({
             return (
               <div
                 key={position}
-                style={vorschauSpan(anchor.form)}
+                style={vorschauPosition(position, anchor.form)}
                 className={`relative flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border border-x-rand border-b-rand border-t-4 ${RAHMENFARBE[anchor.modul]} bg-flaeche p-2 text-center shadow-sm`}
               >
                 <form action={modulEntfernen.bind(null, anchor.modul)} className="absolute top-2 right-2">
@@ -190,6 +206,7 @@ export function StartseiteRasterEinstellung({
             <button
               key={position}
               type="button"
+              style={vorschauPosition(position, "KLEIN")}
               onClick={() => neueZelleOeffnen(position)}
               aria-label="Modul für dieses Feld auswählen"
               className="flex aspect-square items-center justify-center rounded-2xl border border-dashed border-flaeche-300 text-3xl text-tertiaer transition hover:border-marke-gruen hover:text-marke-gruen-dunkel"
