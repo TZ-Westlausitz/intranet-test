@@ -157,7 +157,16 @@ export function StartseiteRasterEinstellung({
 
   return (
     <>
-      <div className="grid grid-cols-4 grid-rows-2 gap-3">
+      {/* aspect-[2/1] am GANZEN Raster statt aspect-square an jeder
+          einzelnen Zelle (Rückmeldung 2026-09-28: Formulare BREIT wurde
+          genauso hoch wie Newsfeed) — aspect-square auf einer 2 Spalten
+          breiten Zelle zwingt SIE SELBST auf die doppelte Zeilenhöhe,
+          unabhängig von ihrer echten Grid-Platzierung (row: 2 / span 1
+          stimmte schon, nur die Höhe wurde vom Seitenverhältnis der
+          Zelle überschrieben). Die Zellen füllen jetzt einfach ihre
+          Grid-Spur (Standard-"stretch"), die Gesamthöhe kommt vom
+          Container im echten 4:2-Seitenverhältnis der Startseite. */}
+      <div className="grid aspect-[2/1] grid-cols-4 grid-rows-2 gap-3">
         {Array.from({ length: 8 }, (_, position) => {
           const anchor = raster.find((p) => p.position === position)
 
@@ -167,7 +176,7 @@ export function StartseiteRasterEinstellung({
               <div
                 key={position}
                 style={vorschauPosition(position, anchor.form)}
-                className={`relative flex aspect-square flex-col items-center justify-center gap-1 rounded-2xl border border-x-rand border-b-rand border-t-4 ${RAHMENFARBE[anchor.modul]} bg-flaeche p-2 text-center shadow-sm`}
+                className={`relative flex flex-col items-center justify-center gap-1 rounded-2xl border border-x-rand border-b-rand border-t-4 ${RAHMENFARBE[anchor.modul]} bg-flaeche p-2 text-center shadow-sm`}
               >
                 <form action={modulEntfernen.bind(null, anchor.modul)} className="absolute top-2 right-2">
                   <button
@@ -209,7 +218,7 @@ export function StartseiteRasterEinstellung({
               style={vorschauPosition(position, "KLEIN")}
               onClick={() => neueZelleOeffnen(position)}
               aria-label="Modul für dieses Feld auswählen"
-              className="flex aspect-square items-center justify-center rounded-2xl border border-dashed border-flaeche-300 text-3xl text-tertiaer transition hover:border-marke-gruen hover:text-marke-gruen-dunkel"
+              className="flex items-center justify-center rounded-2xl border border-dashed border-flaeche-300 text-3xl text-tertiaer transition hover:border-marke-gruen hover:text-marke-gruen-dunkel"
             >
               +
             </button>
