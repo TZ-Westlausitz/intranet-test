@@ -3,6 +3,7 @@ import Link from "next/link"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { Hinweis } from "@/components/hinweis"
 import { ProjektFormFelder, LEERE_PROJEKT_STANDARDWERTE } from "@/components/projekt-form-felder"
 import { projekteFuerPerson, alleProjekte } from "@/lib/projekte/abfragen"
@@ -61,6 +62,7 @@ export default async function ProjekteSeite({
           >
             Anlegen
           </button>
+          <FormularAenderungenSchutz />
         </form>
       )}
 

@@ -4,6 +4,7 @@ import { useRef, useState } from "react"
 import { Paperclip } from "lucide-react"
 
 import { PersonenAuswahl } from "@/components/personen-auswahl"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAETEN } from "@/lib/aufgaben-optionen"
 import { AUFGABE_STATUS_KLASSEN, AUFGABE_STATUS_NAMEN } from "@/lib/projekte-optionen"
 
@@ -354,6 +355,7 @@ export function ProjektAufgaben({
           >
             Aufgabe hinzufügen
           </button>
+          <FormularAenderungenSchutz />
         </form>
       )}
     </div>

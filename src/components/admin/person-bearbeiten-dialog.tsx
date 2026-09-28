@@ -2,6 +2,8 @@
 
 import { useRef, useState, useTransition } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 type Option = { id: string; name: string }
 
 export type ZugehoerigkeitAnzeige = {
@@ -108,6 +110,7 @@ export function PersonBearbeitenDialog({
               >
                 Speichern
               </button>
+              <FormularAenderungenSchutz />
             </form>
           </section>
 
@@ -170,6 +173,7 @@ export function PersonBearbeitenDialog({
               >
                 Hinzufügen
               </button>
+              <FormularAenderungenSchutz />
             </form>
           </section>
 
@@ -196,6 +200,7 @@ export function PersonBearbeitenDialog({
               >
                 Gruppen speichern
               </button>
+              <FormularAenderungenSchutz />
             </form>
           </section>
 
@@ -222,6 +227,7 @@ export function PersonBearbeitenDialog({
               >
                 Berechtigungen speichern
               </button>
+              <FormularAenderungenSchutz />
             </form>
           </section>
 

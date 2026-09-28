@@ -2,6 +2,8 @@
 
 import { useRef } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 import { ArtikelFormFelder, LEERE_ARTIKEL_STANDARDWERTE, type ArtikelFormularOptionen } from "@/components/artikel-form-felder"
 
 /**
@@ -70,6 +72,7 @@ export function ArtikelErstellenDialog({
               Veröffentlichen
             </button>
           </div>
+          <FormularAenderungenSchutz />
         </form>
       </dialog>
     </>

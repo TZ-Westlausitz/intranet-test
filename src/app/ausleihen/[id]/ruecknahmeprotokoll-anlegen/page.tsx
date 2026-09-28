@@ -15,6 +15,7 @@ import { AusleiheStatus } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { DatumUhrzeitFeld } from "@/components/datum-uhrzeit-feld"
 import { RuecknahmeBewertung } from "@/components/ruecknahme-bewertung"
 
@@ -224,6 +225,7 @@ export default async function RuecknahmeprotokollAnlegenSeite({
         >
           PDF-Entwurf erzeugen
         </button>
+        <FormularAenderungenSchutz />
       </form>
 
       <ZurueckButton />

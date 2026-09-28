@@ -15,6 +15,7 @@ import {
 import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { DatumUhrzeitFeld } from "@/components/datum-uhrzeit-feld"
 import { ZustandUndVorschaeden } from "@/components/zustand-und-vorschaeden"
 
@@ -254,6 +255,7 @@ export default async function UebergabeprotokollAnlegenSeite({
         >
           PDF-Entwurf erzeugen
         </button>
+        <FormularAenderungenSchutz />
       </form>
 
       <ZurueckButton />

@@ -4,6 +4,7 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import {
   infoKategorieErstellen,
   infoKategorieUmbenennen,
@@ -52,6 +53,7 @@ export default async function InfoKategorienSeite() {
         >
           Hinzufügen
         </button>
+        <FormularAenderungenSchutz />
       </form>
 
       <ul className="mt-6 flex flex-col divide-y divide-flaeche-100 rounded-xl border border-rand bg-flaeche">
@@ -77,6 +79,7 @@ export default async function InfoKategorienSeite() {
               >
                 Speichern
               </button>
+              <FormularAenderungenSchutz />
             </form>
             <span
               title="Infos mit dieser Kategorie"

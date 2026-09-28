@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 import { Hinweis } from "@/components/hinweis"
 import { heutigesDatumIso } from "@/lib/datum"
 
@@ -166,6 +168,7 @@ export function AnfrageFormular({
       >
         Anfrage senden
       </button>
+      <FormularAenderungenSchutz />
     </form>
   )
 }

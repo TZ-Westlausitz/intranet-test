@@ -2,6 +2,7 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { FarbschemaSchalter } from "@/components/farbschema-schalter"
 import { STARTSEITE_WEITERES_MODULE } from "@/lib/bausteine"
 import { nutzeroberflaecheAktualisieren } from "@/lib/einstellungen/aktionen"
@@ -59,6 +60,7 @@ export default async function EinstellungenSeite() {
           >
             Speichern
           </button>
+          <FormularAenderungenSchutz />
         </form>
       </section>
 

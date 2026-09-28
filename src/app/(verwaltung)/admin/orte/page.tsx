@@ -4,6 +4,7 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { ortErstellen, ortUmbenennen, ortAktivSetzen } from "@/lib/admin/orte-aktionen"
 
 /**
@@ -44,6 +45,7 @@ export default async function OrteSeite() {
         >
           Hinzufügen
         </button>
+        <FormularAenderungenSchutz />
       </form>
 
       <ul className="mt-6 flex flex-col divide-y divide-flaeche-100 rounded-xl border border-rand bg-flaeche">
@@ -66,6 +68,7 @@ export default async function OrteSeite() {
               >
                 Speichern
               </button>
+              <FormularAenderungenSchutz />
             </form>
             <form action={ortAktivSetzen.bind(null, ort.id, !ort.aktiv)}>
               <button

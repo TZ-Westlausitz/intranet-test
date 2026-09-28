@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react"
 import { Paperclip } from "lucide-react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 /**
  * "+ Meldung"-Knopf + Anlegen-Pop-Up für die Kontaktstelle. Kein
  * Entwurf-Mechanismus wie bei Aufgaben — eine Meldung ist append-only
@@ -122,6 +124,7 @@ export function MeldungErstellenDialog({
               Melden
             </button>
           </div>
+          <FormularAenderungenSchutz />
         </form>
       </dialog>
     </>

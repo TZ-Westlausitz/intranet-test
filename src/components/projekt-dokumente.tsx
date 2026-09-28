@@ -3,6 +3,8 @@
 import { useRef, useState } from "react"
 import { FileText, X } from "lucide-react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 function formatiereGroesse(bytes: number): string {
   return bytes < 1_000_000 ? `${Math.round(bytes / 1024)} KB` : `${(bytes / 1_000_000).toFixed(1)} MB`
 }
@@ -157,6 +159,7 @@ export function ProjektDokumente({
           >
             Hochladen
           </button>
+          <FormularAenderungenSchutz />
         </form>
       )}
     </div>

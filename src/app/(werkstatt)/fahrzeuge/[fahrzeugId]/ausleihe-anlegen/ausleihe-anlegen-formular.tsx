@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 import { Hinweis } from "@/components/hinweis"
 import { heutigesDatumIso } from "@/lib/datum"
 
@@ -105,6 +107,7 @@ export function AusleiheAnlegenFormular({
       >
         Ausleihe anlegen
       </button>
+      <FormularAenderungenSchutz />
     </form>
   )
 }

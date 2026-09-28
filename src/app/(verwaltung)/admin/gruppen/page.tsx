@@ -2,6 +2,7 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { gruppeErstellen, gruppeUmbenennen, gruppeAktivSetzen } from "@/lib/admin/gruppen-aktionen"
 import { abteilungErstellen, abteilungUmbenennen, abteilungAktivSetzen } from "@/lib/admin/abteilungen-aktionen"
 
@@ -66,6 +67,7 @@ export default async function GruppenUndAbteilungenSeite() {
             >
               Hinzufügen
             </button>
+            <FormularAenderungenSchutz />
           </form>
 
           <ul className="mt-3 flex flex-col divide-y divide-flaeche-100 rounded-xl border border-rand bg-flaeche">
@@ -88,6 +90,7 @@ export default async function GruppenUndAbteilungenSeite() {
                   >
                     Speichern
                   </button>
+                  <FormularAenderungenSchutz />
                 </form>
                 <form action={gruppeAktivSetzen.bind(null, gruppe.id, !gruppe.aktiv)}>
                   <button
@@ -135,6 +138,7 @@ export default async function GruppenUndAbteilungenSeite() {
             >
               Hinzufügen
             </button>
+            <FormularAenderungenSchutz />
           </form>
 
           <ul className="mt-3 flex flex-col divide-y divide-flaeche-100 rounded-xl border border-rand bg-flaeche">
@@ -171,6 +175,7 @@ export default async function GruppenUndAbteilungenSeite() {
                   >
                     Speichern
                   </button>
+                  <FormularAenderungenSchutz />
                 </form>
                 <form action={abteilungAktivSetzen.bind(null, abteilung.id, !abteilung.aktiv)}>
                   <button

@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { AusleiheStatus } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
 /**
  * Offene Anfragen aus der Selbstbedienung (Mitarbeitende → "Fahrzeug
@@ -106,6 +107,7 @@ export default async function AnfragenSeite() {
                   >
                     Ablehnen
                   </button>
+                  <FormularAenderungenSchutz />
                 </form>
               </div>
             </li>

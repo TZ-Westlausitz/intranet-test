@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { MoreVertical } from "lucide-react"
 
 /**
@@ -157,6 +159,7 @@ export function WissensOrdnerKachel({
               Speichern
             </button>
           </div>
+          <FormularAenderungenSchutz />
         </form>
       </dialog>
     </div>

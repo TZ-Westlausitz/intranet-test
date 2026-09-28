@@ -3,6 +3,8 @@
 import { useRef } from "react"
 import { Pencil } from "lucide-react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 import {
   AufgabeFormFelder,
   type AufgabeAnhangAnzeige,
@@ -84,6 +86,7 @@ export function AufgabeBearbeitenDialog({
               Speichern
             </button>
           </div>
+          <FormularAenderungenSchutz />
         </form>
       </dialog>
     </>

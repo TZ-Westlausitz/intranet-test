@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 import {
   FormularFeld,
   RICH_TEXT_ANZEIGE_KLASSE,
@@ -63,6 +65,7 @@ export function FormularAusfuellen({
         >
           Absenden
         </button>
+        <FormularAenderungenSchutz />
       </form>
     </div>
   )

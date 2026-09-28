@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 import { InfoFormFelder, LEERE_INFO_STANDARDWERTE, type InfoFormularOptionen } from "@/components/info-form-felder"
 import { EntwurfBestaetigenDialog } from "@/components/entwurf-bestaetigen-dialog"
 
@@ -119,6 +121,7 @@ export function InfoErstellenDialog({
              an einem Knopf, damit "Als Entwurf speichern" ohne
              Feld-Duplizierung dieselben Werte mitschickt. */}
           <button ref={entwurfKnopfRef} type="submit" formAction={entwurfSpeichernAktion} className="hidden" />
+          <FormularAenderungenSchutz />
         </form>
       </dialog>
 

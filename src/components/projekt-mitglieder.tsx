@@ -1,6 +1,7 @@
 "use client"
 
 import { PersonenAuswahl } from "@/components/personen-auswahl"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { PROJEKTMITGLIED_ROLLE_NAMEN } from "@/lib/projekte-optionen"
 
 export type ProjektmitgliedAnzeige = {
@@ -116,6 +117,7 @@ export function ProjektMitglieder({
           >
             Hinzufügen
           </button>
+          <FormularAenderungenSchutz />
         </form>
       )}
     </div>

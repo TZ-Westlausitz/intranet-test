@@ -1,5 +1,6 @@
 "use client"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { relativesDatum } from "@/lib/datum"
 import { zwischenzielStatus, ZWISCHENZIEL_STATUS_KLASSEN } from "@/lib/projekte-optionen"
 
@@ -114,6 +115,7 @@ export function ProjektZwischenziele({
           >
             Hinzufügen
           </button>
+          <FormularAenderungenSchutz />
         </form>
       )}
     </div>

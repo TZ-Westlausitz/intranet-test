@@ -4,6 +4,7 @@ import { useRef } from "react"
 import { Archive, Bell, BellOff, Info, LogOut, Users, X } from "lucide-react"
 
 import { PersonenAuswahl } from "@/components/personen-auswahl"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
 export type GruppenMitgliedAnzeige = { personId: string; name: string; istAdmin: boolean }
 
@@ -197,6 +198,7 @@ export function ChatKonversationMenuDialog({
                   >
                     Hinzufügen
                   </button>
+                  <FormularAenderungenSchutz />
                 </form>
               )}
             </div>

@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 import { AuftragFormFelder, LEERER_AUFTRAG_STANDARDWERTE, type AuftragStandardwerte } from "@/components/auftrag-form-felder"
 import { EntwurfBestaetigenDialog } from "@/components/entwurf-bestaetigen-dialog"
 import type { Person } from "@/components/termin-form-felder"
@@ -141,6 +143,7 @@ export function AuftragErstellenDialog({
           {/* Verstecktes zweites Submit-Ziel im selben Formular — siehe
              Kommentar in InfoErstellenDialog. */}
           <button ref={entwurfKnopfRef} type="submit" formAction={entwurfSpeichernAktion} className="hidden" />
+          <FormularAenderungenSchutz />
         </form>
       </dialog>
 

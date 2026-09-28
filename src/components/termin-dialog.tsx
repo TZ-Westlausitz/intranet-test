@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 import { TerminFormFelder, LEERE_TERMIN_STANDARDWERTE, type Person } from "@/components/termin-form-felder"
 import { datumIsoAusDate, zeitAusDate } from "@/lib/datum"
 
@@ -143,6 +145,7 @@ export function TerminDialog({
               Termin erstellen
             </button>
           </div>
+          <FormularAenderungenSchutz />
         </form>
       </dialog>
     </>

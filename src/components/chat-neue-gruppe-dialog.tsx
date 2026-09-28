@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 import { InfoEmpfaengerAuswahl } from "@/components/info-empfaenger-auswahl"
 import type { Person } from "@/components/termin-form-felder"
 
@@ -89,6 +91,7 @@ export function ChatNeueGruppeDialog({
                 Erstellen
               </button>
             </div>
+            <FormularAenderungenSchutz />
           </form>
         )}
       </dialog>

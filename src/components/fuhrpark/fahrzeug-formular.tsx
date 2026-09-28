@@ -74,7 +74,6 @@ export function FahrzeugFormularFelder({
               </option>
             ))}
           </select>
-          <span className="text-xs font-normal text-tertiaer">Bestimmt u. a. die Skizze beim Schaden erfassen.</span>
         </label>
       </div>
 

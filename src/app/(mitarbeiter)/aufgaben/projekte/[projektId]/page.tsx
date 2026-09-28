@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { ProjektmitgliedRolle } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { Hinweis } from "@/components/hinweis"
 import { ProjektFormFelder } from "@/components/projekt-form-felder"
 import { ProjektZeitstrahl } from "@/components/projekt-zeitstrahl"
@@ -329,6 +330,7 @@ export default async function ProjektDetailSeite({
               >
                 Speichern
               </button>
+              <FormularAenderungenSchutz />
             </form>
           </details>
         )}

@@ -4,6 +4,7 @@ import { useState } from "react"
 
 import { Passwortfeld } from "@/components/passwortfeld"
 import { Hinweis } from "@/components/hinweis"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
 const GRUENER_RAND = "border-marke-gruen focus:border-marke-gruen"
 
@@ -63,6 +64,7 @@ export function PasswortAendernFormular({
       >
         Passwort speichern
       </button>
+      <FormularAenderungenSchutz />
     </form>
   )
 }

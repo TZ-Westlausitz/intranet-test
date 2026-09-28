@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { AlertTriangle, Check, Paperclip } from "lucide-react"
 import { berechtigung } from "@/lib/auth/berechtigung"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { prisma } from "@/lib/db"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -418,6 +419,7 @@ export default async function AufgabenSeite({
           >
             Hinzufügen
           </button>
+          <FormularAenderungenSchutz />
         </form>
 
         {todosOffen.length === 0 ? (

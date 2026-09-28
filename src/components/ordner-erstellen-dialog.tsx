@@ -2,6 +2,8 @@
 
 import { useRef } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 /**
  * "+ Ordner"/"+ Unterordner"-Knopf + Anlegen-Pop-Up — ein einziges
  * Namensfeld, dieselbe kleine Komponente für beide Ebenen (für einen
@@ -66,6 +68,7 @@ export function OrdnerErstellenDialog({
               Anlegen
             </button>
           </div>
+          <FormularAenderungenSchutz />
         </form>
       </dialog>
     </>

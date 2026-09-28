@@ -11,6 +11,7 @@ import { AusleiheStatus, DokumentArt } from "@/generated/prisma/enums"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { ZweiUnterschriften } from "@/components/zwei-unterschriften"
 
 /**
@@ -189,6 +190,7 @@ export default async function NutzungsvereinbarungUnterschreibenSeite({
         >
           Vereinbarung verbindlich unterschreiben
         </button>
+        <FormularAenderungenSchutz />
       </form>
 
       <ZurueckButton />

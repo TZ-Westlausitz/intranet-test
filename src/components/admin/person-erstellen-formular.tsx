@@ -2,6 +2,8 @@
 
 import { useRef, useState, useTransition } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 type Option = { id: string; name: string; kuerzel: string | null }
 
 /**
@@ -173,6 +175,7 @@ export function PersonErstellenFormular({
             {istPending ? "Wird angelegt …" : "Benutzer anlegen"}
           </button>
         </div>
+        <FormularAenderungenSchutz />
       </form>
     </div>
   )

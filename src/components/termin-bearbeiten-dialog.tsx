@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 import { TerminFormFelder, type AnhangAnzeige, type Person, type TerminStandardwerte } from "@/components/termin-form-felder"
 
 /**
@@ -193,6 +195,7 @@ export function TerminBearbeitenDialog({
               </button>
             </div>
           </div>
+          <FormularAenderungenSchutz />
         </form>
       )}
     </dialog>

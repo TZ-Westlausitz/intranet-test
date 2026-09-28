@@ -1,6 +1,7 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { InfoAvatar } from "@/components/info-avatar"
 import { ProfilbildBearbeiten } from "@/components/profilbild-bearbeiten"
 import { personKontaktDetail } from "@/lib/kontakte/abfragen"
@@ -138,6 +139,7 @@ export default async function ProfilSeite({
         >
           Speichern
         </button>
+        <FormularAenderungenSchutz />
       </form>
 
       <ZurueckButton />

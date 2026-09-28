@@ -4,6 +4,7 @@ import { fahrzeugAnlegen } from "@/lib/fuhrpark/aktionen"
 import { FahrzeugFormularFelder } from "@/components/fuhrpark/fahrzeug-formular"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
 const FEHLER_TEXTE: Record<string, string> = {
   pflichtfeld: "Kennzeichen und Bezeichnung sind Pflichtfelder.",
@@ -37,6 +38,7 @@ export default async function NeuesFahrzeugSeite({ searchParams }: { searchParam
         >
           Fahrzeug anlegen
         </button>
+        <FormularAenderungenSchutz />
       </form>
 
       <ZurueckButton />

@@ -2,6 +2,8 @@
 
 import { forwardRef, useImperativeHandle, useRef } from "react"
 
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+
 import {
   InfoFormFelder,
   type InfoAnhangAnzeige,
@@ -85,6 +87,7 @@ export const InfoBearbeitenDialog = forwardRef<
             Speichern
           </button>
         </div>
+        <FormularAenderungenSchutz />
       </form>
     </dialog>
   )

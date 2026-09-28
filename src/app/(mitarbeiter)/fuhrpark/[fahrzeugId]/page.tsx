@@ -23,6 +23,7 @@ import { TerminVorschlagenDialog } from "@/components/fuhrpark/termin-vorschlage
 import { TerminvorschlagKarte } from "@/components/fuhrpark/terminvorschlag-karte"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
+import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
 const FEHLER_TEXTE: Record<string, string> = {
   pflichtfeld: "Kennzeichen und Bezeichnung sind Pflichtfelder.",
@@ -353,6 +354,7 @@ export default async function FahrzeugProfilSeite({
             <button type="submit" className="h-10 w-fit rounded-lg bg-marke-gruen px-5 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel">
               Speichern
             </button>
+            <FormularAenderungenSchutz />
           </form>
         </details>
       )}
