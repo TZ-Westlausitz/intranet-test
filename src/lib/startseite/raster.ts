@@ -57,7 +57,7 @@ export const STARTSEITE_MODUL_KATALOG: StartseiteModulKatalogEintrag[] = [
   { id: "KALENDER", name: "Kalender", formen: ["KLEIN"] },
   { id: "AUFGABEN", name: "Aufgaben", formen: ["KLEIN"] },
   { id: "WISSENSBEREICH", name: "Wissensbereich", formen: ["KLEIN", "BREIT", "HOCH"] },
-  { id: "FORMULARE", name: "Formulare", formen: ["KLEIN", "BREIT"] },
+  { id: "FORMULARE", name: "Formulare", formen: ["KLEIN", "BREIT", "GROSS"] },
   { id: "KONTAKTE", name: "Kontakte", formen: ["KLEIN", "BREIT"] },
   { id: "FAHRZEUGE", name: "Fahrzeuge", formen: ["KLEIN"] },
   { id: "TODO_LISTE", name: "To-Do-Liste", formen: ["KLEIN"] },

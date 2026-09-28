@@ -28,7 +28,7 @@ import { FormulareKachel } from "@/components/startseite/formulare-kachel"
 import { KontakteKachel } from "@/components/startseite/kontakte-kachel"
 import { parseRaster } from "@/lib/startseite/raster"
 import { gitterKlassen, portraitZeilenVorlage } from "@/lib/startseite/gitter-klassen"
-import { formulareStartseitenStand } from "@/lib/formulare/abfragen"
+import { formulareStartseitenStand, verfuegbareFormulare } from "@/lib/formulare/abfragen"
 import { personenFuerKachel } from "@/lib/kontakte/abfragen"
 import { ordnerVorschauFuerKachel } from "@/lib/wissen/abfragen"
 
@@ -106,13 +106,17 @@ export default async function Startseite() {
   const formularePlatzierung = raster.find((p) => p.modul === "FORMULARE")
   const kontaktePlatzierung = raster.find((p) => p.modul === "KONTAKTE")
   const wissensbereichPlatzierung = raster.find((p) => p.modul === "WISSENSBEREICH")
+  // Verfügbare Vorlagen (Schnellzugriff) nur bei der Form GROSS nötig
+  // (siehe FormulareKachel) — bei KLEIN/BREIT bleibt es beim reinen Stand.
+  const formulareGross = formularePlatzierung?.form === "GROSS"
 
-  const [formulareStand, kontaktePersonen, wissensOrdner] = await Promise.all([
+  const [formulareStand, kontaktePersonen, wissensOrdner, formulareVerfuegbar] = await Promise.all([
     formularePlatzierung ? formulareStartseitenStand(kontext) : Promise.resolve({ eigeneOffen: [], adressiertOffen: [] }),
     kontaktePlatzierung ? personenFuerKachel(kontaktePlatzierung.personenIds ?? []) : Promise.resolve([]),
     wissensbereichPlatzierung
       ? ordnerVorschauFuerKachel(wissensbereichPlatzierung.ordnerIds ?? [], kontext)
       : Promise.resolve([]),
+    formulareGross ? verfuegbareFormulare(kontext) : Promise.resolve([]),
   ])
 
   // Fahrzeuge-Vorschaudaten: auf dem Handy IMMER für Werkstatt-Rolle nötig
@@ -203,6 +207,18 @@ export default async function Startseite() {
   // eigene Kachel weiter unten im Raster.
   const auftraegeGesamtOffen = auftraegeStatus.offen + auftraegeStatus.angenommen
   const aufgabenGesamtOffen = auftraegeGesamtOffen + offeneProjektAufgaben.length
+  // Für die Aufgaben-Kachel (untere Hälfte, Rückmeldung 2026-09-28): die
+  // ohnehin schon geladenen offenen Projekt-Aufgaben nach Projekt
+  // gruppieren, statt einer eigenen Abfrage — nur Projekte mit
+  // mindestens einer offenen eigenen Aufgabe tauchen dort auf.
+  const projekteMitOffenenAufgaben = Array.from(
+    offeneProjektAufgaben.reduce((karte, aufgabe) => {
+      const eintrag = karte.get(aufgabe.projekt!.id) ?? { id: aufgabe.projekt!.id, titel: aufgabe.projekt!.titel, anzahl: 0 }
+      eintrag.anzahl += 1
+      karte.set(aufgabe.projekt!.id, eintrag)
+      return karte
+    }, new Map<string, { id: string; titel: string; anzahl: number }>()).values()
+  )
   const terminVorschau = termin
     ? `${
         istGleicherTag(termin.beginn, heute)
@@ -394,7 +410,7 @@ export default async function Startseite() {
                       className={gitterKlasse}
                       auftraegeOffen={auftraegeStatus.offen}
                       auftraegeAngenommen={auftraegeStatus.angenommen}
-                      projektAufgabenAnzahl={offeneProjektAufgaben.length}
+                      projekte={projekteMitOffenenAufgaben}
                     />
                   )
                 case "WISSENSBEREICH":
@@ -432,8 +448,10 @@ export default async function Startseite() {
                     <FormulareKachel
                       key="FORMULARE"
                       className={gitterKlasse}
+                      gross={formulareGross}
                       eigeneOffen={formulareStand.eigeneOffen}
                       adressiertOffen={formulareStand.adressiertOffen}
+                      verfuegbar={formulareVerfuegbar}
                     />
                   )
                 case "KONTAKTE":
