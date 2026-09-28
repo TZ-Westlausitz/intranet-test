@@ -10,12 +10,23 @@ const ELEMENT_INCLUDE = {
 
 const ANHANG_SELECT = { id: true, dateiname: true, groesseBytes: true, mimetyp: true, elementId: true } as const
 
-/** Für Spalte 1 der Übersicht — aktive, für die Person freigeschaltete Vorlagen. */
+/** Für Spalte 1 der Übersicht — aktive, für die Person freigeschaltete Vorlagen. Dieselbe Liste dient auch als Auswahl für die Formulare-Kachel-Shortcuts auf der Startseite. */
 export async function verfuegbareFormulare(kontext: FormularKontext) {
   return prisma.formularVorlage.findMany({
     where: { aktiv: true, istEntwurf: false, ...formularSichtbarFuer(kontext.personId) },
     orderBy: { titel: "asc" },
   })
+}
+
+/** Für die Formulare-Kachel auf der Startseite (Form BREIT) — die als Schnellzugriff gewählten Vorlagen in Auswahl-Reihenfolge. Nicht mehr verfügbare/deaktivierte Vorlagen fallen dabei still raus (Muster: personenFuerKachel/ordnerVorschauFuerKachel). */
+export async function formularVorlagenFuerKachel(vorlagenIds: string[], kontext: FormularKontext) {
+  if (vorlagenIds.length === 0) return []
+  const vorlagen = await prisma.formularVorlage.findMany({
+    where: { id: { in: vorlagenIds }, aktiv: true, istEntwurf: false, ...formularSichtbarFuer(kontext.personId) },
+    select: { id: true, titel: true },
+  })
+  const nachId = new Map(vorlagen.map((v) => [v.id, v]))
+  return vorlagenIds.map((id) => nachId.get(id)).filter((v): v is NonNullable<typeof v> => v !== undefined)
 }
 
 /** Für Spalte 2 — von der Person selbst eingereichte Formulare. */

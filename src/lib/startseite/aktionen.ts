@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
+import { formularSichtbarFuer } from "@/lib/formulare/sichtbarkeit"
 import {
   brauchtUnterauswahl,
+  FORMULARE_MAX_SHORTCUTS,
   KONTAKTE_MAX,
   KONTAKTE_MIN,
   parseRaster,
@@ -37,8 +39,9 @@ async function rasterSpeichern(personId: string, raster: StartseitePlatzierung[]
 
 /**
  * Platziert ein Modul OHNE Unterauswahl (alles außer KONTAKTE/
- * WISSENSBEREICH, siehe kontakteModulPlatzieren/wissensbereichModulPlatzieren)
- * an einer Rasterposition — verschiebt es dabei automatisch von einer
+ * WISSENSBEREICH und FORMULARE bei BREIT, siehe kontakteModulPlatzieren/
+ * wissensbereichModulPlatzieren/formulareModulPlatzieren) an einer
+ * Rasterposition — verschiebt es dabei automatisch von einer
  * eventuellen bisherigen Position (jedes Modul kommt nur einmal im Raster
  * vor). Ungültige Ziele (belegt, außerhalb des Rasters, Form passt dort
  * nicht) werden stillschweigend verworfen, statt einen fehlerhaften
@@ -47,7 +50,7 @@ async function rasterSpeichern(personId: string, raster: StartseitePlatzierung[]
  */
 export async function modulPlatzieren(position: number, modul: StartseiteModulId, form: StartseiteForm) {
   const kontext = await berechtigung()
-  if (!STARTSEITE_MODUL_KATALOG.some((m) => m.id === modul) || brauchtUnterauswahl(modul)) return
+  if (!STARTSEITE_MODUL_KATALOG.some((m) => m.id === modul) || brauchtUnterauswahl(modul, form)) return
 
   const bestehend = (await eigenesRaster(kontext.personId)).filter((p) => p.modul !== modul)
   if (!platzierungPasst(bestehend, position, modul, form)) return
@@ -105,6 +108,35 @@ export async function wissensbereichModulPlatzieren(position: number, form: Star
 
   const bestehend = (await eigenesRaster(kontext.personId)).filter((p) => p.modul !== "WISSENSBEREICH")
   await rasterSpeichern(kontext.personId, [...bestehend, { position, modul: "WISSENSBEREICH", form, ordnerIds }])
+}
+
+/** Platziert oder bearbeitet die FORMULARE-Kachel bei der Form BREIT mit Vorlagen-Auswahl — liest `formData` ("vorlagen"), bis zu 5, nur Vorlagen, die für die Person tatsächlich verfügbar sind (Muster: verfuegbareFormulare). */
+export async function formulareModulPlatzieren(position: number, form: StartseiteForm, formData: FormData) {
+  const kontext = await berechtigung()
+  if (
+    !platzierungPasst(
+      (await eigenesRaster(kontext.personId)).filter((p) => p.modul !== "FORMULARE"),
+      position,
+      "FORMULARE",
+      form
+    )
+  ) {
+    return
+  }
+
+  const gewaehlt = formData.getAll("vorlagen").map(String)
+  if (gewaehlt.length === 0 || gewaehlt.length > FORMULARE_MAX_SHORTCUTS) return
+
+  const verfuegbareVorlagen = await prisma.formularVorlage.findMany({
+    where: { id: { in: gewaehlt }, aktiv: true, istEntwurf: false, ...formularSichtbarFuer(kontext.personId) },
+    select: { id: true },
+  })
+  const gueltigeIds = new Set(verfuegbareVorlagen.map((v) => v.id))
+  const formularIds = gewaehlt.filter((id) => gueltigeIds.has(id))
+  if (formularIds.length === 0) return
+
+  const bestehend = (await eigenesRaster(kontext.personId)).filter((p) => p.modul !== "FORMULARE")
+  await rasterSpeichern(kontext.personId, [...bestehend, { position, modul: "FORMULARE", form, formularIds }])
 }
 
 /** Entfernt ein Modul wieder aus dem Raster — die Zelle(n) werden frei (Kreuz-Knopf im Einstellungen-Pop-up). */

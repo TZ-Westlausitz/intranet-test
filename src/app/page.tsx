@@ -28,7 +28,7 @@ import { FormulareKachel } from "@/components/startseite/formulare-kachel"
 import { KontakteKachel } from "@/components/startseite/kontakte-kachel"
 import { parseRaster } from "@/lib/startseite/raster"
 import { gitterKlassen, portraitZeilenVorlage } from "@/lib/startseite/gitter-klassen"
-import { formulareStartseitenStand, verfuegbareFormulare } from "@/lib/formulare/abfragen"
+import { formulareStartseitenStand, formularVorlagenFuerKachel } from "@/lib/formulare/abfragen"
 import { personenFuerKachel } from "@/lib/kontakte/abfragen"
 import { ordnerVorschauFuerKachel } from "@/lib/wissen/abfragen"
 
@@ -106,17 +106,18 @@ export default async function Startseite() {
   const formularePlatzierung = raster.find((p) => p.modul === "FORMULARE")
   const kontaktePlatzierung = raster.find((p) => p.modul === "KONTAKTE")
   const wissensbereichPlatzierung = raster.find((p) => p.modul === "WISSENSBEREICH")
-  // Verfügbare Vorlagen (Schnellzugriff) nur bei der Form GROSS nötig
-  // (siehe FormulareKachel) — bei KLEIN/BREIT bleibt es beim reinen Stand.
-  const formulareGross = formularePlatzierung?.form === "GROSS"
+  // Ob es sich lohnt, die gewählten Schnellzugriff-Vorlagen nachzuladen —
+  // nur bei der Form BREIT hat die Formulare-Kachel dafür Platz (siehe
+  // FormulareKachel).
+  const formulareBreit = formularePlatzierung?.form === "BREIT"
 
-  const [formulareStand, kontaktePersonen, wissensOrdner, formulareVerfuegbar] = await Promise.all([
+  const [formulareStand, kontaktePersonen, wissensOrdner, formulareShortcuts] = await Promise.all([
     formularePlatzierung ? formulareStartseitenStand(kontext) : Promise.resolve({ eigeneOffen: [], adressiertOffen: [] }),
     kontaktePlatzierung ? personenFuerKachel(kontaktePlatzierung.personenIds ?? []) : Promise.resolve([]),
     wissensbereichPlatzierung
       ? ordnerVorschauFuerKachel(wissensbereichPlatzierung.ordnerIds ?? [], kontext)
       : Promise.resolve([]),
-    formulareGross ? verfuegbareFormulare(kontext) : Promise.resolve([]),
+    formulareBreit ? formularVorlagenFuerKachel(formularePlatzierung?.formularIds ?? [], kontext) : Promise.resolve([]),
   ])
 
   // Fahrzeuge-Vorschaudaten: auf dem Handy IMMER für Werkstatt-Rolle nötig
@@ -448,10 +449,10 @@ export default async function Startseite() {
                     <FormulareKachel
                       key="FORMULARE"
                       className={gitterKlasse}
-                      gross={formulareGross}
+                      breit={formulareBreit}
                       eigeneOffen={formulareStand.eigeneOffen}
                       adressiertOffen={formulareStand.adressiertOffen}
-                      verfuegbar={formulareVerfuegbar}
+                      shortcuts={formulareShortcuts}
                     />
                   )
                 case "KONTAKTE":

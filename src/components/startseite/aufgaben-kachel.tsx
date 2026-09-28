@@ -5,10 +5,17 @@ export type AufgabenKachelProjekt = { id: string; titel: string; anzahl: number 
 /**
  * Startseiten-Kachel "Aufgaben" — aus src/app/page.tsx herausgelöst, siehe
  * KalenderKachel. Zweigeteilt (Rückmeldung 2026-09-28): obere Hälfte zählt
- * Aufträge (Offen/Angenommen), untere Hälfte listet die eigenen Projekte
- * mit der Anzahl noch offener eigener Aufgaben darin — nur Projekte mit
- * mindestens einer offenen eigenen Aufgabe, "falls verfügbar" heißt hier
- * also: Abschnitt bleibt weg, wenn es keine gibt.
+ * Aufträge (Offen/Angenommen), untere Hälfte ist eine eigene, genauso große
+ * Überschrift "Projekte" (verlinkt auf /aufgaben/projekte) mit den eigenen
+ * Projekten darunter — jedes Projekt für sich verlinkt auf seine
+ * Unterseite. Nur Projekte mit mindestens einer offenen eigenen Aufgabe,
+ * "falls verfügbar" heißt hier also: Abschnitt bleibt weg, wenn es keine
+ * gibt.
+ *
+ * Zwei Überschriften mit eigenem Link bedeuten: die Kachel ist kein
+ * einzelner `<Link>` mehr wie anfangs, sondern jede Überschrift UND jedes
+ * Projekt verlinkt für sich (Muster: WissensbereichKachel mit Ordnern) —
+ * verschachtelte `<a>`-Tags sind sonst ungültiges HTML.
  */
 export function AufgabenKachel({
   className,
@@ -25,11 +32,13 @@ export function AufgabenKachel({
   const gesamtOffen = auftraegeOffen + auftraegeAngenommen + projektAufgabenGesamt
 
   return (
-    <Link
-      href="/aufgaben"
-      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen-dunkel bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen`}
+    <div
+      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen-dunkel bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen-dunkel`}
     >
-      <div className="flex items-center justify-between gap-1.5">
+      <Link
+        href="/aufgaben"
+        className="flex shrink-0 items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+      >
         <h2 className="text-lg font-semibold text-ueberschrift hover:underline">Aufgaben</h2>
         {gesamtOffen > 0 && (
           <span
@@ -39,7 +48,7 @@ export function AufgabenKachel({
             {gesamtOffen}
           </span>
         )}
-      </div>
+      </Link>
 
       {gesamtOffen === 0 ? (
         <p className="mt-2 text-xs text-sekundaer">Alles erledigt</p>
@@ -66,12 +75,22 @@ export function AufgabenKachel({
           {/* Untere Hälfte: eigene Projekte mit offenen Aufgaben. */}
           {projekte.length > 0 && (
             <div className="min-h-0 flex-1 border-t border-flaeche-100 pt-2">
-              <h3 className="text-[11px] font-semibold tracking-wide text-sekundaer uppercase">Projekte</h3>
+              <Link
+                href="/aufgaben/projekte"
+                className="rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+              >
+                <h3 className="text-sm font-semibold text-ueberschrift hover:underline">Projekte</h3>
+              </Link>
               <ul className="mt-1 flex flex-col gap-1 overflow-y-auto">
                 {projekte.map((p) => (
-                  <li key={p.id} className="flex items-center justify-between gap-2 text-xs text-primaer">
-                    <span className="truncate">{p.titel}</span>
-                    <span className="font-medium">{p.anzahl}</span>
+                  <li key={p.id}>
+                    <Link
+                      href={`/aufgaben/projekte/${p.id}`}
+                      className="flex items-center justify-between gap-2 rounded text-xs text-primaer hover:text-marke-gruen-dunkel hover:underline"
+                    >
+                      <span className="truncate">{p.titel}</span>
+                      <span className="shrink-0 font-medium">{p.anzahl}</span>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -79,6 +98,6 @@ export function AufgabenKachel({
           )}
         </div>
       )}
-    </Link>
+    </div>
   )
 }

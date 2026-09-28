@@ -6,6 +6,7 @@ import { X } from "lucide-react"
 import { PersonenAuswahl } from "@/components/personen-auswahl"
 import type { Person } from "@/components/termin-form-felder"
 import {
+  formulareModulPlatzieren,
   kontakteModulPlatzieren,
   modulEntfernen,
   modulPlatzieren,
@@ -14,6 +15,7 @@ import {
 import {
   belegteZellen,
   brauchtUnterauswahl,
+  FORMULARE_MAX_SHORTCUTS,
   KONTAKTE_MAX,
   KONTAKTE_MIN,
   modulName,
@@ -70,6 +72,7 @@ function vorschauPosition(position: number, form: StartseiteForm): React.CSSProp
 }
 
 type OrdnerAuswahlEintrag = { id: string; name: string; artikelAnzahl: number }
+type VorlagenAuswahlEintrag = { id: string; titel: string }
 
 /**
  * Die 8 Rasterfelder als kleine, klickbare Skizze — Vorschau der echten
@@ -92,17 +95,20 @@ export function StartseiteRasterEinstellung({
   raster,
   personen,
   ordnerListe,
+  vorlagenListe,
 }: {
   raster: StartseitePlatzierung[]
   personen: Person[]
   ordnerListe: OrdnerAuswahlEintrag[]
+  vorlagenListe: VorlagenAuswahlEintrag[]
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [offenePosition, setOffenePosition] = useState<number | null>(null)
-  const [schritt, setSchritt] = useState<"modul" | "kontakte" | "wissensbereich">("modul")
+  const [schritt, setSchritt] = useState<"modul" | "kontakte" | "wissensbereich" | "formulare">("modul")
   const [gewaehlteForm, setGewaehlteForm] = useState<StartseiteForm | null>(null)
   const [bearbeitetePlatzierung, setBearbeitetePlatzierung] = useState<StartseitePlatzierung | null>(null)
   const [ordnerAuswahl, setOrdnerAuswahl] = useState<string[]>([])
+  const [formularAuswahl, setFormularAuswahl] = useState<string[]>([])
 
   const belegteZellenNachPosition = new Map<number, StartseiteModulId>()
   for (const platzierung of raster) {
@@ -116,20 +122,28 @@ export function StartseiteRasterEinstellung({
     dialogRef.current?.showModal()
   }
 
+  function schrittFuer(modul: StartseiteModulId): "kontakte" | "wissensbereich" | "formulare" {
+    if (modul === "KONTAKTE") return "kontakte"
+    if (modul === "FORMULARE") return "formulare"
+    return "wissensbereich"
+  }
+
   function unterauswahlBearbeiten(platzierung: StartseitePlatzierung) {
     setOffenePosition(platzierung.position)
     setBearbeitetePlatzierung(platzierung)
     setGewaehlteForm(platzierung.form)
     setOrdnerAuswahl(platzierung.ordnerIds ?? [])
-    setSchritt(platzierung.modul === "KONTAKTE" ? "kontakte" : "wissensbereich")
+    setFormularAuswahl(platzierung.formularIds ?? [])
+    setSchritt(schrittFuer(platzierung.modul))
     dialogRef.current?.showModal()
   }
 
   function modulGewaehlt(modul: StartseiteModulId, form: StartseiteForm) {
-    if (brauchtUnterauswahl(modul)) {
+    if (brauchtUnterauswahl(modul, form)) {
       setGewaehlteForm(form)
       setOrdnerAuswahl([])
-      setSchritt(modul === "KONTAKTE" ? "kontakte" : "wissensbereich")
+      setFormularAuswahl([])
+      setSchritt(schrittFuer(modul))
     }
     // Module ohne Unterauswahl platzieren sich selbst über ihr eigenes
     // <form> im Rendern unten (siehe passendeOptionen) und schließen den
@@ -155,6 +169,14 @@ export function StartseiteRasterEinstellung({
     })
   }
 
+  function formularUmschalten(vorlageId: string) {
+    setFormularAuswahl((bisher) => {
+      if (bisher.includes(vorlageId)) return bisher.filter((id) => id !== vorlageId)
+      if (bisher.length >= FORMULARE_MAX_SHORTCUTS) return bisher
+      return [...bisher, vorlageId]
+    })
+  }
+
   return (
     <>
       {/* aspect-[2/1] am GANZEN Raster statt aspect-square an jeder
@@ -171,7 +193,7 @@ export function StartseiteRasterEinstellung({
           const anchor = raster.find((p) => p.position === position)
 
           if (anchor) {
-            const editierbar = brauchtUnterauswahl(anchor.modul)
+            const editierbar = brauchtUnterauswahl(anchor.modul, anchor.form)
             return (
               <div
                 key={position}
@@ -196,9 +218,9 @@ export function StartseiteRasterEinstellung({
                   >
                     <span className="text-sm font-semibold text-ueberschrift sm:text-base">{modulName(anchor.modul)}</span>
                     <span className="text-xs text-sekundaer">
-                      {anchor.modul === "KONTAKTE"
-                        ? `${anchor.personenIds?.length ?? 0} Personen — bearbeiten`
-                        : `${anchor.ordnerIds?.length ?? 0} Ordner — bearbeiten`}
+                      {anchor.modul === "KONTAKTE" && `${anchor.personenIds?.length ?? 0} Personen — bearbeiten`}
+                      {anchor.modul === "WISSENSBEREICH" && `${anchor.ordnerIds?.length ?? 0} Ordner — bearbeiten`}
+                      {anchor.modul === "FORMULARE" && `${anchor.formularIds?.length ?? 0} Formulare — bearbeiten`}
                     </span>
                   </button>
                 ) : (
@@ -245,7 +267,7 @@ export function StartseiteRasterEinstellung({
                 <p className="px-2 py-2 text-sm text-sekundaer">Kein passendes Modul mehr übrig für dieses Feld.</p>
               ) : (
                 passendeOptionen.map(({ modul, name, form }) =>
-                  brauchtUnterauswahl(modul) ? (
+                  brauchtUnterauswahl(modul, form) ? (
                     <button
                       key={`${modul}-${form}`}
                       type="button"
@@ -390,6 +412,72 @@ export function StartseiteRasterEinstellung({
               <button
                 type="submit"
                 disabled={ordnerAuswahl.length === 0}
+                className="h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Speichern
+              </button>
+            </div>
+          </form>
+        )}
+
+        {schritt === "formulare" && gewaehlteForm && (
+          <form
+            action={formulareModulPlatzieren.bind(null, offenePosition ?? -1, gewaehlteForm)}
+            onSubmit={() => window.setTimeout(() => dialogRef.current?.close(), 0)}
+          >
+            <div className="border-b border-rand px-5 py-4">
+              <h2 className="text-lg font-semibold text-ueberschrift">Formulare für den Schnellzugriff</h2>
+              <p className="mt-1 text-xs text-sekundaer">Bis zu {FORMULARE_MAX_SHORTCUTS} eigene, verfügbare Vorlagen.</p>
+            </div>
+
+            <div className="flex max-h-[50vh] flex-col gap-1 overflow-y-auto px-3 py-3">
+              {vorlagenListe.length === 0 ? (
+                <p className="px-2 py-2 text-sm text-sekundaer">Keine Formulare für dich freigeschaltet.</p>
+              ) : (
+                vorlagenListe.map((vorlage) => {
+                  const ausgewaehlt = formularAuswahl.includes(vorlage.id)
+                  const deaktiviert = !ausgewaehlt && formularAuswahl.length >= FORMULARE_MAX_SHORTCUTS
+                  return (
+                    <label
+                      key={vorlage.id}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-primaer hover:bg-flaeche-100 ${deaktiviert ? "opacity-50" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        name="vorlagen"
+                        value={vorlage.id}
+                        checked={ausgewaehlt}
+                        disabled={deaktiviert}
+                        onChange={() => formularUmschalten(vorlage.id)}
+                        className="h-4 w-4"
+                      />
+                      {vorlage.titel}
+                    </label>
+                  )
+                })
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 border-t border-rand px-5 py-3">
+              {!bearbeitetePlatzierung && (
+                <button
+                  type="button"
+                  onClick={() => setSchritt("modul")}
+                  className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
+                >
+                  Zurück
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => dialogRef.current?.close()}
+                className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
+              >
+                Abbrechen
+              </button>
+              <button
+                type="submit"
+                disabled={formularAuswahl.length === 0}
                 className="h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Speichern

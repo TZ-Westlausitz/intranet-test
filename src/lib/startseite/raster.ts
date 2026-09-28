@@ -25,10 +25,10 @@
  * gebaut.
  *
  * Manche Module brauchen zusätzlich zu Position+Form eine Unterauswahl
- * (KONTAKTE: 3–5 Personen, WISSENSBEREICH: 1–3 Ordner) — siehe
- * `brauchtUnterauswahl` und die jeweiligen Felder auf
- * `StartseitePlatzierung`. Die übrigen Module sind mit Modul+Form fertig
- * konfiguriert.
+ * (KONTAKTE: 3–5 Personen, WISSENSBEREICH: 1–3 Ordner, FORMULARE bei BREIT:
+ * bis zu 5 Vorlagen als Schnellzugriff) — siehe `brauchtUnterauswahl` und
+ * die jeweiligen Felder auf `StartseitePlatzierung`. Die übrigen Module
+ * sind mit Modul+Form fertig konfiguriert.
  */
 
 export type StartseiteModulId =
@@ -57,7 +57,7 @@ export const STARTSEITE_MODUL_KATALOG: StartseiteModulKatalogEintrag[] = [
   { id: "KALENDER", name: "Kalender", formen: ["KLEIN"] },
   { id: "AUFGABEN", name: "Aufgaben", formen: ["KLEIN"] },
   { id: "WISSENSBEREICH", name: "Wissensbereich", formen: ["KLEIN", "BREIT", "HOCH"] },
-  { id: "FORMULARE", name: "Formulare", formen: ["KLEIN", "BREIT", "GROSS"] },
+  { id: "FORMULARE", name: "Formulare", formen: ["KLEIN", "BREIT"] },
   { id: "KONTAKTE", name: "Kontakte", formen: ["KLEIN", "BREIT"] },
   { id: "FAHRZEUGE", name: "Fahrzeuge", formen: ["KLEIN"] },
   { id: "TODO_LISTE", name: "To-Do-Liste", formen: ["KLEIN"] },
@@ -72,14 +72,23 @@ export function modulErlaubteFormen(id: StartseiteModulId): StartseiteForm[] {
   return STARTSEITE_MODUL_KATALOG.find((m) => m.id === id)?.formen ?? ["KLEIN"]
 }
 
-/** KONTAKTE braucht 3–5 Personen, WISSENSBEREICH 1–3 Ordner — beide erst nach Modul+Form-Wahl über einen zweiten Schritt im Einstellungen-Pop-up. */
-export function brauchtUnterauswahl(id: StartseiteModulId): boolean {
-  return id === "KONTAKTE" || id === "WISSENSBEREICH"
+/**
+ * KONTAKTE (jede Form) und WISSENSBEREICH (jede Form) brauchen immer eine
+ * Unterauswahl, FORMULARE nur bei der Form BREIT (Rückmeldung 2026-09-28:
+ * das rechte der beiden inneren Kästchen dort zeigt gewählte Vorlagen als
+ * Schnellzugriff — bei KLEIN ist dafür kein Platz). Läuft nach Modul+Form-
+ * Wahl über einen zweiten Schritt im Einstellungen-Pop-up.
+ */
+export function brauchtUnterauswahl(modul: StartseiteModulId, form: StartseiteForm): boolean {
+  if (modul === "KONTAKTE" || modul === "WISSENSBEREICH") return true
+  if (modul === "FORMULARE" && form === "BREIT") return true
+  return false
 }
 
 export const KONTAKTE_MIN = 3
 export const KONTAKTE_MAX = 5
 export const WISSENSBEREICH_MAX_ORDNER_HOCH = 3
+export const FORMULARE_MAX_SHORTCUTS = 5
 
 export type StartseitePlatzierung = {
   position: number
@@ -89,6 +98,8 @@ export type StartseitePlatzierung = {
   personenIds?: string[]
   /** Nur WISSENSBEREICH: 1 Ordner (KLEIN/BREIT) oder bis zu 3 (HOCH). */
   ordnerIds?: string[]
+  /** Nur FORMULARE bei der Form BREIT: bis zu 5 gewählte Vorlagen als Schnellzugriff. */
+  formularIds?: string[]
 }
 
 /**
@@ -145,6 +156,7 @@ function gueltigesRaster(platzierungen: StartseitePlatzierung[]): boolean {
 
     if (p.personenIds !== undefined && !Array.isArray(p.personenIds)) return false
     if (p.ordnerIds !== undefined && !Array.isArray(p.ordnerIds)) return false
+    if (p.formularIds !== undefined && !Array.isArray(p.formularIds)) return false
   }
   return true
 }
@@ -179,6 +191,7 @@ export function parseRaster(gespeichert: string | null): StartseitePlatzierung[]
       form: (eintrag.form as StartseiteForm) ?? LEGACY_FORM[eintrag.modul as StartseiteModulId] ?? "KLEIN",
       personenIds: Array.isArray(eintrag.personenIds) ? eintrag.personenIds : undefined,
       ordnerIds: Array.isArray(eintrag.ordnerIds) ? eintrag.ordnerIds : undefined,
+      formularIds: Array.isArray(eintrag.formularIds) ? eintrag.formularIds : undefined,
     }))
     return gueltigesRaster(platzierungen) ? platzierungen : STARTSEITE_STANDARD
   } catch {
