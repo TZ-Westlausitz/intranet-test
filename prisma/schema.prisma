@@ -189,14 +189,14 @@ model Person {
   /// verlassen sind zwei unterschiedliche Ereignisse.
   deaktiviertAm DateTime?
 
-  /// Welches Modul aus dem Kopfzeilenpunkt "Weiteres" (siehe
-  /// src/lib/bausteine.ts) auf der Startseite als Kachel in Zeile 2,
-  /// Spalte 4 erscheint — die übrigen Module dieser Liste zeigen sich dort
-  /// nicht. `null` heißt "noch nicht eingestellt", dann greift auf der
-  /// Startseite ein Default (aktuell das erste Modul der Liste). Speichert
-  /// bewusst den Namen des Moduls, nicht dessen Pfad — der ist stabiler,
-  /// falls sich mal nur die Ziel-URL ändert.
-  startseiteWeiteresModul String?
+  /// Modulares Startseiten-Raster (Tablet/Desktop, siehe
+  /// src/lib/startseite/raster.ts): welches Modul in welchem der 8
+  /// Rasterfelder erscheint, als JSON-Text (`StartseitePlatzierung[]`).
+  /// `null` heißt "noch nicht eingestellt", dann greift `STARTSEITE_STANDARD`
+  /// als Fallback beim Lesen (siehe `parseRaster`). Löst seit 2026-09-28 das
+  /// frühere `startseiteWeiteresModul` ab, das nur EIN wählbares Feld
+  /// kannte statt des ganzen Rasters.
+  startseiteRaster String?
 
   /// Firmenweiter, rein lesender Überblicksmodus (Admin-Modus, Schalter in
   /// der Desktop-Menüleiste) — nur wirksam in Kombination mit Rolle

@@ -46,14 +46,17 @@ type InfoEintrag = {
 export function NewsfeedHomeKachel({
   infos,
   offeneBestaetigungen,
+  className = "",
 }: {
   infos: InfoEintrag[]
   offeneBestaetigungen: number
+  /** Grid-Platzierung von der aufrufenden Seite (siehe src/lib/startseite/gitter-klassen.ts) — auf der Handy-Ansicht leer, dort steht die Kachel außerhalb eines Rasters. */
+  className?: string
 }) {
   const dialogRef = useRef<InfoAnzeigenDialogHandle>(null)
 
   return (
-    <div className="col-span-2 row-span-2 portrait:row-span-1 flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-5 shadow-sm">
+    <div className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-5 shadow-sm`}>
       <Link
         href="/newsfeed"
         className="flex shrink-0 items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
