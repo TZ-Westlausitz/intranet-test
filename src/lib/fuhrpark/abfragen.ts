@@ -26,6 +26,26 @@ export async function fuhrparkFahrzeuge(kontext: FuhrparkKontext) {
 }
 
 /**
+ * Ausgemusterte Fahrzeuge (`aktiv: false`) — eigene, eingeklappte Übersicht
+ * ganz unten in der Fuhrpark-Liste, nur für die Werkstattleitung
+ * (Rückmeldung 2026-09-29). Der Zähler pro Fahrzeug entscheidet, ob es
+ * überhaupt löschbar ist: Mietverlauf/Schäden/Terminvorschläge bleiben
+ * Nachweise (siehe fahrzeugLoeschen) und verhindern das endgültige Löschen.
+ */
+export async function fuhrparkAusgesonderteFahrzeuge() {
+  return prisma.fahrzeug.findMany({
+    where: { aktiv: false },
+    select: {
+      id: true,
+      bezeichnung: true,
+      kennzeichen: true,
+      _count: { select: { ausleihen: true, schaeden: true, terminvorschlaege: true } },
+    },
+    orderBy: [{ bezeichnung: "asc" }, { kennzeichen: "asc" }],
+  })
+}
+
+/**
  * Ein Fahrzeug mit allem, was das Profil zeigt — oder `null`, wenn es das
  * Fahrzeug nicht gibt ODER diese Person es nicht sehen darf (kein Unterschied
  * nach außen, damit sich nicht erraten lässt, welche Fahrzeuge existieren).

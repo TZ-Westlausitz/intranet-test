@@ -176,6 +176,37 @@ export async function fahrzeugAktualisieren(fahrzeugId: string, formData: FormDa
 }
 
 /**
+ * Ausgemustertes Fahrzeug endgültig löschen — nur Werkstattleiter, und nur
+ * für bereits ausgemusterte Fahrzeuge (Regel: erst deaktivieren, dann
+ * bewusst zusätzlich löschen, kein direkter Weg von "aktiv" aus).
+ *
+ * Absichtlich KEIN Löschen, solange noch Mietverlauf, Schäden oder
+ * Terminvorschläge daran hängen — die Fremdschlüssel dieser Modelle haben
+ * bewusst kein `onDelete: Cascade` (Vereinbarung/Uebergabeprotokoll sind
+ * append-only, Regel 2, und die Abrechnung braucht den Listenpreis zur
+ * Ausleihe). Ohne diese Prüfung würde Postgres den Löschversuch mit einem
+ * Fremdschlüsselfehler ablehnen; die Prüfung hier sorgt nur für eine
+ * verständliche Fehlermeldung statt eines rohen Datenbankfehlers.
+ */
+export async function fahrzeugLoeschen(fahrzeugId: string) {
+  await berechtigung({ benoetigteBerechtigung: BEARBEITEN })
+
+  const fahrzeug = await prisma.fahrzeug.findUnique({
+    where: { id: fahrzeugId },
+    select: { aktiv: true, _count: { select: { ausleihen: true, schaeden: true, terminvorschlaege: true } } },
+  })
+  if (!fahrzeug || fahrzeug.aktiv) redirect("/fuhrpark")
+
+  const hatHistorie = fahrzeug._count.ausleihen + fahrzeug._count.schaeden + fahrzeug._count.terminvorschlaege > 0
+  if (hatHistorie) redirect("/fuhrpark?fehler=fahrzeugHatHistorie")
+
+  await prisma.fahrzeug.delete({ where: { id: fahrzeugId } })
+
+  fuhrparkNachAenderung()
+  redirect("/fuhrpark")
+}
+
+/**
  * Terminvorschlag (TÜV/Service/Reifenwechsel) an den Halter schicken — nur
  * Werkstattleiter, und nur wenn das Fahrzeug einen Halter hat. Ohne Halter
  * (z. B. ein Praxisfahrzeug) trägt die Werkstatt das Datum direkt im
