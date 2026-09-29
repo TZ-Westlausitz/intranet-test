@@ -321,11 +321,21 @@ export async function fahrzeugschadenErfassen(fahrzeugId: string, formData: Form
   // Ohne Datum: heute.
   const festgestelltAm = kalendertagAusEingabe(formData.get("festgestelltAm")) ?? berlinerTagesbeginn()
 
+  // Zusätzliches Freitextfeld für die Sachlage insgesamt (Rückmeldung
+  // 2026-09-29) — das Model hat keinen eigenen "Vorgang", der mehrere
+  // Schadensstellen bündelt (jede Stelle ist eine eigene Zeile, siehe
+  // Kommentar am Model Fahrzeugschaden), deshalb hängt der Text an jeder
+  // aus dieser Erfassung entstehenden Zeile mit dran statt an einem neuen
+  // Feld, das dafür extra eingeführt werden müsste.
+  const zusatzbeschreibung = textOderNull(formData.get("zusatzbeschreibung"))
+
   await prisma.fahrzeugschaden.createMany({
     data: schadenspunkte.map((punkt) => ({
       fahrzeugId,
       position: punkt.zone,
-      beschreibung: `${punkt.art}: ${punkt.beschreibung}`,
+      beschreibung: zusatzbeschreibung
+        ? `${punkt.art}: ${punkt.beschreibung} — ${zusatzbeschreibung}`
+        : `${punkt.art}: ${punkt.beschreibung}`,
       festgestelltAm,
       gemeldetVonId: kontext.personId,
     })),

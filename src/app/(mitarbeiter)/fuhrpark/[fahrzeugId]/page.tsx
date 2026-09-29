@@ -302,6 +302,18 @@ export default async function FahrzeugProfilSeite({
               </p>
               <Schadensskizze name="schadenspunkte" fahrzeugtyp={fahrzeug.fahrzeugtyp} />
               <label className="flex flex-col gap-1 text-sm font-medium text-primaer">
+                Beschreibung
+                <textarea
+                  name="zusatzbeschreibung"
+                  rows={3}
+                  placeholder="Zusätzliche Angaben zur Sachlage, z. B. wie es passiert ist"
+                  className="rounded-lg border border-flaeche-300 bg-flaeche px-3 py-2 text-sm"
+                />
+                <span className="text-xs font-normal text-tertiaer">
+                  Ergänzt die Angaben zu den einzelnen Schadensstellen oben, optional.
+                </span>
+              </label>
+              <label className="flex flex-col gap-1 text-sm font-medium text-primaer">
                 Festgestellt am
                 <input type="date" name="festgestelltAm" defaultValue={datumIsoAusDate(heute)} className="h-10 rounded-lg border border-flaeche-300 bg-flaeche px-3 text-sm" />
               </label>
