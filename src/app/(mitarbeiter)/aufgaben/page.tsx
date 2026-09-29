@@ -205,30 +205,37 @@ function AuftragInhalt({ auftrag, heute, name }: { auftrag: AuftragMitBeziehung;
  * "To-Do-Liste" zeigen jetzt ebenfalls hierher statt auf die alte
  * Unterseite.
  *
- * Zwei-Spalten-Layout ab `md:` (Rückmeldung 2026-09-23: vier gestapelte
- * Karten auf einer Seite wirkten unübersichtlich) — links alles, was der
- * Person zugewiesen wurde ("Dir zugewiesen" + "Aus Projekten
- * zugewiesen"), rechts die eigene To-Do-Liste + was die Person selbst
- * delegiert hat ("Meine To-Dos" + "Von dir vergeben") — Rückmeldung
- * 2026-09-29: vorher stand "Meine To-Dos" links neben den fremdvergebenen
- * Aufträgen, "Aus Projekten zugewiesen" dagegen rechts bei der
- * Delegation, obwohl es inhaltlich zu "Dir zugewiesen" gehört. Auf dem
- * Handy bleibt alles einspaltig gestapelt (`grid-cols-1`, erst ab `md:`
- * zwei Spalten) — bewusst EIN Grid mit CSS-Breakpoints statt zwei
+ * Zwei- ODER Drei-Spalten-Layout ab `md:` (Rückmeldung 2026-09-23: vier
+ * gestapelte Karten auf einer Seite wirkten unübersichtlich), je nachdem,
+ * ob die Person selbst Aufträge vergeben darf (`darfAuftraegeZuweisen`,
+ * Berechtigung "Aufgaben") — Rückmeldung 2026-09-29:
+ *
+ * - Mit der Berechtigung DREI Spalten: 1. "Von dir vergeben" (Delegation),
+ *   2. "Dir zugewiesen" + "Aus Projekten zugewiesen" (was die Person
+ *   bekommt), 3. "Meine To-Dos" (rein persönlich) — jedes Thema eine
+ *   eigene Spalte, `md:max-w-6xl` breit für den zusätzlichen Platz.
+ * - Ohne die Berechtigung bleibt es bei ZWEI Spalten wie zuvor: links
+ *   "Dir zugewiesen" + "Aus Projekten zugewiesen", rechts "Meine To-Dos"
+ *   (+ "Von dir vergeben", falls trotz fehlender Berechtigung noch alte
+ *   vergebene Aufträge/Entwürfe existieren — siehe blockVonDirVergeben),
+ *   `md:max-w-4xl` breit.
+ *
+ * Die einzelnen Karten stehen dafür als JSX-Bausteine (blockDirZugewiesen
+ * usw.) VOR dem return und werden je nach Spaltenzahl nur unterschiedlich
+ * auf die Spalten verteilt, nicht dupliziert. Auf dem Handy bleibt in
+ * beiden Fällen alles einspaltig gestapelt (`grid-cols-1`, erst ab `md:`
+ * mehrspaltig) — bewusst EIN Grid mit CSS-Breakpoints statt mehrerer
  * komplett getrennter `<main>`-Bäume wie bei /formulare: Diese Seite hat
- * ein `autoOeffnen`-Dialog (AuftragErstellenDialog), und zwei parallel im
- * DOM stehende Kopien davon hätten dasselbe Doppel-Dialog-Problem wie
+ * ein `autoOeffnen`-Dialog (AuftragErstellenDialog), und mehrere parallel
+ * im DOM stehende Kopien davon hätten dasselbe Doppel-Dialog-Problem wie
  * seinerzeit bei der Kontaktstelle (siehe Memory
  * kontaktstelle-meldestelle-baustein) — ein einziger Baum mit reinem
  * CSS-Umbruch vermeidet das von vornherein.
  *
- * Beide Spalten haben inzwischen immer Inhalt — "Dir zugewiesen" links
- * und "Meine To-Dos" rechts sind beide unbedingt gerendert (mit
- * Leertext, falls nichts da ist) —, deshalb ist die Seite für
- * angemeldete Personen immer zweispaltig und `md:max-w-4xl` breit; nur
- * der Admin-Modus (eigene, firmenweite Übersicht statt der beiden
- * persönlichen Spalten) prüft weiterhin, ob die zweite Karte dort
- * überhaupt etwas zu zeigen hat.
+ * Der Admin-Modus (eigene, firmenweite Übersicht statt der persönlichen
+ * Spalten) ist davon unabhängig und bleibt bei seiner eigenen
+ * Zweispalten-Logik (`seiteZweispaltig`, prüft nur, ob die zweite
+ * Firmenkarte etwas zu zeigen hat).
  */
 export default async function AufgabenSeite({
   searchParams,
@@ -280,44 +287,18 @@ export default async function AufgabenSeite({
   // immer zweispaltig, siehe Doku-Kommentar oben.
   const zweiteFirmenkarteHatInhalt = (firmenweiteProjektAufgabenOffen?.length ?? 0) > 0
   const seiteZweispaltig = kontext.adminModusAktiv ? zweiteFirmenkarteHatInhalt : true
+  // Persönliche Ansicht: drei Spalten, sobald die Person selbst Aufträge
+  // vergeben darf (eigene Spalte "Von dir vergeben" statt in "Meine
+  // To-Dos" mit eingesammelt), sonst wie bisher zwei — siehe Doku-Kommentar
+  // oben.
+  const persoenlicheMaxBreite = darfAuftraegeZuweisen ? " md:max-w-6xl" : " md:max-w-4xl"
 
-  return (
-    <main className={"mx-auto max-w-2xl px-5 py-10" + (seiteZweispaltig ? " md:max-w-4xl" : "")}>
-      <Kopfleiste />
-      <ZielHervorheben zielId={zielAuftragId} />
-      <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Aufgaben</h1>
-
-      {zeigeProjekteKachel && (
-        <Link
-          href="/aufgaben/projekte"
-          className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
-        >
-          <div>
-            <h2 className="text-lg font-semibold text-ueberschrift">
-              {kontext.adminModusAktiv ? "Alle Projekte (Firma)" : "Meine Projekte"}
-            </h2>
-            <p className="mt-1 text-sm text-sekundaer">Größere Vorhaben mit mehreren Beteiligten und Zeitstrahl.</p>
-          </div>
-          {projekte.length > 0 && (
-            <span
-              aria-label={`${projekte.length} ${kontext.adminModusAktiv ? "Projekte in der Firma" : "eigene Projekte"}`}
-              className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
-            >
-              {projekte.length}
-            </span>
-          )}
-        </Link>
-      )}
-
-      {fehler && (
-        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700 md:text-left">
-          {FEHLER_TEXTE[fehler] ?? "Das hat nicht geklappt."}
-        </p>
-      )}
-
-      {!kontext.adminModusAktiv && (
-      <div className={"mt-6 grid grid-cols-1 gap-6" + (seiteZweispaltig ? " md:grid-cols-2 md:items-start" : "")}>
-      <div className="flex flex-col gap-4">
+  // Die drei/zwei Spalten-Bausteine der persönlichen Ansicht als JSX-Werte
+  // statt inline im Grid — so werden sie je nach darfAuftraegeZuweisen nur
+  // unterschiedlich auf die Spalten verteilt (siehe Doku-Kommentar oben),
+  // ohne dass die Karten selbst dupliziert werden müssten.
+  const blockDirZugewiesen = (
+    <>
       <div className="rounded-xl border border-rand bg-flaeche p-4">
         <div className="flex items-center justify-between gap-1.5">
           <h2 className="text-sm font-semibold text-ueberschrift">Dir zugewiesen</h2>
@@ -412,69 +393,71 @@ export default async function AufgabenSeite({
           </ul>
         </details>
       )}
+    </>
+  )
 
-      {projektAufgabenOffen.length > 0 && (
-        <div className="rounded-xl border border-rand bg-flaeche p-4">
-          <div className="flex items-center justify-between gap-1.5">
-            <h2 className="text-sm font-semibold text-ueberschrift">Aus Projekten zugewiesen</h2>
-            <span
-              aria-label={`${projektAufgabenOffen.length} aus Projekten zugewiesen`}
-              className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
-            >
-              {projektAufgabenOffen.length}
-            </span>
-          </div>
-          <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
-            {projektAufgabenOffen.map((aufgabe) => {
-              const faellig = faelligAnzeige(aufgabe, heute)
-              return (
-                <li key={aufgabe.id} className="flex items-start gap-3 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={
-                          "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium " +
-                          AUFGABE_STATUS_KLASSEN[aufgabe.status ?? "OFFEN"]
-                        }
-                      >
-                        {AUFGABE_STATUS_NAMEN[aufgabe.status ?? "OFFEN"]}
-                      </span>
-                      <span className="text-sm text-primaer">{aufgabe.titel}</span>
-                    </div>
-                    <p className="mt-0.5 truncate text-xs text-tertiaer">
-                      {aufgabe.projekt?.titel}
-                      {aufgabe.zwischenziel && ` · ${aufgabe.zwischenziel.titel}`}
-                    </p>
-                  </div>
-
-                  {faellig && (
-                    <span
-                      className={
-                        "mt-0.5 flex shrink-0 items-center gap-1 text-xs font-medium " +
-                        (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
-                      }
-                    >
-                      {faellig.ueberfaellig && <AlertTriangle className="h-3.5 w-3.5" aria-hidden />}
-                      {faellig.text}
-                      {faellig.ueberfaellig && <span className="sr-only"> (überfällig)</span>}
-                    </span>
-                  )}
-
-                  <Link
-                    href={`/aufgaben/projekte/${aufgabe.projektId}`}
-                    className="mt-0.5 shrink-0 text-xs font-medium text-marke-gruen-dunkel hover:underline"
-                  >
-                    Zum Projekt →
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      )}
+  const blockAusProjekten = projektAufgabenOffen.length > 0 && (
+    <div className="rounded-xl border border-rand bg-flaeche p-4">
+      <div className="flex items-center justify-between gap-1.5">
+        <h2 className="text-sm font-semibold text-ueberschrift">Aus Projekten zugewiesen</h2>
+        <span
+          aria-label={`${projektAufgabenOffen.length} aus Projekten zugewiesen`}
+          className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
+        >
+          {projektAufgabenOffen.length}
+        </span>
       </div>
+      <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
+        {projektAufgabenOffen.map((aufgabe) => {
+          const faellig = faelligAnzeige(aufgabe, heute)
+          return (
+            <li key={aufgabe.id} className="flex items-start gap-3 py-2.5">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={
+                      "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium " +
+                      AUFGABE_STATUS_KLASSEN[aufgabe.status ?? "OFFEN"]
+                    }
+                  >
+                    {AUFGABE_STATUS_NAMEN[aufgabe.status ?? "OFFEN"]}
+                  </span>
+                  <span className="text-sm text-primaer">{aufgabe.titel}</span>
+                </div>
+                <p className="mt-0.5 truncate text-xs text-tertiaer">
+                  {aufgabe.projekt?.titel}
+                  {aufgabe.zwischenziel && ` · ${aufgabe.zwischenziel.titel}`}
+                </p>
+              </div>
 
-      <div className="flex flex-col gap-4">
+              {faellig && (
+                <span
+                  className={
+                    "mt-0.5 flex shrink-0 items-center gap-1 text-xs font-medium " +
+                    (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
+                  }
+                >
+                  {faellig.ueberfaellig && <AlertTriangle className="h-3.5 w-3.5" aria-hidden />}
+                  {faellig.text}
+                  {faellig.ueberfaellig && <span className="sr-only"> (überfällig)</span>}
+                </span>
+              )}
+
+              <Link
+                href={`/aufgaben/projekte/${aufgabe.projektId}`}
+                className="mt-0.5 shrink-0 text-xs font-medium text-marke-gruen-dunkel hover:underline"
+              >
+                Zum Projekt →
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+
+  const blockMeineTodos = (
+    <>
       <div className="rounded-xl border border-rand bg-flaeche p-4">
         <div className="flex items-center justify-between gap-1.5">
           <h2 className="text-sm font-semibold text-ueberschrift">Meine To-Dos</h2>
@@ -616,85 +599,101 @@ export default async function AufgabenSeite({
           </ul>
         </details>
       )}
+    </>
+  )
 
+  // Zähler jetzt als Badge (Rückmeldung 2026-09-29, wie bei den übrigen
+  // Karten) statt als Zahl in Klammern im Überschriftstext.
+  const blockVonDirVergeben = (
+    <>
       {(darfAuftraegeZuweisen || vergebenOffen.length > 0 || entwuerfe.length > 0) && (
-      <div className="rounded-xl border border-rand bg-flaeche p-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-ueberschrift">Von dir vergeben ({vergebenOffen.length})</h2>
-          {darfAuftraegeZuweisen && (
-            <AuftragErstellenDialog
-              personen={personenAnzeige}
-              erstellenAktion={auftragErstellen}
-              entwurfSpeichernAktion={auftragAlsEntwurfSpeichern}
-              autoOeffnen={neu === "1"}
-            />
-          )}
-        </div>
+        <div className="rounded-xl border border-rand bg-flaeche p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-sm font-semibold text-ueberschrift">Von dir vergeben</h2>
+              {vergebenOffen.length > 0 && (
+                <span
+                  aria-label={`${vergebenOffen.length} von dir vergeben`}
+                  className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
+                >
+                  {vergebenOffen.length}
+                </span>
+              )}
+            </div>
+            {darfAuftraegeZuweisen && (
+              <AuftragErstellenDialog
+                personen={personenAnzeige}
+                erstellenAktion={auftragErstellen}
+                entwurfSpeichernAktion={auftragAlsEntwurfSpeichern}
+                autoOeffnen={neu === "1"}
+              />
+            )}
+          </div>
 
-        {entwuerfe.length > 0 && (
-          <ul className="mt-3 flex flex-col divide-y divide-flaeche-100 rounded-lg bg-marke-orange/5">
-            {entwuerfe.map((entwurf) => (
-              <li key={entwurf.id} className="flex items-center justify-between gap-3 px-2 py-2">
-                <div className="min-w-0">
-                  <p className="truncate text-sm text-primaer">{entwurf.titel || "Entwurf ohne Titel"}</p>
-                  <span className="rounded-full bg-marke-orange/15 px-1.5 py-0.5 text-[11px] font-medium text-marke-orange">
-                    Entwurf
-                  </span>
-                </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  {darfAuftraegeZuweisen && (
-                    <AuftragErstellenDialog
-                      personen={personenAnzeige}
-                      erstellenAktion={auftragEntwurfFinalisieren.bind(null, entwurf.id)}
-                      entwurfSpeichernAktion={auftragEntwurfAktualisieren.bind(null, entwurf.id)}
-                      entwurf={{ id: entwurf.id, standardwerte: auftragZuStandardwerte(entwurf) }}
+          {entwuerfe.length > 0 && (
+            <ul className="mt-3 flex flex-col divide-y divide-flaeche-100 rounded-lg bg-marke-orange/5">
+              {entwuerfe.map((entwurf) => (
+                <li key={entwurf.id} className="flex items-center justify-between gap-3 px-2 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm text-primaer">{entwurf.titel || "Entwurf ohne Titel"}</p>
+                    <span className="rounded-full bg-marke-orange/15 px-1.5 py-0.5 text-[11px] font-medium text-marke-orange">
+                      Entwurf
+                    </span>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-3">
+                    {darfAuftraegeZuweisen && (
+                      <AuftragErstellenDialog
+                        personen={personenAnzeige}
+                        erstellenAktion={auftragEntwurfFinalisieren.bind(null, entwurf.id)}
+                        entwurfSpeichernAktion={auftragEntwurfAktualisieren.bind(null, entwurf.id)}
+                        entwurf={{ id: entwurf.id, standardwerte: auftragZuStandardwerte(entwurf) }}
+                      />
+                    )}
+                    <form action={auftragLoeschen.bind(null, entwurf.id)}>
+                      <button type="submit" className="text-xs text-tertiaer hover:text-red-600">
+                        Löschen
+                      </button>
+                    </form>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {vergebenOffen.length === 0 ? (
+            <p className="mt-3 text-sm text-sekundaer">Nichts Offenes.</p>
+          ) : (
+            <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
+              {vergebenOffen.map((auftrag) => (
+                <li key={auftrag.id} data-ziel={auftrag.id} className="flex items-start gap-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    {/* auftraegeFuerPerson schließt Entwürfe aus (istEntwurf: false) — zugewiesenAn ist hier immer gesetzt. */}
+                    <AuftragInhalt
+                      auftrag={auftrag}
+                      heute={heute}
+                      name={`an ${auftrag.zugewiesenAn!.vorname} ${auftrag.zugewiesenAn!.nachname}`}
                     />
-                  )}
-                  <form action={auftragLoeschen.bind(null, entwurf.id)}>
-                    <button type="submit" className="text-xs text-tertiaer hover:text-red-600">
-                      Löschen
+                    <AnhaengeAnzeige auftragId={auftrag.id} anhaenge={auftrag.anhaenge} loeschbar />
+                    <AuftragKommentare
+                      auftragId={auftrag.id}
+                      kommentare={auftrag.kommentare}
+                      kommentarAktion={auftragKommentarErstellen}
+                    />
+                  </div>
+                  <form action={auftragLoeschen.bind(null, auftrag.id)}>
+                    <button
+                      type="submit"
+                      aria-label="Aufgabe zurückziehen"
+                      className="mt-0.5 shrink-0 rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
+                    >
+                      ×
                     </button>
                   </form>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {vergebenOffen.length === 0 ? (
-          <p className="mt-3 text-sm text-sekundaer">Nichts Offenes.</p>
-        ) : (
-          <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
-            {vergebenOffen.map((auftrag) => (
-              <li key={auftrag.id} data-ziel={auftrag.id} className="flex items-start gap-3 py-2.5">
-                <div className="min-w-0 flex-1">
-                  {/* auftraegeFuerPerson schließt Entwürfe aus (istEntwurf: false) — zugewiesenAn ist hier immer gesetzt. */}
-                  <AuftragInhalt
-                    auftrag={auftrag}
-                    heute={heute}
-                    name={`an ${auftrag.zugewiesenAn!.vorname} ${auftrag.zugewiesenAn!.nachname}`}
-                  />
-                  <AnhaengeAnzeige auftragId={auftrag.id} anhaenge={auftrag.anhaenge} loeschbar />
-                  <AuftragKommentare
-                    auftragId={auftrag.id}
-                    kommentare={auftrag.kommentare}
-                    kommentarAktion={auftragKommentarErstellen}
-                  />
-                </div>
-                <form action={auftragLoeschen.bind(null, auftrag.id)}>
-                  <button
-                    type="submit"
-                    aria-label="Aufgabe zurückziehen"
-                    className="mt-0.5 shrink-0 rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
-                  >
-                    ×
-                  </button>
-                </form>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       {vergebenErledigt.length > 0 && (
@@ -735,8 +734,70 @@ export default async function AufgabenSeite({
           </ul>
         </details>
       )}
-      </div>
-      </div>
+    </>
+  )
+
+  return (
+    <main
+      className={
+        "mx-auto max-w-2xl px-5 py-10" +
+        (kontext.adminModusAktiv ? (seiteZweispaltig ? " md:max-w-4xl" : "") : persoenlicheMaxBreite)
+      }
+    >
+      <Kopfleiste />
+      <ZielHervorheben zielId={zielAuftragId} />
+      <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Aufgaben</h1>
+
+      {zeigeProjekteKachel && (
+        <Link
+          href="/aufgaben/projekte"
+          className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+        >
+          <div>
+            <h2 className="text-lg font-semibold text-ueberschrift">
+              {kontext.adminModusAktiv ? "Alle Projekte (Firma)" : "Meine Projekte"}
+            </h2>
+            <p className="mt-1 text-sm text-sekundaer">Größere Vorhaben mit mehreren Beteiligten und Zeitstrahl.</p>
+          </div>
+          {projekte.length > 0 && (
+            <span
+              aria-label={`${projekte.length} ${kontext.adminModusAktiv ? "Projekte in der Firma" : "eigene Projekte"}`}
+              className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
+            >
+              {projekte.length}
+            </span>
+          )}
+        </Link>
+      )}
+
+      {fehler && (
+        <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-center text-sm text-red-700 md:text-left">
+          {FEHLER_TEXTE[fehler] ?? "Das hat nicht geklappt."}
+        </p>
+      )}
+
+      {!kontext.adminModusAktiv && (
+        darfAuftraegeZuweisen ? (
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3 md:items-start">
+            <div className="flex flex-col gap-4">{blockVonDirVergeben}</div>
+            <div className="flex flex-col gap-4">
+              {blockDirZugewiesen}
+              {blockAusProjekten}
+            </div>
+            <div className="flex flex-col gap-4">{blockMeineTodos}</div>
+          </div>
+        ) : (
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 md:items-start">
+            <div className="flex flex-col gap-4">
+              {blockDirZugewiesen}
+              {blockAusProjekten}
+            </div>
+            <div className="flex flex-col gap-4">
+              {blockMeineTodos}
+              {blockVonDirVergeben}
+            </div>
+          </div>
+        )
       )}
 
       {kontext.adminModusAktiv && (
