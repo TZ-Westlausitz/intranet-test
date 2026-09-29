@@ -93,7 +93,7 @@ export function BausteinMehrMenu({
               {punkt.name}
               {(punkt.badge ?? 0) > 0 && (
                 <span
-                  aria-label={`${punkt.badge} anstehende Fristen`}
+                  aria-label={`${punkt.badge} offen`}
                   className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
                 >
                   {punkt.badge}

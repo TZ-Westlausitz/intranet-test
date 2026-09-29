@@ -2,14 +2,14 @@ export type BausteinUnterpunkt = {
   name: string
   href: string
   /**
-   * Dieser Eintrag ist der Fuhrpark-Punkt: Name, Ziel und Zähler kommen zur
-   * Laufzeit aus fuhrparkNavigation() statt aus dieser festen Liste — je
-   * nach Berechtigung heißt er "Fuhrpark" (alle Fahrzeuge) oder "Mein
-   * Fahrzeug" (nur der eigene Halter-Bezug), und fehlt ganz, wenn die
-   * Person nichts von beidem hat.
+   * Dieser Eintrag ist der Fahrzeuge-Punkt: der Zähler kommt zur Laufzeit
+   * aus fahrzeugeNavigation() statt aus dieser festen Liste (offene
+   * Anfragen + fällige Fuhrpark-Fristen, siehe dort) — Name und Ziel
+   * bleiben fest, weil die Zielseite selbst schon berechtigungsabhängig
+   * zusammengestellt ist (siehe /fahrzeug-reservierungen).
    */
-  istFuhrparkPunkt?: boolean
-  /** Laufzeitwert für einen kleinen Zähler (z. B. fällige Fristen) — kommt nicht aus BAUSTEINE selbst. */
+  istFahrzeugePunkt?: boolean
+  /** Laufzeitwert für einen kleinen Zähler (z. B. offene Anfragen/fällige Fristen) — kommt nicht aus BAUSTEINE selbst. */
   badge?: number
 }
 
@@ -59,8 +59,11 @@ export const BAUSTEINE: BausteinEintrag[] = [
   {
     name: "Weiteres",
     unterpunkte: [
-      { name: "Fahrzeuge", href: "/fahrzeug-mieten" },
-      { name: "Fuhrpark", href: "/fuhrpark", istFuhrparkPunkt: true },
+      // Rückmeldung 2026-09-29: "Fahrzeuge" und "Fuhrpark" standen hier
+      // getrennt, das Werkstattleiter-Reservierungsmenü hing dazu an
+      // keinem Menüpunkt. Jetzt EIN Punkt, der berechtigungsabhängig zur
+      // passenden Auswahl auf /fahrzeug-reservierungen führt.
+      { name: "Fahrzeuge", href: "/fahrzeug-reservierungen", istFahrzeugePunkt: true },
       { name: "Geplante Aktionen", href: "/geplante-aktionen" },
     ],
   },
