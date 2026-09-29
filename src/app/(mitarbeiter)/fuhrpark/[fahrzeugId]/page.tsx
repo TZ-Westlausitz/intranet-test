@@ -26,7 +26,7 @@ import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
 const FEHLER_TEXTE: Record<string, string> = {
-  pflichtfeld: "Kennzeichen und Bezeichnung sind Pflichtfelder.",
+  pflichtfeld: "Kennzeichen und Fahrzeugname sind Pflichtfelder.",
   kennzeichenVergeben: "Dieses Kennzeichen gibt es bereits im Fuhrpark.",
   standortUngueltig: "Der gewählte Standort existiert nicht (mehr).",
   halterUngueltig: "Der gewählte Halter ist nicht (mehr) aktiv.",
@@ -105,7 +105,7 @@ export default async function FahrzeugProfilSeite({
         <dl className="mt-2 flex flex-col gap-2 text-sm">
           <div className="flex justify-between gap-4 border-b border-flaeche-100 pb-2">
             <dt className="text-sekundaer">Standort</dt>
-            <dd className="text-right font-medium">{fahrzeug.standort?.name ?? "Kein fester Standort"}</dd>
+            <dd className="text-right font-medium">{fahrzeug.ort?.name ?? "Kein fester Standort"}</dd>
           </div>
           <div className="flex justify-between gap-4 border-b border-flaeche-100 pb-2">
             <dt className="text-sekundaer">Halter / verantwortlich</dt>

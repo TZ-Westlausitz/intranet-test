@@ -7,7 +7,7 @@ import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
 const FEHLER_TEXTE: Record<string, string> = {
-  pflichtfeld: "Kennzeichen und Bezeichnung sind Pflichtfelder.",
+  pflichtfeld: "Kennzeichen und Fahrzeugname sind Pflichtfelder.",
   kennzeichenVergeben: "Dieses Kennzeichen gibt es bereits im Fuhrpark.",
   standortUngueltig: "Der gewählte Standort existiert nicht (mehr).",
   halterUngueltig: "Der gewählte Halter ist nicht (mehr) aktiv.",

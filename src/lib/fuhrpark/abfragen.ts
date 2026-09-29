@@ -17,7 +17,7 @@ export async function fuhrparkFahrzeuge(kontext: FuhrparkKontext) {
   return prisma.fahrzeug.findMany({
     where: { aktiv: true, ...(darfAlleSehen ? {} : { halterId: kontext.personId }) },
     include: {
-      standort: { select: { name: true } },
+      ort: { select: { id: true, name: true } },
       halter: { select: { vorname: true, nachname: true } },
       _count: { select: { schaeden: { where: { behobenAm: null } } } },
     },
@@ -42,7 +42,7 @@ export async function fahrzeugProfil(kontext: FuhrparkKontext, fahrzeugId: strin
   const fahrzeug = await prisma.fahrzeug.findUnique({
     where: { id: fahrzeugId },
     include: {
-      standort: { select: { id: true, name: true } },
+      ort: { select: { id: true, name: true } },
       halter: { select: { benutzername: true, vorname: true, nachname: true, aktiv: true } },
       schaeden: {
         include: { gemeldetVon: { select: { vorname: true, nachname: true } } },
@@ -108,10 +108,21 @@ export async function fahrzeugProfil(kontext: FuhrparkKontext, fahrzeugId: strin
   }
 }
 
+/**
+ * Aktive Orte für die Standort-Auswahl — im Adminbereich unter /admin/orte
+ * frei pflegbar (Model Ort), bewusst NICHT die fünf festen Standorte
+ * (Rückmeldung 2026-09-29): mehr Freiheit bei der Zuordnung, ohne dafür
+ * Code ändern zu müssen. Dient sowohl dem Fahrzeug-Formular als auch dem
+ * Standort-Filter über der Fuhrpark-Liste.
+ */
+export async function fuhrparkOrte() {
+  return prisma.ort.findMany({ where: { aktiv: true }, orderBy: { name: "asc" }, select: { id: true, name: true } })
+}
+
 /** Auswahllisten für das Fahrzeug-Formular (Standort, Halter). */
 export async function fuhrparkFormularOptionen() {
-  const [standorte, personen] = await Promise.all([
-    prisma.standort.findMany({ where: { aktiv: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  const [orte, personen] = await Promise.all([
+    fuhrparkOrte(),
     prisma.person.findMany({
       where: { aktiv: true },
       orderBy: [{ nachname: "asc" }, { vorname: "asc" }],
@@ -119,7 +130,7 @@ export async function fuhrparkFormularOptionen() {
     }),
   ])
   return {
-    standorte,
+    orte,
     personen: personen.map((p) => ({ id: p.benutzername, name: `${p.vorname} ${p.nachname}` })),
   }
 }

@@ -2,7 +2,7 @@ import { PersonenAuswahl } from "@/components/personen-auswahl"
 import { datumIsoAusDate } from "@/lib/datum"
 
 type Optionen = {
-  standorte: { id: string; name: string }[]
+  orte: { id: string; name: string }[]
   personen: { id: string; name: string }[]
 }
 
@@ -12,7 +12,7 @@ export type FahrzeugStandardwerte = {
   fahrzeugtyp: "PKW" | "TRANSPORTER" | "BUS"
   sitzplaetze: number | null
   merkmale: string | null
-  standortId: string | null
+  ortId: string | null
   halterId: string | null
   zuordnungHinweis: string | null
   huFaelligAm: Date | null
@@ -62,8 +62,8 @@ export function FahrzeugFormularFelder({
           <input name="kennzeichen" required defaultValue={standard?.kennzeichen} placeholder="z. B. KM-TZ 123" className={FELD} />
         </label>
         <label className={LABEL}>
-          Bezeichnung
-          <input name="bezeichnung" required defaultValue={standard?.bezeichnung} placeholder="z. B. VW Multivan, 8 Sitze" className={FELD} />
+          Fahrzeugname
+          <input name="bezeichnung" required defaultValue={standard?.bezeichnung} placeholder="z. B. VW Multivan" className={FELD} />
         </label>
         <label className={LABEL}>
           Fahrzeugtyp
@@ -81,11 +81,11 @@ export function FahrzeugFormularFelder({
         <legend className="px-1 text-sm font-semibold text-ueberschrift">Zuordnung</legend>
         <label className={LABEL}>
           Standort
-          <select name="standortId" defaultValue={standard?.standortId ?? ""} className={FELD}>
+          <select name="ortId" defaultValue={standard?.ortId ?? ""} className={FELD}>
             <option value="">— kein fester Standort —</option>
-            {optionen.standorte.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
+            {optionen.orte.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.name}
               </option>
             ))}
           </select>

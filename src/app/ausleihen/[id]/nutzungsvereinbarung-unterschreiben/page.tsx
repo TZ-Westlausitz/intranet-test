@@ -133,7 +133,7 @@ export default async function NutzungsvereinbarungUnterschreibenSeite({
 
   const ausleihe = await prisma.ausleihe.findUnique({
     where: { id },
-    include: { fahrzeug: { include: { standort: true } }, entleiher: true },
+    include: { fahrzeug: { include: { ort: true } }, entleiher: true },
   })
 
   if (!ausleihe || ausleihe.status !== AusleiheStatus.ZUGESAGT || !ausleihe.vereinbarungsentwurfPfad) {
@@ -177,7 +177,7 @@ export default async function NutzungsvereinbarungUnterschreibenSeite({
             type="text"
             name="ort"
             required
-            defaultValue={ausleihe.fahrzeug.standort?.name}
+            defaultValue={ausleihe.fahrzeug.ort?.name}
             className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
           />
         </label>

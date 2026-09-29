@@ -289,7 +289,6 @@ model Standort {
   aktiv   Boolean @default(true)
 
   zugehoerigkeiten Zugehoerigkeit[]
-  fahrzeuge        Fahrzeug[]
 }
 
 model Abteilung {
@@ -415,7 +414,9 @@ model PersonBerechtigung {
 
 /// Feinere Orte innerhalb eines Standorts (z. B. "Kamenz - Praxis") für eine
 /// künftige Orts-Auswahl bei Terminen/Aufgaben statt Freitext (siehe Memory
-/// ort-feld-standort-dropdown). Bewusst eine flache Liste ohne
+/// ort-feld-standort-dropdown) — UND seit 2026-09-29 bereits die
+/// Standort-Auswahl im Fuhrpark (Fahrzeug.ortId, siehe dort): admin-pflegbar
+/// statt der fünf festen Standorte. Bewusst eine flache Liste ohne
 /// Fremdschlüssel auf Standort: der Standortname steckt schon im Namen
 /// ("Kamenz - ..."), und nicht jeder Ort gehört eindeutig zu genau einem
 /// der fünf Standorte (z. B. "Halle Jesau").
@@ -423,6 +424,8 @@ model Ort {
   id    String  @id @default(cuid())
   name  String  @unique
   aktiv Boolean @default(true)
+
+  fahrzeuge Fahrzeug[]
 }
 
 /// Zentrales Protokoll für alle Module. Was hier hineingeschrieben wird, ist
@@ -523,8 +526,13 @@ model Fahrzeug {
   /// ist die einzige Stelle, an der das System eine Vorauswahl trifft.
   fuerPrivatausleiheFreigegeben Boolean @default(false)
 
-  standortId String?
-  aktiv      Boolean @default(true)
+  /// Zeigt auf Ort, NICHT auf Standort — bewusst der feinere, im
+  /// Adminbereich frei pflegbare Ort statt der fünf festen Standorte
+  /// (Rückmeldung 2026-09-29: "Standort soll Auswahlmöglichkeiten von
+  /// Orte (Admin) haben"). Standort bleibt weiterhin die Grundlage für
+  /// Zugehoerigkeit/Personen, hat mit dem Fuhrpark aber nichts mehr zu tun.
+  ortId String?
+  aktiv Boolean @default(true)
 
   /// Steuert u. a., welche Fahrzeug-Skizze beim Schaden-Erfassen gezeichnet
   /// wird (PKW = Kombi-Umriss, TRANSPORTER/BUS = die bestehende
@@ -559,7 +567,7 @@ model Fahrzeug {
   /// Aktuell montierte Reifen. Reine Angabe, keine Wechsel-Historie.
   reifenart Reifenart?
 
-  standort          Standort?                 @relation(fields: [standortId], references: [id])
+  ort               Ort?                      @relation(fields: [ortId], references: [id])
   halter            Person?                   @relation("FahrzeugHalter", fields: [halterId], references: [benutzername])
   ausleihen         Ausleihe[]
   schaeden          Fahrzeugschaden[]
@@ -567,7 +575,7 @@ model Fahrzeug {
 
   @@index([fuerPrivatausleiheFreigegeben, aktiv])
   @@index([halterId])
-  @@index([standortId])
+  @@index([ortId])
 }
 
 enum Reifenart {

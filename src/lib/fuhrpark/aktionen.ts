@@ -46,8 +46,8 @@ async function fahrzeugDatenAusFormular(formData: FormData) {
   const bezeichnung = String(formData.get("bezeichnung") ?? "").trim()
   if (!kennzeichen || !bezeichnung) return { fehler: "pflichtfeld" as const }
 
-  const standortId = textOderNull(formData.get("standortId"))
-  if (standortId && (await prisma.standort.count({ where: { id: standortId, aktiv: true } })) === 0) {
+  const ortId = textOderNull(formData.get("ortId"))
+  if (ortId && (await prisma.ort.count({ where: { id: ortId, aktiv: true } })) === 0) {
     return { fehler: "standortUngueltig" as const }
   }
 
@@ -73,7 +73,7 @@ async function fahrzeugDatenAusFormular(formData: FormData) {
       fahrzeugtyp,
       sitzplaetze: ganzzahlAusEingabe(formData.get("sitzplaetze")),
       merkmale: textOderNull(formData.get("merkmale")),
-      standortId,
+      ortId,
       halterId,
       zuordnungHinweis: textOderNull(formData.get("zuordnungHinweis")),
       huFaelligAm: kalendertagAusEingabe(formData.get("huFaelligAm")),

@@ -179,6 +179,10 @@ async function main() {
   const kamenz = await prisma.standort.findUniqueOrThrow({ where: { kuerzel: "KM" } })
   const servicezentrum = await prisma.abteilung.findUniqueOrThrow({ where: { name: "Servicezentrum" } })
   const fahrdienstGruppe = await prisma.gruppe.findUniqueOrThrow({ where: { name: "Fahrdienst" } })
+  // Standort der Testfahrzeuge unten: der Fuhrpark verlinkt seit 2026-09-29
+  // auf Ort statt auf Standort (siehe Kommentar am Model Fahrzeug) — "Halle
+  // Jesau" ist die tatsächliche Fahrzeughalle.
+  const halleJesau = await prisma.ort.findUniqueOrThrow({ where: { name: "Halle Jesau" } })
 
   // --- Testkonto Werkstattleiter -------------------------------------------
   // Passwort aus der Umgebung, damit hier kein Geheimnis im Repository steht.
@@ -251,7 +255,7 @@ async function main() {
       kraftstoffart: "Diesel",
       tankgroesseLiter: 70,
       fuerPrivatausleiheFreigegeben: true,
-      standortId: kamenz.id,
+      ortId: halleJesau.id,
     },
   })
 
@@ -267,7 +271,7 @@ async function main() {
       kraftstoffart: "Diesel",
       tankgroesseLiter: 55,
       fuerPrivatausleiheFreigegeben: true,
-      standortId: kamenz.id,
+      ortId: halleJesau.id,
     },
   })
 
@@ -283,7 +287,7 @@ async function main() {
       kraftstoffart: "Diesel",
       tankgroesseLiter: 75,
       fuerPrivatausleiheFreigegeben: true,
-      standortId: kamenz.id,
+      ortId: halleJesau.id,
     },
   })
 
