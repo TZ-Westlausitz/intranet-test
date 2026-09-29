@@ -319,7 +319,17 @@ export default async function AufgabenSeite({
       <div className={"mt-6 grid grid-cols-1 gap-6" + (seiteZweispaltig ? " md:grid-cols-2 md:items-start" : "")}>
       <div className="flex flex-col gap-4">
       <div className="rounded-xl border border-rand bg-flaeche p-4">
-        <h2 className="text-sm font-semibold text-ueberschrift">Dir zugewiesen ({zugewiesenOffen.length})</h2>
+        <div className="flex items-center justify-between gap-1.5">
+          <h2 className="text-sm font-semibold text-ueberschrift">Dir zugewiesen</h2>
+          {zugewiesenOffen.length > 0 && (
+            <span
+              aria-label={`${zugewiesenOffen.length} dir zugewiesen`}
+              className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
+            >
+              {zugewiesenOffen.length}
+            </span>
+          )}
+        </div>
 
         {zugewiesenOffen.length === 0 ? (
           <p className="mt-3 text-sm text-sekundaer">Nichts Offenes.</p>
@@ -405,9 +415,15 @@ export default async function AufgabenSeite({
 
       {projektAufgabenOffen.length > 0 && (
         <div className="rounded-xl border border-rand bg-flaeche p-4">
-          <h2 className="text-sm font-semibold text-ueberschrift">
-            Aus Projekten zugewiesen ({projektAufgabenOffen.length})
-          </h2>
+          <div className="flex items-center justify-between gap-1.5">
+            <h2 className="text-sm font-semibold text-ueberschrift">Aus Projekten zugewiesen</h2>
+            <span
+              aria-label={`${projektAufgabenOffen.length} aus Projekten zugewiesen`}
+              className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
+            >
+              {projektAufgabenOffen.length}
+            </span>
+          </div>
           <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
             {projektAufgabenOffen.map((aufgabe) => {
               const faellig = faelligAnzeige(aufgabe, heute)
@@ -460,7 +476,17 @@ export default async function AufgabenSeite({
 
       <div className="flex flex-col gap-4">
       <div className="rounded-xl border border-rand bg-flaeche p-4">
-        <h2 className="text-sm font-semibold text-ueberschrift">Meine To-Dos</h2>
+        <div className="flex items-center justify-between gap-1.5">
+          <h2 className="text-sm font-semibold text-ueberschrift">Meine To-Dos</h2>
+          {todosOffen.length > 0 && (
+            <span
+              aria-label={`${todosOffen.length} offene To-Dos`}
+              className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-marke-orange px-1 text-xs font-bold text-neutral-900"
+            >
+              {todosOffen.length}
+            </span>
+          )}
+        </div>
 
         <form
           action={aufgabeErstellen}
@@ -547,9 +573,7 @@ export default async function AufgabenSeite({
 
       {todosErledigt.length > 0 && (
         <details className="rounded-xl border border-rand bg-flaeche p-4">
-          <summary className="cursor-pointer text-sm font-semibold text-ueberschrift">
-            Meine To-Dos, erledigt ({todosErledigt.length})
-          </summary>
+          <summary className="cursor-pointer text-sm font-semibold text-ueberschrift">Meine To-Dos, erledigt</summary>
 
           <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
             {todosErledigt.map((aufgabe) => (
