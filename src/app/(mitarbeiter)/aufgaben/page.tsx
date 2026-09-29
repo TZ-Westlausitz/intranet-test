@@ -206,11 +206,15 @@ function AuftragInhalt({ auftrag, heute, name }: { auftrag: AuftragMitBeziehung;
  * Unterseite.
  *
  * Zwei-Spalten-Layout ab `md:` (Rückmeldung 2026-09-23: vier gestapelte
- * Karten auf einer Seite wirkten unübersichtlich) — links "Dir
- * zugewiesen" + "Meine To-Dos" (was man bekommt/für sich selbst), rechts
- * "Aus Projekten zugewiesen" + "Von dir vergeben" (Delegation/Verwaltung).
- * Auf dem Handy bleibt alles einspaltig gestapelt (`grid-cols-1`, erst ab
- * `md:` zwei Spalten) — bewusst EIN Grid mit CSS-Breakpoints statt zwei
+ * Karten auf einer Seite wirkten unübersichtlich) — links alles, was der
+ * Person zugewiesen wurde ("Dir zugewiesen" + "Aus Projekten
+ * zugewiesen"), rechts die eigene To-Do-Liste + was die Person selbst
+ * delegiert hat ("Meine To-Dos" + "Von dir vergeben") — Rückmeldung
+ * 2026-09-29: vorher stand "Meine To-Dos" links neben den fremdvergebenen
+ * Aufträgen, "Aus Projekten zugewiesen" dagegen rechts bei der
+ * Delegation, obwohl es inhaltlich zu "Dir zugewiesen" gehört. Auf dem
+ * Handy bleibt alles einspaltig gestapelt (`grid-cols-1`, erst ab `md:`
+ * zwei Spalten) — bewusst EIN Grid mit CSS-Breakpoints statt zwei
  * komplett getrennter `<main>`-Bäume wie bei /formulare: Diese Seite hat
  * ein `autoOeffnen`-Dialog (AuftragErstellenDialog), und zwei parallel im
  * DOM stehende Kopien davon hätten dasselbe Doppel-Dialog-Problem wie
@@ -218,14 +222,13 @@ function AuftragInhalt({ auftrag, heute, name }: { auftrag: AuftragMitBeziehung;
  * kontaktstelle-meldestelle-baustein) — ein einziger Baum mit reinem
  * CSS-Umbruch vermeidet das von vornherein.
  *
- * Die rechte Spalte bleibt für die meisten Personen leer (keine
- * Berechtigung "Aufgaben", kein Projekt, nichts vergeben) — Screenshot-
- * Rückmeldung direkt danach: ein leerer Bereich neben der linken Spalte
- * sah schlimmer aus als einspaltig. `seiteZweispaltig` (aus
- * `rechteSpalteHatInhalt` bzw. der Admin-Modus-Entsprechung berechnet)
- * schaltet Breite UND Grid-Spalten deshalb nur ein, wenn auf der rechten
- * Seite tatsächlich etwas zu zeigen ist — sonst bleibt die Seite komplett
- * einspaltig und schmal (`max-w-2xl`), wie vor dem Zwei-Spalten-Umbau.
+ * Beide Spalten haben inzwischen immer Inhalt — "Dir zugewiesen" links
+ * und "Meine To-Dos" rechts sind beide unbedingt gerendert (mit
+ * Leertext, falls nichts da ist) —, deshalb ist die Seite für
+ * angemeldete Personen immer zweispaltig und `md:max-w-4xl` breit; nur
+ * der Admin-Modus (eigene, firmenweite Übersicht statt der beiden
+ * persönlichen Spalten) prüft weiterhin, ob die zweite Karte dort
+ * überhaupt etwas zu zeigen hat.
  */
 export default async function AufgabenSeite({
   searchParams,
@@ -271,17 +274,12 @@ export default async function AufgabenSeite({
   const personenAnzeige = personen.map((p) => ({ id: p.benutzername, name: `${p.vorname} ${p.nachname}` }))
   const zeigeProjekteKachel = projekte.length > 0 || kontext.berechtigungen.includes("Projektmanager")
   const darfAuftraegeZuweisen = kontext.berechtigungen.includes("Aufgaben")
-  // Rechte Spalte kann für die meisten Personen komplett leer bleiben (keine
-  // Berechtigung "Aufgaben", kein Projekt, nichts vergeben) — dann NICHT in
-  // zwei Spalten aufteilen (leerer Bereich neben der linken Spalte wirkt
-  // schlimmer als schlicht einspaltig), sondern grid-cols-1 belassen.
-  const rechteSpalteHatInhalt =
-    projektAufgabenOffen.length > 0 || darfAuftraegeZuweisen || vergebenOffen.length > 0 || entwuerfe.length > 0
-  // Dasselbe Kriterium für die Admin-Modus-Übersicht (zwei firmenweite
-  // Karten statt zwei persönlicher Spalten) — bestimmt zusammen mit
-  // rechteSpalteHatInhalt, ob die Seite überhaupt breiter/zweispaltig wird.
+  // Für die Admin-Modus-Übersicht (zwei firmenweite Karten statt zwei
+  // persönlicher Spalten) bestimmt das weiterhin, ob die zweite Karte
+  // überhaupt etwas zu zeigen hat — die persönliche Ansicht ist dagegen
+  // immer zweispaltig, siehe Doku-Kommentar oben.
   const zweiteFirmenkarteHatInhalt = (firmenweiteProjektAufgabenOffen?.length ?? 0) > 0
-  const seiteZweispaltig = kontext.adminModusAktiv ? zweiteFirmenkarteHatInhalt : rechteSpalteHatInhalt
+  const seiteZweispaltig = kontext.adminModusAktiv ? zweiteFirmenkarteHatInhalt : true
 
   return (
     <main className={"mx-auto max-w-2xl px-5 py-10" + (seiteZweispaltig ? " md:max-w-4xl" : "")}>
@@ -405,6 +403,62 @@ export default async function AufgabenSeite({
         </details>
       )}
 
+      {projektAufgabenOffen.length > 0 && (
+        <div className="rounded-xl border border-rand bg-flaeche p-4">
+          <h2 className="text-sm font-semibold text-ueberschrift">
+            Aus Projekten zugewiesen ({projektAufgabenOffen.length})
+          </h2>
+          <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
+            {projektAufgabenOffen.map((aufgabe) => {
+              const faellig = faelligAnzeige(aufgabe, heute)
+              return (
+                <li key={aufgabe.id} className="flex items-start gap-3 py-2.5">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={
+                          "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium " +
+                          AUFGABE_STATUS_KLASSEN[aufgabe.status ?? "OFFEN"]
+                        }
+                      >
+                        {AUFGABE_STATUS_NAMEN[aufgabe.status ?? "OFFEN"]}
+                      </span>
+                      <span className="text-sm text-primaer">{aufgabe.titel}</span>
+                    </div>
+                    <p className="mt-0.5 truncate text-xs text-tertiaer">
+                      {aufgabe.projekt?.titel}
+                      {aufgabe.zwischenziel && ` · ${aufgabe.zwischenziel.titel}`}
+                    </p>
+                  </div>
+
+                  {faellig && (
+                    <span
+                      className={
+                        "mt-0.5 flex shrink-0 items-center gap-1 text-xs font-medium " +
+                        (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
+                      }
+                    >
+                      {faellig.ueberfaellig && <AlertTriangle className="h-3.5 w-3.5" aria-hidden />}
+                      {faellig.text}
+                      {faellig.ueberfaellig && <span className="sr-only"> (überfällig)</span>}
+                    </span>
+                  )}
+
+                  <Link
+                    href={`/aufgaben/projekte/${aufgabe.projektId}`}
+                    className="mt-0.5 shrink-0 text-xs font-medium text-marke-gruen-dunkel hover:underline"
+                  >
+                    Zum Projekt →
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+      </div>
+
+      <div className="flex flex-col gap-4">
       <div className="rounded-xl border border-rand bg-flaeche p-4">
         <h2 className="text-sm font-semibold text-ueberschrift">Meine To-Dos</h2>
 
@@ -537,62 +591,6 @@ export default async function AufgabenSeite({
             ))}
           </ul>
         </details>
-      )}
-      </div>
-
-      <div className="flex flex-col gap-4">
-      {projektAufgabenOffen.length > 0 && (
-        <div className="rounded-xl border border-rand bg-flaeche p-4">
-          <h2 className="text-sm font-semibold text-ueberschrift">
-            Aus Projekten zugewiesen ({projektAufgabenOffen.length})
-          </h2>
-          <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
-            {projektAufgabenOffen.map((aufgabe) => {
-              const faellig = faelligAnzeige(aufgabe, heute)
-              return (
-                <li key={aufgabe.id} className="flex items-start gap-3 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={
-                          "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium " +
-                          AUFGABE_STATUS_KLASSEN[aufgabe.status ?? "OFFEN"]
-                        }
-                      >
-                        {AUFGABE_STATUS_NAMEN[aufgabe.status ?? "OFFEN"]}
-                      </span>
-                      <span className="text-sm text-primaer">{aufgabe.titel}</span>
-                    </div>
-                    <p className="mt-0.5 truncate text-xs text-tertiaer">
-                      {aufgabe.projekt?.titel}
-                      {aufgabe.zwischenziel && ` · ${aufgabe.zwischenziel.titel}`}
-                    </p>
-                  </div>
-
-                  {faellig && (
-                    <span
-                      className={
-                        "mt-0.5 flex shrink-0 items-center gap-1 text-xs font-medium " +
-                        (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
-                      }
-                    >
-                      {faellig.ueberfaellig && <AlertTriangle className="h-3.5 w-3.5" aria-hidden />}
-                      {faellig.text}
-                      {faellig.ueberfaellig && <span className="sr-only"> (überfällig)</span>}
-                    </span>
-                  )}
-
-                  <Link
-                    href={`/aufgaben/projekte/${aufgabe.projektId}`}
-                    className="mt-0.5 shrink-0 text-xs font-medium text-marke-gruen-dunkel hover:underline"
-                  >
-                    Zum Projekt →
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
       )}
 
       {(darfAuftraegeZuweisen || vergebenOffen.length > 0 || entwuerfe.length > 0) && (
