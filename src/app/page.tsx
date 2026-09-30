@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { CheckSquare, ClipboardList, Clock, FileEdit, Truck } from "lucide-react"
+import { CheckSquare, ClipboardList, Clock, Truck } from "lucide-react"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
@@ -318,15 +318,16 @@ export default async function Startseite() {
               MobileTabBar, Wissensbereich und Kontakte auf der neuen
               "Menü"-Seite (siehe src/app/(mitarbeiter)/menu/page.tsx) —
               eine dritte Fundstelle für dieselben drei Ziele wäre nur
-              Redundanz. Die übrigen fünf haben (noch) keinen anderen Platz
-              in der neuen mobilen Navigation und bleiben deshalb hier. */}
+              Redundanz. "Fahrzeuge" führt seit der Menü-Vereinheitlichung
+              (2026-09-30) auf den gemeinsamen Hub /fahrzeug-reservierungen,
+              der "Fahrzeug mieten" und "Meine Anfragen" selbst schon als
+              eigene Kacheln enthält — dafür hier keine getrennten Einträge
+              mehr. Die übrigen vier haben (noch) keinen anderen Platz in
+              der neuen mobilen Navigation und bleiben deshalb hier. */}
           <ul className="grid grid-cols-2 gap-3">
             {[
               { href: "/formulare", name: "Formulare", icon: ClipboardList },
-              istWerkstatt
-                ? { href: "/fahrzeug-reservierungen", name: "Fahrzeuge", icon: Truck }
-                : { href: "/fahrzeug-mieten", name: "Fahrzeug mieten", icon: Truck },
-              { href: "/meine-anfragen", name: "Meine Anfragen", icon: FileEdit },
+              { href: "/fahrzeug-reservierungen", name: "Fahrzeuge", icon: Truck },
               { href: "/aufgaben", name: "To-Do-Liste", icon: CheckSquare },
               { href: "/geplante-aktionen", name: "Geplante Aktionen", icon: Clock },
             ].map((kachel) => (
