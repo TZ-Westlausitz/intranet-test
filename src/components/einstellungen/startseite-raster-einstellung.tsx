@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { X } from "lucide-react"
 
 import { PersonenAuswahl } from "@/components/personen-auswahl"
@@ -10,6 +10,7 @@ import {
   kontakteModulPlatzieren,
   modulEntfernen,
   modulPlatzieren,
+  rasterLueckenFuellen,
   wissensbereichModulPlatzieren,
 } from "@/lib/startseite/aktionen"
 import {
@@ -97,6 +98,22 @@ export function StartseiteRasterEinstellung({
   const [bearbeitetePlatzierung, setBearbeitetePlatzierung] = useState<StartseitePlatzierung | null>(null)
   const [ordnerAuswahl, setOrdnerAuswahl] = useState<string[]>([])
   const [formularAuswahl, setFormularAuswahl] = useState<string[]>([])
+
+  // Rückmeldung 2026-09-30: "alle 8 Plätze sollen immer eine Belegung
+  // haben, nie frei bleiben dürfen" — beim Verlassen dieser Seite (echtes
+  // Unmounten, z. B. Klick auf einen anderen Menüpunkt oder "← Zurück")
+  // füllt rasterLueckenFuellen() etwaige Lücken automatisch auf. Bewusst
+  // beim Verlassen statt bei jeder einzelnen Änderung, damit man
+  // zwischendurch (z. B. beim Tausch "erst entfernen, dann neu platzieren")
+  // kurz eine leere Zelle sehen darf, ohne dass sofort etwas
+  // hineingesetzt wird. Deckt nicht Tab schließen/Neuladen ab (kein
+  // verlässlicher Weg, dabei noch eine Server Action abzuschließen) —
+  // dieselbe Einschränkung wie bei FormularAenderungenSchutz.
+  useEffect(() => {
+    return () => {
+      rasterLueckenFuellen()
+    }
+  }, [])
 
   const belegteZellenNachPosition = new Map<number, StartseiteModulId>()
   for (const platzierung of raster) {

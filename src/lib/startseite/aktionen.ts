@@ -10,6 +10,7 @@ import {
   FORMULARE_MAX_SHORTCUTS,
   KONTAKTE_MAX,
   KONTAKTE_MIN,
+  leereZellen,
   parseRaster,
   platzierungPasst,
   STARTSEITE_MODUL_KATALOG,
@@ -144,6 +145,43 @@ export async function modulEntfernen(modul: StartseiteModulId) {
   const kontext = await berechtigung()
   const bestehend = (await eigenesRaster(kontext.personId)).filter((p) => p.modul !== modul)
   await rasterSpeichern(kontext.personId, bestehend)
+}
+
+/**
+ * Füllt beim Verlassen der Einstellungen-Seite automatisch alle noch
+ * freien Rasterzellen auf (Rückmeldung 2026-09-30: "alle 8 Plätze sollen
+ * immer eine Belegung haben, nie frei bleiben dürfen") — mit noch nicht
+ * verwendeten Modulen in zufälliger Reihenfolge, jeweils als KLEIN und
+ * ohne Unterauswahl (Kontakte/Wissensbereich brauchen erst eine Auswahl,
+ * Newsfeed kennt gar kein KLEIN — beides käme für eine automatische
+ * Befüllung nicht ohne Weiteres in Frage). Bleiben mehr Lücken als
+ * geeignete Module übrig, bleibt der Rest ausnahmsweise frei, statt ein
+ * ungültiges Raster zu speichern. Aufgerufen von
+ * StartseiteRasterEinstellung beim Unmount (Navigation weg von der Seite).
+ */
+export async function rasterLueckenFuellen() {
+  const kontext = await berechtigung()
+  const bestehend = await eigenesRaster(kontext.personId)
+  const luecken = leereZellen(bestehend)
+  if (luecken.length === 0) return
+
+  const verwendet = new Set(bestehend.map((p) => p.modul))
+  const kandidaten = STARTSEITE_MODUL_KATALOG.filter(
+    (m) => !verwendet.has(m.id) && m.formen.includes("KLEIN") && !brauchtUnterauswahl(m.id, "KLEIN"),
+  ).map((m) => m.id)
+  for (let i = kandidaten.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[kandidaten[i], kandidaten[j]] = [kandidaten[j], kandidaten[i]]
+  }
+
+  const neu = [...bestehend]
+  for (const position of luecken) {
+    const modul = kandidaten.pop()
+    if (!modul) break
+    neu.push({ position, modul, form: "KLEIN" })
+  }
+
+  await rasterSpeichern(kontext.personId, neu)
 }
 
 /** Setzt auf STARTSEITE_STANDARD zurück (siehe raster.ts) — technisch einfach `null`, dann greift beim Lesen der Fallback. */

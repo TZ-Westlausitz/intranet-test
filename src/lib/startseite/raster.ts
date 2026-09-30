@@ -136,6 +136,18 @@ export const STARTSEITE_STANDARD: StartseitePlatzierung[] = [
   { position: 7, modul: "TODO_LISTE", form: "KLEIN" },
 ]
 
+/**
+ * Rasterzellen (0–7), die von KEINER Platzierung belegt sind — Rückmeldung
+ * 2026-09-30: "alle 8 Plätze sollen immer eine Belegung haben, nie frei
+ * bleiben dürfen". Entfernt eine Person ein Modul, entstehen dadurch
+ * Lücken; rasterLueckenFuellen() (aktionen.ts) füllt sie beim Verlassen
+ * der Einstellungen-Seite automatisch wieder auf.
+ */
+export function leereZellen(platzierungen: StartseitePlatzierung[]): number[] {
+  const belegt = new Set(platzierungen.flatMap(belegteZellen))
+  return [0, 1, 2, 3, 4, 5, 6, 7].filter((zelle) => !belegt.has(zelle))
+}
+
 /** Alle Rasterzellen, die eine Platzierung an dieser Position/Form belegt — leer, wenn die Form dort nicht hinpasst (z. B. GROSS in Zeile 2). */
 export function belegteZellen(platzierung: { position: number; form: StartseiteForm }): number[] {
   const { position, form } = platzierung
