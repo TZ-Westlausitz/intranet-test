@@ -18,6 +18,7 @@ import {
   FORMULARE_MAX_SHORTCUTS,
   KONTAKTE_MAX,
   KONTAKTE_MIN,
+  modulAkzentKlassen,
   modulName,
   platzierungPasst,
   STARTSEITE_MODUL_KATALOG,
@@ -26,19 +27,6 @@ import {
   type StartseiteModulId,
   type StartseitePlatzierung,
 } from "@/lib/startseite/raster"
-
-/** Randfarbe je Modul — identisch zur jeweiligen echten Kachel auf der Startseite (Muster: die einzelnen Kachel-Komponenten in src/components/startseite/). */
-const RAHMENFARBE: Record<StartseiteModulId, string> = {
-  NEWSFEED: "border-t-marke-gruen",
-  KALENDER: "border-t-marke-orange",
-  AUFGABEN: "border-t-marke-gruen-dunkel",
-  WISSENSBEREICH: "border-t-marke-orange",
-  FORMULARE: "border-t-marke-gruen-dunkel",
-  KONTAKTE: "border-t-marke-gruen",
-  FAHRZEUGE: "border-t-marke-gruen",
-  TODO_LISTE: "border-t-marke-gruen",
-  GEPLANTE_AKTIONEN: "border-t-marke-gruen",
-}
 
 /** Kurzer Zusatz zum Modulnamen im Auswahl-Pop-up, wenn ein Modul mehrere Formen erlaubt (siehe STARTSEITE_MODUL_KATALOG) — bei nur einer möglichen Form (die meisten Module) bleibt der Name pur. */
 const FORM_HINWEIS: Record<StartseiteForm, string> = {
@@ -198,7 +186,7 @@ export function StartseiteRasterEinstellung({
               <div
                 key={position}
                 style={vorschauPosition(position, anchor.form)}
-                className={`relative flex flex-col items-center justify-center gap-1 rounded-2xl border border-x-rand border-b-rand border-t-4 ${RAHMENFARBE[anchor.modul]} bg-flaeche p-2 text-center shadow-sm`}
+                className={`relative flex flex-col items-center justify-center gap-1 rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen(anchor.modul)} bg-flaeche p-2 text-center shadow-sm`}
               >
                 <form action={modulEntfernen.bind(null, anchor.modul)} className="absolute top-2 right-2">
                   <button
