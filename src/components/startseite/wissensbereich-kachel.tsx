@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { modulAkzentKlassen } from "@/lib/startseite/raster"
+
 type OrdnerVorschau = {
   id: string
   name: string
@@ -20,7 +22,7 @@ export function WissensbereichKachel({ className, ordner }: { className: string;
     return (
       <Link
         href="/wissen"
-        className={`${className} flex flex-col justify-between rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4 shadow-sm transition hover:border-marke-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen`}
+        className={`${className} flex flex-col justify-between rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen("WISSENSBEREICH")} bg-flaeche p-4 shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen`}
       >
         <div>
           <h2 className="text-lg font-semibold text-ueberschrift">Wissensbereich</h2>
@@ -33,7 +35,7 @@ export function WissensbereichKachel({ className, ordner }: { className: string;
 
   return (
     <div
-      className={`${className} flex flex-col gap-3 overflow-hidden rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4 shadow-sm transition hover:border-marke-orange`}
+      className={`${className} flex flex-col gap-3 overflow-hidden rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen("WISSENSBEREICH")} bg-flaeche p-4 shadow-sm transition`}
     >
       <Link
         href="/wissen"

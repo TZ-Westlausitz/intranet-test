@@ -13,6 +13,7 @@ import {
   infoUmfrageOptionUmschalten,
 } from "@/lib/infos/aktionen"
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
+import { modulAkzentKlassen } from "@/lib/startseite/raster"
 import type { Titelbild } from "@/lib/infos/abfragen"
 
 // `absenderName`/`previewHtml` kommen fertig berechnet von der Seite (siehe
@@ -56,7 +57,7 @@ export function NewsfeedHomeKachel({
   const dialogRef = useRef<InfoAnzeigenDialogHandle>(null)
 
   return (
-    <div className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-5 shadow-sm`}>
+    <div className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen("NEWSFEED")} bg-flaeche p-5 shadow-sm`}>
       <Link
         href="/newsfeed"
         className="flex shrink-0 items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"

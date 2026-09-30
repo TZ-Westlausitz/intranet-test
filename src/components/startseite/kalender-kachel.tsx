@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { MONATSNAMEN } from "@/lib/kalender"
+import { modulAkzentKlassen } from "@/lib/startseite/raster"
 
 /**
  * Startseiten-Kachel "Kalender" — aus src/app/page.tsx herausgelöst, damit
@@ -21,7 +22,7 @@ export function KalenderKachel({
   return (
     <Link
       href="/kalender"
-      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4 text-center shadow-sm transition hover:border-marke-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen`}
+      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen("KALENDER")} bg-flaeche p-4 text-center shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen`}
     >
       <div className="flex items-center justify-center gap-1.5">
         <h2 className="text-lg font-semibold text-ueberschrift">Kalender</h2>

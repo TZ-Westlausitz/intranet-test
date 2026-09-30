@@ -44,24 +44,39 @@ export type StartseiteModulId =
 
 export type StartseiteForm = "KLEIN" | "BREIT" | "HOCH" | "GROSS"
 
+/**
+ * Randfarbe je Modul (Rückmeldung 2026-09-30: "wie bekommen wir das
+ * Farbthema der Kästchen in ein sinnvolles Muster?") — fest am Modul,
+ * nicht an der Rasterposition, damit ein Modul immer an seiner Farbe
+ * wiedererkennbar bleibt, egal wo es im eigenen Raster liegt. GRUEN für
+ * die Hauptthemen (Newsfeed, Aufgaben, Formulare, To-Do-Liste), ORANGE
+ * für die übrigen (Kalender, Wissensbereich, Kontakte, Fahrzeuge,
+ * Geplante Aktionen). Vorher hatte jede Kachel ihre Randfarbe einzeln
+ * hardcodiert, ohne erkennbares Muster (u. a. zwei zufällige
+ * "gruen-dunkel"-Ausreißer bei Aufgaben/Formulare) — jetzt EINE Quelle,
+ * siehe modulAkzentKlassen().
+ */
+export type StartseiteAkzent = "GRUEN" | "ORANGE"
+
 export type StartseiteModulKatalogEintrag = {
   id: StartseiteModulId
   name: string
   /** Erlaubte Formen, erster Eintrag ist die im Auswahl-Pop-up voreingestellte. */
   formen: StartseiteForm[]
+  akzent: StartseiteAkzent
 }
 
 /** Reihenfolge hier bestimmt auch die Reihenfolge im Auswahl-Pop-up der Einstellungen-Seite. */
 export const STARTSEITE_MODUL_KATALOG: StartseiteModulKatalogEintrag[] = [
-  { id: "NEWSFEED", name: "Newsfeed", formen: ["GROSS", "HOCH"] },
-  { id: "KALENDER", name: "Kalender", formen: ["KLEIN"] },
-  { id: "AUFGABEN", name: "Aufgaben", formen: ["KLEIN"] },
-  { id: "WISSENSBEREICH", name: "Wissensbereich", formen: ["KLEIN", "BREIT", "HOCH"] },
-  { id: "FORMULARE", name: "Formulare", formen: ["KLEIN", "BREIT"] },
-  { id: "KONTAKTE", name: "Kontakte", formen: ["KLEIN", "BREIT"] },
-  { id: "FAHRZEUGE", name: "Fahrzeuge", formen: ["KLEIN"] },
-  { id: "TODO_LISTE", name: "To-Do-Liste", formen: ["KLEIN"] },
-  { id: "GEPLANTE_AKTIONEN", name: "Geplante Aktionen", formen: ["KLEIN"] },
+  { id: "NEWSFEED", name: "Newsfeed", formen: ["GROSS", "HOCH"], akzent: "GRUEN" },
+  { id: "KALENDER", name: "Kalender", formen: ["KLEIN"], akzent: "ORANGE" },
+  { id: "AUFGABEN", name: "Aufgaben", formen: ["KLEIN"], akzent: "GRUEN" },
+  { id: "WISSENSBEREICH", name: "Wissensbereich", formen: ["KLEIN", "BREIT", "HOCH"], akzent: "ORANGE" },
+  { id: "FORMULARE", name: "Formulare", formen: ["KLEIN", "BREIT"], akzent: "GRUEN" },
+  { id: "KONTAKTE", name: "Kontakte", formen: ["KLEIN", "BREIT"], akzent: "ORANGE" },
+  { id: "FAHRZEUGE", name: "Fahrzeuge", formen: ["KLEIN"], akzent: "ORANGE" },
+  { id: "TODO_LISTE", name: "To-Do-Liste", formen: ["KLEIN"], akzent: "GRUEN" },
+  { id: "GEPLANTE_AKTIONEN", name: "Geplante Aktionen", formen: ["KLEIN"], akzent: "ORANGE" },
 ]
 
 export function modulName(id: StartseiteModulId): string {
@@ -70,6 +85,12 @@ export function modulName(id: StartseiteModulId): string {
 
 export function modulErlaubteFormen(id: StartseiteModulId): StartseiteForm[] {
   return STARTSEITE_MODUL_KATALOG.find((m) => m.id === id)?.formen ?? ["KLEIN"]
+}
+
+/** Tailwind-Klassen für Rand+Hover einer Kachel, passend zu ihrem Modul-Akzent (siehe STARTSEITE_MODUL_KATALOG). */
+export function modulAkzentKlassen(id: StartseiteModulId): string {
+  const akzent = STARTSEITE_MODUL_KATALOG.find((m) => m.id === id)?.akzent ?? "GRUEN"
+  return akzent === "GRUEN" ? "border-t-marke-gruen hover:border-marke-gruen" : "border-t-marke-orange hover:border-marke-orange"
 }
 
 /**

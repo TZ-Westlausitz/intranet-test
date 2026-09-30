@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { modulAkzentKlassen } from "@/lib/startseite/raster"
+
 /** Startseiten-Kachel "Fahrzeuge" — aus src/app/page.tsx herausgelöst, siehe KalenderKachel. Inhalt je nach Rolle wie bisher: Werkstatt-Vorschau oder einfache "Fahrzeug mieten"-Kachel. */
 export function FahrzeugeKachel({
   className,
@@ -15,7 +17,7 @@ export function FahrzeugeKachel({
   return (
     <Link
       href={istWerkstatt ? "/fahrzeug-reservierungen" : "/fahrzeug-mieten"}
-      className={`${className} flex flex-col justify-between rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen`}
+      className={`${className} flex flex-col justify-between rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen("FAHRZEUGE")} bg-flaeche p-4 shadow-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen`}
     >
       {istWerkstatt ? (
         <>

@@ -1,6 +1,8 @@
 import Link from "next/link"
 import { CheckSquare, ClipboardList, Newspaper } from "lucide-react"
 
+import { modulAkzentKlassen } from "@/lib/startseite/raster"
+
 type GeplanterEintrag = { id: string; titel: string; datum: Date; typ: "info" | "aufgabe" | "auftrag" }
 
 /** Startseiten-Kachel "Geplante Aktionen" — aus src/app/page.tsx herausgelöst, siehe KalenderKachel. */
@@ -15,7 +17,7 @@ export function GeplanteAktionenKachel({
 }) {
   return (
     <div
-      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen`}
+      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen("GEPLANTE_AKTIONEN")} bg-flaeche p-4 shadow-sm transition`}
     >
       <Link
         href="/geplante-aktionen"

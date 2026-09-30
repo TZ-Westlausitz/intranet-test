@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { InfoAvatar } from "@/components/info-avatar"
+import { modulAkzentKlassen } from "@/lib/startseite/raster"
 
 type KontaktVorschau = { benutzername: string; vorname: string; nachname: string; profilbildPfad: string | null }
 
@@ -8,7 +9,7 @@ type KontaktVorschau = { benutzername: string; vorname: string; nachname: string
 export function KontakteKachel({ className, personen }: { className: string; personen: KontaktVorschau[] }) {
   return (
     <div
-      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen`}
+      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen("KONTAKTE")} bg-flaeche p-4 shadow-sm transition`}
     >
       <Link
         href="/kontakte"

@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { modulAkzentKlassen } from "@/lib/startseite/raster"
+
 type EinreichungVorschau = { id: string; vorlage: { titel: string } }
 type VorlagenShortcut = { id: string; titel: string }
 
@@ -38,7 +40,7 @@ export function FormulareKachel({
   if (!breit) {
     return (
       <div
-        className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen-dunkel bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen-dunkel`}
+        className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen("FORMULARE")} bg-flaeche p-4 shadow-sm transition`}
       >
         <Link
           href="/formulare"
@@ -87,7 +89,7 @@ export function FormulareKachel({
 
   return (
     <div
-      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen-dunkel bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen-dunkel`}
+      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen("FORMULARE")} bg-flaeche p-4 shadow-sm transition`}
     >
       <div className="grid min-h-0 flex-1 grid-cols-2 gap-4">
         {/* Linke Hälfte: der Stand, verlinkt auf /formulare. Keine eigene

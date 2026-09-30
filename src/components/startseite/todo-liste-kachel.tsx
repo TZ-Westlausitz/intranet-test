@@ -1,6 +1,7 @@
 import Link from "next/link"
 
 import { aufgabeErledigtSetzen } from "@/lib/aufgaben/aktionen"
+import { modulAkzentKlassen } from "@/lib/startseite/raster"
 
 /** Startseiten-Kachel "To-Do-Liste" — aus src/app/page.tsx herausgelöst, siehe KalenderKachel. */
 export function TodoListeKachel({
@@ -14,7 +15,7 @@ export function TodoListeKachel({
 }) {
   return (
     <div
-      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen`}
+      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen("TODO_LISTE")} bg-flaeche p-4 shadow-sm transition`}
     >
       <Link
         href="/aufgaben"

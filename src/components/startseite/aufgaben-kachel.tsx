@@ -1,5 +1,7 @@
 import Link from "next/link"
 
+import { modulAkzentKlassen } from "@/lib/startseite/raster"
+
 export type AufgabenKachelProjekt = { id: string; titel: string; anzahl: number }
 
 /**
@@ -33,7 +35,7 @@ export function AufgabenKachel({
 
   return (
     <div
-      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen-dunkel bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen-dunkel`}
+      className={`${className} flex flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 ${modulAkzentKlassen("AUFGABEN")} bg-flaeche p-4 shadow-sm transition`}
     >
       <Link
         href="/aufgaben"
