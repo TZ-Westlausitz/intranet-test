@@ -1,7 +1,10 @@
 "use client"
 
+import { useState } from "react"
+import { Pencil } from "lucide-react"
+
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
-import { relativesDatum } from "@/lib/datum"
+import { datumIsoAusDate, relativesDatum } from "@/lib/datum"
 import { zwischenzielStatus, ZWISCHENZIEL_STATUS_KLASSEN } from "@/lib/projekte-optionen"
 
 export type ZwischenzielListenAnzeige = {
@@ -24,6 +27,13 @@ export type ZwischenzielListenAnzeige = {
  * verwirrenden globalen Fortschrittsanzeige. Kein manueller
  * "Erledigt"-Knopf mehr — erreicht wird ausschließlich aus dem
  * Aufgaben-Fortschritt abgeleitet.
+ *
+ * Die Frist (und mit ihr auch der Titel, weil zwischenzielAktualisieren
+ * ohnehin beides zusammen erwartet) lässt sich seit Rückmeldung
+ * 2026-09-30 nachträglich bearbeiten — vorher gab es dafür trotz
+ * vorhandener Server Action keine Bedienstelle, ein Zwischenziel ließ
+ * sich nur anlegen oder löschen. Inline-Formular pro Zeile statt Dialog,
+ * weil nur zwei einfache Felder.
  */
 export function ProjektZwischenziele({
   projektId,
@@ -32,6 +42,7 @@ export function ProjektZwischenziele({
   istLeitung,
   schreibgeschuetzt,
   erstellenAktion,
+  aktualisierenAktion,
   loeschenAktion,
 }: {
   projektId: string
@@ -40,8 +51,11 @@ export function ProjektZwischenziele({
   istLeitung: boolean
   schreibgeschuetzt: boolean
   erstellenAktion: (projektId: string, formData: FormData) => void
+  aktualisierenAktion: (projektId: string, zwischenzielId: string, formData: FormData) => void
   loeschenAktion: (projektId: string, zwischenzielId: string) => void
 }) {
+  const [bearbeiteId, setBearbeiteId] = useState<string | null>(null)
+
   if (!istLeitung && zwischenziele.length === 0) return null
 
   return (
@@ -50,6 +64,55 @@ export function ProjektZwischenziele({
         <ul className="flex flex-col divide-y divide-flaeche-100">
           {zwischenziele.map((zwischenziel, index) => {
             const status = zwischenzielStatus(zwischenziel, heute)
+
+            if (bearbeiteId === zwischenziel.id) {
+              return (
+                <li key={zwischenziel.id} className="py-2">
+                  <form
+                    action={(formData) => {
+                      aktualisierenAktion(projektId, zwischenziel.id, formData)
+                      setBearbeiteId(null)
+                    }}
+                    className="flex flex-wrap items-end gap-2"
+                  >
+                    <div>
+                      <label className="block text-xs font-medium text-primaer">Titel</label>
+                      <input
+                        name="titel"
+                        type="text"
+                        required
+                        defaultValue={zwischenziel.titel}
+                        className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-primaer">Frist</label>
+                      <input
+                        name="frist"
+                        type="date"
+                        required
+                        defaultValue={datumIsoAusDate(zwischenziel.frist)}
+                        className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="h-9 shrink-0 rounded-lg bg-marke-gruen px-3 text-sm font-medium text-neutral-900 transition hover:bg-marke-gruen-dunkel"
+                    >
+                      Speichern
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBearbeiteId(null)}
+                      className="h-9 shrink-0 rounded-lg px-3 text-sm font-medium text-tertiaer transition hover:bg-flaeche-100"
+                    >
+                      Abbrechen
+                    </button>
+                  </form>
+                </li>
+              )
+            }
+
             return (
               <li key={zwischenziel.id} className="flex items-center justify-between gap-2 py-2">
                 <div className="flex min-w-0 items-center gap-2.5">
@@ -77,15 +140,25 @@ export function ProjektZwischenziele({
                   </span>
 
                   {istLeitung && !schreibgeschuetzt && (
-                    <form action={loeschenAktion.bind(null, projektId, zwischenziel.id)}>
+                    <>
                       <button
-                        type="submit"
-                        aria-label={`${zwischenziel.titel} löschen`}
-                        className="rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
+                        type="button"
+                        onClick={() => setBearbeiteId(zwischenziel.id)}
+                        aria-label={`${zwischenziel.titel} bearbeiten`}
+                        className="rounded p-1 text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
                       >
-                        ×
+                        <Pencil className="h-3.5 w-3.5" aria-hidden />
                       </button>
-                    </form>
+                      <form action={loeschenAktion.bind(null, projektId, zwischenziel.id)}>
+                        <button
+                          type="submit"
+                          aria-label={`${zwischenziel.titel} löschen`}
+                          className="rounded p-1 text-tertiaer transition hover:bg-red-50 hover:text-red-600"
+                        >
+                          ×
+                        </button>
+                      </form>
+                    </>
                   )}
                 </div>
               </li>

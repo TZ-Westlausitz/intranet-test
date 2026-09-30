@@ -2,23 +2,71 @@ import { prisma } from "@/lib/db"
 import { AufgabeStatus, ProjektStatus } from "@/generated/prisma/enums"
 import { projektSichtbarFuer } from "@/lib/projekte/mitgliedschaft"
 
-/** "Meine Projekte" für die Übersichtsseite /aufgaben/projekte. */
+const TERMINAL_STATUS = [ProjektStatus.ABGESCHLOSSEN, ProjektStatus.ABGEBROCHEN]
+
+// Für die Zeitstrahl-Vorschau je Projekt auf der Übersichtsseite
+// /aufgaben/projekte (Rückmeldung 2026-09-30) — dieselben Rohdaten, die die
+// Detailseite ohnehin selbst zu zwischenzieleMitFortschritt() verarbeitet.
+const MIT_ZEITSTRAHL_DATEN = {
+  zwischenziele: { orderBy: { frist: "asc" as const } },
+  aufgaben: { select: { status: true, zwischenzielId: true } },
+}
+
+/** "Meine Projekte" für die Übersichtsseite /aufgaben/projekte — alle Status gemischt, die Seite selbst trennt aktiv/fertig. */
 export async function projekteFuerPerson(personId: string) {
   return prisma.projekt.findMany({
     where: projektSichtbarFuer(personId),
+    include: MIT_ZEITSTRAHL_DATEN,
     orderBy: [{ status: "asc" }, { ende: "asc" }],
   })
 }
 
 /**
  * Admin-Modus (siehe Kontext.adminModusAktiv): jedes noch nicht
- * abgeschlossene/abgebrochene Projekt firmenweit, ohne Mitgliedschafts-
- * Einschränkung — rein lesend, siehe Plan "Admin-Modus".
+ * abgeschlossene/abgebrochene (= aktive) Projekt firmenweit, ohne
+ * Mitgliedschafts-Einschränkung — rein lesend, siehe Plan "Admin-Modus".
+ * Abgeschlossene/abgebrochene Projekte firmenweit liefert stattdessen
+ * `alleFertigenProjekte`, getrennt gehalten, weil die Übersichtsseite
+ * beide unterschiedlich anzeigt (mit/ohne Zeitstrahl).
  */
 export async function alleProjekte() {
   return prisma.projekt.findMany({
-    where: { status: { notIn: [ProjektStatus.ABGESCHLOSSEN, ProjektStatus.ABGEBROCHEN] } },
+    where: { status: { notIn: TERMINAL_STATUS } },
+    include: MIT_ZEITSTRAHL_DATEN,
     orderBy: [{ status: "asc" }, { ende: "asc" }],
+  })
+}
+
+/** Admin-Modus: alle abgeschlossenen/abgebrochenen Projekte firmenweit, für die Spalte "Fertige Projekte" — bewusst ohne Zwischenziele/Aufgaben, dort gibt's keinen Zeitstrahl mehr. */
+export async function alleFertigenProjekte() {
+  return prisma.projekt.findMany({
+    where: { status: { in: TERMINAL_STATUS } },
+    orderBy: [{ ende: "desc" }],
+  })
+}
+
+/**
+ * Aufgaben-Zähler je Zwischenziel (Rückmeldung zur früher verwirrenden
+ * globalen Fortschrittsanzeige über dem Zeitstrahl — deshalb pro
+ * Zwischenziel, nicht global über alle Aufgaben). `erreicht` wird
+ * abgeleitet statt gespeichert (siehe Kommentar am Model Zwischenziel):
+ * erst wenn es mindestens eine Aufgabe hat und alle davon erledigt sind,
+ * gilt es als erreicht. Geteilt zwischen Projekt-Detailseite und der
+ * Zeitstrahl-Vorschau auf der Übersichtsseite.
+ */
+export function zwischenzieleMitFortschritt(
+  zwischenziele: { id: string; titel: string; frist: Date }[],
+  aufgaben: { status: AufgabeStatus | null; zwischenzielId: string | null }[],
+) {
+  return zwischenziele.map((z) => {
+    const zugehoerig = aufgaben.filter((a) => a.zwischenzielId === z.id)
+    const aufgabenErledigt = zugehoerig.filter((a) => a.status === AufgabeStatus.ERLEDIGT).length
+    return {
+      ...z,
+      erreicht: zugehoerig.length > 0 && aufgabenErledigt === zugehoerig.length,
+      aufgabenErledigt,
+      aufgabenGesamt: zugehoerig.length,
+    }
   })
 }
 
@@ -86,7 +134,11 @@ export async function projektAufgabenFuerPerson(personId: string) {
  */
 export async function alleOffenenProjektAufgaben() {
   return prisma.aufgabe.findMany({
-    where: { projektId: { not: null }, status: { not: AufgabeStatus.ERLEDIGT } },
+    where: {
+      projektId: { not: null },
+      status: { not: AufgabeStatus.ERLEDIGT },
+      projekt: { status: { notIn: [ProjektStatus.ABGESCHLOSSEN, ProjektStatus.ABGEBROCHEN] } },
+    },
     include: {
       projekt: { select: { id: true, titel: true } },
       zwischenziel: { select: { titel: true } },

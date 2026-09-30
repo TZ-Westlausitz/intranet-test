@@ -20,6 +20,7 @@ import {
   projektAufgaben,
   projektDokumente,
   projektNachrichten,
+  zwischenzieleMitFortschritt,
 } from "@/lib/projekte/abfragen"
 import { istProjektSchreibgeschuetzt, projektZugriffTrotzPlanung } from "@/lib/projekte/mitgliedschaft"
 import {
@@ -29,7 +30,7 @@ import {
   projektMitgliedEntfernen,
   projektMitgliedRolleSetzen,
 } from "@/lib/projekte/aktionen"
-import { zwischenzielErstellen, zwischenzielLoeschen } from "@/lib/projekte/zwischenziele-aktionen"
+import { zwischenzielErstellen, zwischenzielAktualisieren, zwischenzielLoeschen } from "@/lib/projekte/zwischenziele-aktionen"
 import {
   projektAufgabeErstellen,
   projektAufgabeAnnehmen,
@@ -100,23 +101,7 @@ export default async function ProjektDetailSeite({
     }),
   ])
 
-  // Aufgaben-Zähler je Zwischenziel für die Zwischenziel-Kachel — bewusst
-  // NICHT global über alle Aufgaben (siehe Rückmeldung zur früher
-  // verwirrenden, globalen Fortschrittsanzeige über dem Zeitstrahl).
-  // `erreicht` wird hier abgeleitet statt gespeichert (siehe Kommentar am
-  // Model Zwischenziel): erst wenn es mindestens eine Aufgabe hat und alle
-  // davon erledigt sind, gilt es als erreicht — ein leeres Zwischenziel
-  // ohne Aufgaben also nie automatisch.
-  const zwischenzieleAnzeige = projekt.zwischenziele.map((z) => {
-    const zugehoerig = aufgaben.filter((a) => a.zwischenzielId === z.id)
-    const aufgabenErledigt = zugehoerig.filter((a) => a.status === "ERLEDIGT").length
-    return {
-      ...z,
-      erreicht: zugehoerig.length > 0 && aufgabenErledigt === zugehoerig.length,
-      aufgabenErledigt,
-      aufgabenGesamt: zugehoerig.length,
-    }
-  })
+  const zwischenzieleAnzeige = zwischenzieleMitFortschritt(projekt.zwischenziele, aufgaben)
   const mitgliederAnzeige = projekt.mitglieder.map((m) => ({
     id: m.id,
     personId: m.personId,
@@ -235,6 +220,7 @@ export default async function ProjektDetailSeite({
                 istLeitung={istLeitung}
                 schreibgeschuetzt={schreibgeschuetzt}
                 erstellenAktion={zwischenzielErstellen}
+                aktualisierenAktion={zwischenzielAktualisieren}
                 loeschenAktion={zwischenzielLoeschen}
               />
             </div>

@@ -5,10 +5,13 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { ProjektStatus, ProjektmitgliedRolle } from "@/generated/prisma/enums"
+import { ProjektStatus, ProjektmitgliedRolle, AufgabeStatus } from "@/generated/prisma/enums"
 import { richTextSanitisieren } from "@/lib/rich-text"
 import { projektMitgliedschaftPruefen } from "@/lib/projekte/mitgliedschaft"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
+import { berlinerTagesbeginn } from "@/lib/datum"
+
+const TERMINAL_STATUS: ProjektStatus[] = [ProjektStatus.ABGESCHLOSSEN, ProjektStatus.ABGEBROCHEN]
 
 /**
  * Legt ein neues Projekt an — nur mit der Berechtigung "Projektmanager"
@@ -60,6 +63,18 @@ export async function projektErstellen(formData: FormData) {
  * während der aktuelle Stand noch PLANUNG ist, wird der Wert ignoriert
  * (Regel 5: keine reine UI-Ausblendung im Status-Dropdown, siehe
  * ProjektFormFelder — die Sperre gilt auch serverseitig).
+ *
+ * Wechselt der Status jetzt erstmals auf ABGESCHLOSSEN/ABGEBROCHEN
+ * (Rückmeldung 2026-09-30):
+ * - Das Enddatum wird auf heute gesetzt, unabhängig vom eingegebenen Wert
+ *   — "Ende" bildet ab diesem Zeitpunkt das tatsächliche Ende ab, nicht
+ *   mehr das ursprünglich geplante.
+ * - Noch offene Projekt-Aufgaben werden den zugewiesenen Personen
+ *   entzogen (zugewiesenAnId geleert), nicht gelöscht: Sie verschwinden
+ *   damit aus deren persönlicher Ansicht (projektAufgabenFuerPerson
+ *   filtert danach), bleiben aber für die Projekt-Historie erhalten.
+ *   Kein Auto-"Erledigt" — ein abgebrochenes Projekt hat eben KEINE
+ *   erledigten Aufgaben, das wäre irreführend.
  */
 export async function projektAktualisieren(projektId: string, formData: FormData) {
   const kontext = await berechtigung()
@@ -76,7 +91,7 @@ export async function projektAktualisieren(projektId: string, formData: FormData
   }
 
   const start = new Date(`${startEingabe}T00:00:00`)
-  const ende = new Date(`${endeEingabe}T00:00:00`)
+  let ende = new Date(`${endeEingabe}T00:00:00`)
   if (Number.isNaN(start.getTime()) || Number.isNaN(ende.getTime()) || ende < start) {
     redirect(`/aufgaben/projekte/${projektId}?fehler=zeitraum`)
   }
@@ -88,10 +103,23 @@ export async function projektAktualisieren(projektId: string, formData: FormData
     status = ProjektStatus.PLANUNG
   }
 
+  const wechseltJetztAufTerminal = TERMINAL_STATUS.includes(status) && !TERMINAL_STATUS.includes(bisherigesProjekt.status)
+  if (wechseltJetztAufTerminal) {
+    ende = berlinerTagesbeginn()
+  }
+
   await prisma.projekt.update({ where: { id: projektId }, data: { titel, ziel, start, ende, status } })
+
+  if (wechseltJetztAufTerminal) {
+    await prisma.aufgabe.updateMany({
+      where: { projektId, status: { not: AufgabeStatus.ERLEDIGT }, zugewiesenAnId: { not: null } },
+      data: { zugewiesenAnId: null },
+    })
+  }
 
   revalidatePath(`/aufgaben/projekte/${projektId}`)
   revalidatePath("/aufgaben/projekte")
+  revalidatePath("/aufgaben")
 }
 
 /**
