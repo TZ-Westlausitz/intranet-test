@@ -41,7 +41,7 @@ import { AUFGABE_STATUS_KLASSEN, AUFGABE_STATUS_NAMEN } from "@/lib/projekte-opt
 import { richTextZuText } from "@/lib/rich-text"
 import { datumIsoAusDate, berlinerTagesbeginn } from "@/lib/datum"
 
-type Ansicht = "aufgaben" | "todos" | "projekte"
+type Ansicht = "aufgaben" | "todos"
 
 const FEHLER_TEXTE: Record<string, string> = {
   pflichtfeld: "Bitte einen Titel eintragen und eine Person auswählen.",
@@ -306,17 +306,22 @@ export default async function AufgabenSeite({
 
   // Tab-Umschalter auf dem Handy (Rückmeldung 2026-10-01, dasselbe Muster
   // wie /formulare) — NUR für die persönliche Ansicht, der Admin-Modus
-  // bleibt bei seiner eigenen, einfachen Firmenweite-Übersicht. "Projekte"
-  // fehlt als Tab ganz, wenn die Person nichts damit zu tun hat
-  // (zeigeProjekteKachel). Wichtig: anders als bei /formulare gibt es hier
-  // NICHT zwei getrennte Mobile/Desktop-Bäume (siehe Doku-Kommentar oben,
+  // bleibt bei seiner eigenen, einfachen Firmenweite-Übersicht. Wichtig:
+  // anders als bei /formulare gibt es hier NICHT zwei getrennte
+  // Mobile/Desktop-Bäume (siehe Doku-Kommentar oben,
   // AuftragErstellenDialog-Problem) — die Tabs blenden stattdessen
   // Abschnitte INNERHALB des einen Grids per CSS aus (`hidden md:flex`
   // bzw. `md:contents`), jeder Block bleibt genau einmal im DOM.
+  //
+  // "Meine Projekte" ist bewusst KEIN dritter Reiter mit eigenem
+  // `ansicht`-Zustand (Rückmeldung 2026-10-01: "gleich auf die
+  // Projektseite weiterleiten, die Seite dazwischen rausnehmen") —
+  // Projekte sind ein eigener Bereich mit eigener Unterseite, kein
+  // Abschnitt dieser Seite. Der dritte Tab ist deshalb ein normaler Link
+  // auf /aufgaben/projekte, kein `?ansicht=`-Link (siehe JSX unten).
   const ansichten: { key: Ansicht; label: string }[] = [
     { key: "aufgaben", label: "Aufgaben" },
     { key: "todos", label: "To-Dos" },
-    ...(zeigeProjekteKachel ? [{ key: "projekte" as const, label: "Meine Projekte" }] : []),
   ]
   const ansicht: Ansicht = ansichten.some((tab) => tab.key === ansichtParam) ? (ansichtParam as Ansicht) : "aufgaben"
 
@@ -789,6 +794,14 @@ export default async function AufgabenSeite({
               {tab.label}
             </Link>
           ))}
+          {zeigeProjekteKachel && (
+            <Link
+              href="/aufgaben/projekte"
+              className="flex-1 border-b-2 border-transparent px-2 py-3 text-center text-tertiaer transition hover:text-primaer"
+            >
+              Meine Projekte
+            </Link>
+          )}
         </nav>
       )}
 
@@ -797,7 +810,7 @@ export default async function AufgabenSeite({
           href="/aufgaben/projekte"
           className={
             "mt-6 items-center justify-between gap-3 rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen " +
-            (kontext.adminModusAktiv || ansicht === "projekte" ? "flex" : "hidden md:flex")
+            (kontext.adminModusAktiv ? "flex" : "hidden md:flex")
           }
         >
           <div>

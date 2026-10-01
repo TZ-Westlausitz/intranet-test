@@ -23,6 +23,8 @@ const FEHLER_TEXTE: Record<string, string> = {
 
 const TERMINAL_STATUS = ["ABGESCHLOSSEN", "ABGEBROCHEN"]
 
+type Ansicht = "aktiv" | "neu" | "fertig"
+
 /** Kompakte Statuspille, für die "Fertige Projekte"-Zeilen (kein Zeitstrahl dort, siehe Kommentar unten). */
 function StatusPille({ status }: { status: string }) {
   return (
@@ -49,16 +51,35 @@ function StatusPille({ status }: { status: string }) {
  * (ABGESCHLOSSEN/ABGEBROCHEN) — dort bewusst OHNE Zeitstrahl, ein
  * abgeschlossenes Projekt braucht keinen Fortschrittsbalken mehr, nur
  * noch Name/Zeitraum/Status als Rückblick.
+ *
+ * Auf dem Handy (Rückmeldung 2026-10-01, dasselbe Muster wie /aufgaben
+ * und /formulare) ein Tab-Umschalter über `?ansicht=` statt aller drei
+ * Abschnitte untereinander gestapelt — "Neues Projekt" nur, wenn
+ * `darfAnlegen`. Anders als bei /aufgaben gibt es hier keinen
+ * dialog-bedingten Zwang zu einem einzigen Baum, aber da die Seite schon
+ * vorher ohne eigene Mobile/Desktop-Aufteilung auskam (keine `md:hidden`-
+ * Bäume), bleibt es bei EINEM Baum mit CSS-Sichtbarkeit je Abschnitt
+ * (`hidden md:flex`) statt einer zweiten Kopie — die aktiven und fertigen
+ * Projekte sowie das Formular sind ohnehin schon jeweils eigenständige
+ * Geschwister-Elemente, keine gemeinsam verschachtelte Spalte wie bei
+ * /aufgaben, deshalb reicht das hier ohne den dortigen `md:contents`-Kniff.
  */
 export default async function ProjekteSeite({
   searchParams,
 }: {
-  searchParams: Promise<{ fehler?: string }>
+  searchParams: Promise<{ fehler?: string; ansicht?: string }>
 }) {
   const kontext = await berechtigung()
-  const { fehler } = await searchParams
+  const { fehler, ansicht: ansichtParam } = await searchParams
   const darfAnlegen = kontext.berechtigungen.includes("Projektmanager")
   const heute = berlinerTagesbeginn()
+
+  const ansichten: { key: Ansicht; label: string }[] = [
+    { key: "aktiv", label: "Aktive Projekte" },
+    ...(darfAnlegen ? [{ key: "neu" as const, label: "Neues Projekt" }] : []),
+    { key: "fertig", label: "Fertige Projekte" },
+  ]
+  const ansicht: Ansicht = ansichten.some((tab) => tab.key === ansichtParam) ? (ansichtParam as Ansicht) : "aktiv"
 
   const [aktiveProjekte, fertigeProjekte] = kontext.adminModusAktiv
     ? await Promise.all([alleProjekte(), alleFertigenProjekte()])
@@ -76,13 +97,29 @@ export default async function ProjekteSeite({
         {kontext.adminModusAktiv ? "Alle Projekte (Firma)" : "Projekte"}
       </h1>
 
+      <nav aria-label="Ansicht wählen" className="mt-6 flex border-b border-rand text-sm font-medium md:hidden">
+        {ansichten.map((tab) => (
+          <Link
+            key={tab.key}
+            href={`/aufgaben/projekte?ansicht=${tab.key}`}
+            aria-current={ansicht === tab.key ? "page" : undefined}
+            className={
+              "flex-1 border-b-2 px-2 py-3 text-center transition " +
+              (ansicht === tab.key ? "border-marke-gruen-dunkel text-ueberschrift" : "border-transparent text-tertiaer hover:text-primaer")
+            }
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </nav>
+
       {fehler && (
         <div className="mt-4">
           <Hinweis>{FEHLER_TEXTE[fehler] ?? "Das hat nicht geklappt."}</Hinweis>
         </div>
       )}
 
-      <div className="mt-6 flex flex-col gap-3">
+      <div className={"mt-6 flex flex-col gap-3 " + (ansicht === "aktiv" ? "" : "hidden md:flex")}>
         {aktiveProjekte.length === 0 ? (
           <p className="text-sm text-sekundaer">
             {kontext.adminModusAktiv
@@ -117,7 +154,7 @@ export default async function ProjekteSeite({
         {darfAnlegen && (
           <form
             action={projektErstellen}
-            className="flex h-fit flex-col gap-3 rounded-xl border border-rand bg-flaeche p-4"
+            className={"h-fit flex-col gap-3 rounded-xl border border-rand bg-flaeche p-4 " + (ansicht === "neu" ? "flex" : "hidden md:flex")}
           >
             <h2 className="text-sm font-semibold text-ueberschrift">Neues Projekt</h2>
             <ProjektFormFelder standardwerte={LEERE_PROJEKT_STANDARDWERTE} />
@@ -131,7 +168,7 @@ export default async function ProjekteSeite({
           </form>
         )}
 
-        <div className="flex h-fit flex-col gap-3 rounded-xl border border-rand bg-flaeche p-4">
+        <div className={"h-fit flex-col gap-3 rounded-xl border border-rand bg-flaeche p-4 " + (ansicht === "fertig" ? "flex" : "hidden md:flex")}>
           <h2 className="text-sm font-semibold text-ueberschrift">Fertige Projekte</h2>
           {fertigeProjekte.length === 0 ? (
             <p className="text-sm text-sekundaer">Noch kein Projekt abgeschlossen oder abgebrochen.</p>
