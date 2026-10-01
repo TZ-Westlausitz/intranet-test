@@ -1,11 +1,14 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
 import { InfoFormFelder, LEERE_INFO_STANDARDWERTE, type InfoFormularOptionen } from "@/components/info-form-felder"
 import { EntwurfBestaetigenDialog } from "@/components/entwurf-bestaetigen-dialog"
+import type { verwendbareInfoVorlagen } from "@/lib/infos/vorlagen-abfragen"
+
+type InfoVorlage = Awaited<ReturnType<typeof verwendbareInfoVorlagen>>[number]
 
 /**
  * "+ Info"-Knopf + Erstellen-Pop-Up — gleiches Muster wie
@@ -30,11 +33,13 @@ export function InfoErstellenDialog({
   optionen,
   erstellenAktion,
   entwurfSpeichernAktion,
+  vorlagen = [],
   autoOeffnen = false,
 }: {
   optionen: InfoFormularOptionen
   erstellenAktion: (formData: FormData) => void
   entwurfSpeichernAktion: (formData: FormData) => void
+  vorlagen?: InfoVorlage[]
   autoOeffnen?: boolean
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -47,6 +52,27 @@ export function InfoErstellenDialog({
   const formRef = useRef<HTMLFormElement>(null)
   const entwurfKnopfRef = useRef<HTMLButtonElement>(null)
   const [entwurfNachfrageOffen, setEntwurfNachfrageOffen] = useState(false)
+
+  // "Aus Vorlage starten" (Rückmeldung 2026-10-01): die Felder in
+  // InfoFormFelder sind unkontrolliert (defaultValue), ein späteres
+  // Umschalten der Auswahl würde sie deshalb NICHT neu befüllen — der
+  // `key` auf InfoFormFelder unten erzwingt stattdessen bei jeder Auswahl
+  // ein komplettes Neu-Mounten mit frischen defaultValue-Props. Empfänger
+  // bleiben bewusst außen vor (siehe InfoVorlage-Kommentar im Schema),
+  // die Vorlage befüllt nur Titel/Inhalt/Kategorie/Einstellungen.
+  const [vorlageId, setVorlageId] = useState("")
+  const standardwerte = useMemo(() => {
+    const vorlage = vorlagen.find((v) => v.id === vorlageId)
+    if (!vorlage) return LEERE_INFO_STANDARDWERTE
+    return {
+      ...LEERE_INFO_STANDARDWERTE,
+      titel: vorlage.titel,
+      inhalt: vorlage.inhalt ?? "",
+      kategorieId: vorlage.kategorieId ?? "",
+      mitBestaetigung: vorlage.mitBestaetigung,
+      kommentareErlaubt: vorlage.kommentareErlaubt,
+    }
+  }, [vorlagen, vorlageId])
 
   function schliessenNachAbsenden() {
     window.setTimeout(() => dialogRef.current?.close(), 0)
@@ -97,7 +123,24 @@ export function InfoErstellenDialog({
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 py-4">
-            <InfoFormFelder standardwerte={LEERE_INFO_STANDARDWERTE} optionen={optionen} />
+            {vorlagen.length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-primaer">Aus Vorlage starten (optional)</label>
+                <select
+                  value={vorlageId}
+                  onChange={(ereignis) => setVorlageId(ereignis.target.value)}
+                  className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
+                >
+                  <option value="">Leer</option>
+                  {vorlagen.map((vorlage) => (
+                    <option key={vorlage.id} value={vorlage.id}>
+                      {vorlage.titel}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <InfoFormFelder key={vorlageId} standardwerte={standardwerte} optionen={optionen} />
           </div>
 
           <div className="flex justify-end gap-2 border-t border-rand px-5 py-4">

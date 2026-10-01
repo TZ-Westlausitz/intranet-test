@@ -216,29 +216,31 @@ model Person {
   aktualisiertAm DateTime @updatedAt
 
   zugehoerigkeiten             Zugehoerigkeit[]
-  ausleihenAlsEntleiher        Ausleihe[]                @relation("Entleiher")
-  ausleihenEntschieden         Ausleihe[]                @relation("Entscheider")
-  fahrzeugeAlsHalter           Fahrzeug[]                @relation("FahrzeugHalter")
-  fahrzeugschaedenGemeldet     Fahrzeugschaden[]         @relation("FahrzeugschadenMelder")
-  fahrzeugTermineVorgeschlagen Fahrzeugterminvorschlag[] @relation("FahrzeugterminVorschlagend")
-  fahrzeugTermineEmpfangen     Fahrzeugterminvorschlag[] @relation("FahrzeugterminEmpfaenger")
-  vereinbarungen               Vereinbarung[]            @relation("VereinbarungFirma")
-  protokolle                   Uebergabeprotokoll[]      @relation("ProtokollDurchfuehrer")
-  fuehrerscheinpruefungen      Fuehrerscheinkontrolle[]  @relation("FsPruefer")
-  freigaben                    Dokumentversion[]         @relation("Freigeber")
-  abrechnungsposten            Abrechnungsposten[]       @relation("PostenErsteller")
-  protokolleintraege           Protokoll[]               @relation("Akteur")
-  termineErstellt              Termin[]                  @relation("TerminErsteller")
+  ausleihenAlsEntleiher        Ausleihe[]                       @relation("Entleiher")
+  ausleihenEntschieden         Ausleihe[]                       @relation("Entscheider")
+  fahrzeugeAlsHalter           Fahrzeug[]                       @relation("FahrzeugHalter")
+  fahrzeugschaedenGemeldet     Fahrzeugschaden[]                @relation("FahrzeugschadenMelder")
+  fahrzeugTermineVorgeschlagen Fahrzeugterminvorschlag[]        @relation("FahrzeugterminVorschlagend")
+  fahrzeugTermineEmpfangen     Fahrzeugterminvorschlag[]        @relation("FahrzeugterminEmpfaenger")
+  vereinbarungen               Vereinbarung[]                   @relation("VereinbarungFirma")
+  protokolle                   Uebergabeprotokoll[]             @relation("ProtokollDurchfuehrer")
+  fuehrerscheinpruefungen      Fuehrerscheinkontrolle[]         @relation("FsPruefer")
+  freigaben                    Dokumentversion[]                @relation("Freigeber")
+  abrechnungsposten            Abrechnungsposten[]              @relation("PostenErsteller")
+  protokolleintraege           Protokoll[]                      @relation("Akteur")
+  termineErstellt              Termin[]                         @relation("TerminErsteller")
   terminTeilnahmen             TerminTeilnehmer[]
   benachrichtigungen           Benachrichtigung[]
-  terminAnhaengeHochgeladen    TerminAnhang[]            @relation("TerminAnhangHochlader")
-  terminKommentare             TerminKommentar[]         @relation("TerminKommentarAutor")
-  aufgaben                     Aufgabe[]                 @relation("AufgabePerson")
-  auftraegeErstellt            Auftrag[]                 @relation("AuftragErsteller")
-  auftraegeZugewiesen          Auftrag[]                 @relation("AuftragZugewiesen")
-  auftragKommentare            AuftragKommentar[]        @relation("AuftragKommentarAutor")
+  terminAnhaengeHochgeladen    TerminAnhang[]                   @relation("TerminAnhangHochlader")
+  terminKommentare             TerminKommentar[]                @relation("TerminKommentarAutor")
+  aufgaben                     Aufgabe[]                        @relation("AufgabePerson")
+  auftraegeErstellt            Auftrag[]                        @relation("AuftragErsteller")
+  auftraegeZugewiesen          Auftrag[]                        @relation("AuftragZugewiesen")
+  auftragKommentare            AuftragKommentar[]               @relation("AuftragKommentarAutor")
   gruppen                      PersonGruppe[]
   berechtigungen               PersonBerechtigung[]
+  aufgabenVorlagenErstellt     AufgabenVorlage[]                @relation("AufgabenVorlageErsteller")
+  aufgabenVorlagenBenutzbar    AufgabenVorlageBenutzbarPerson[]
 
   // --- Projekte (dritter Unterbereich von "Aufgaben") ----------------------
   aufgabenErstelltImProjekt   Aufgabe[]          @relation("AufgabeErstellerProjekt")
@@ -249,13 +251,15 @@ model Person {
   projektNachrichten          Projektnachricht[] @relation("ProjektnachrichtAutor")
 
   // --- Newsfeed --------------------------------------------------------
-  infosErstellt           Info[]                 @relation("InfoErsteller")
+  infosErstellt           Info[]                       @relation("InfoErsteller")
   infoEmpfaenger          InfoEmpfaengerPerson[]
   infoBestaetigungen      InfoBestaetigung[]
   infoLikes               InfoLike[]
-  infoKommentare          InfoKommentar[]        @relation("InfoKommentarAutor")
-  infoAnhaengeHochgeladen InfoAnhang[]           @relation("InfoAnhangHochlader")
+  infoKommentare          InfoKommentar[]              @relation("InfoKommentarAutor")
+  infoAnhaengeHochgeladen InfoAnhang[]                 @relation("InfoAnhangHochlader")
   infoUmfrageStimmen      InfoUmfrageStimme[]
+  infoVorlagenErstellt    InfoVorlage[]                @relation("InfoVorlageErsteller")
+  infoVorlagenBenutzbar   InfoVorlageBenutzbarPerson[]
 
   // --- Wissensbereich ----------------------------------------------------
   wissensArtikelErstellt     WissensArtikel[]          @relation("WissensArtikelErsteller")
@@ -301,11 +305,13 @@ model Abteilung {
   kuerzel String? @unique
   aktiv   Boolean @default(true)
 
-  zugehoerigkeiten    Zugehoerigkeit[]
-  infoEmpfaenger      InfoEmpfaengerAbteilung[]
-  wissensEmpfaenger   WissensEmpfaengerAbteilung[]
-  formulareBenutzbar  FormularBenutzbarAbteilung[]
-  formulareEmpfaenger FormularEmpfaengerAbteilung[]
+  zugehoerigkeiten          Zugehoerigkeit[]
+  infoEmpfaenger            InfoEmpfaengerAbteilung[]
+  wissensEmpfaenger         WissensEmpfaengerAbteilung[]
+  formulareBenutzbar        FormularBenutzbarAbteilung[]
+  formulareEmpfaenger       FormularEmpfaengerAbteilung[]
+  infoVorlagenBenutzbar     InfoVorlageBenutzbarAbteilung[]
+  aufgabenVorlagenBenutzbar AufgabenVorlageBenutzbarAbteilung[]
 }
 
 /// Person × Standort × Abteilung. Mehrfachstandorte kommen vor — deshalb
@@ -362,12 +368,14 @@ model Gruppe {
   aktiv       Boolean @default(true)
   automatisch Boolean @default(false)
 
-  mitglieder          PersonGruppe[]
-  infoEmpfaenger      InfoEmpfaengerGruppe[]
-  wissensEmpfaenger   WissensEmpfaengerGruppe[]
-  formulareEmpfaenger FormularEmpfaengerGruppe[]
-  formulareBenutzbar  FormularBenutzbarGruppe[]
-  chatKonversation    ChatKonversation?
+  mitglieder                PersonGruppe[]
+  infoEmpfaenger            InfoEmpfaengerGruppe[]
+  wissensEmpfaenger         WissensEmpfaengerGruppe[]
+  formulareEmpfaenger       FormularEmpfaengerGruppe[]
+  formulareBenutzbar        FormularBenutzbarGruppe[]
+  chatKonversation          ChatKonversation?
+  infoVorlagenBenutzbar     InfoVorlageBenutzbarGruppe[]
+  aufgabenVorlagenBenutzbar AufgabenVorlageBenutzbarGruppe[]
 }
 
 model PersonGruppe {
@@ -1301,6 +1309,73 @@ model AuftragKommentar {
   @@index([auftragId, erstelltAm])
 }
 
+/// Vorlage für eine neue Aufgabe (Rückmeldung 2026-10-01) — EIN Modell für
+/// beide Anlege-Wege (persönliches To-do UND Auftrag an eine andere
+/// Person), weil sich die Inhaltsfelder decken; `zugewiesenAn` bleibt
+/// bewusst außen vor, genau wie bei InfoVorlage der Empfänger. `faelligIn
+/// Tagen` statt eines festen Datums — ein festes Datum ergäbe in einer
+/// wiederverwendbaren Vorlage keinen Sinn, wird beim Anwenden in ein
+/// konkretes Datum (heute + N Tage, Europe/Berlin, siehe
+/// berlinerTagesbeginn) umgerechnet und bleibt danach normal änderbar.
+/// Sichtbarkeit/Berechtigungen: siehe InfoVorlage, hier mit der
+/// Berechtigung "Aufgaben" statt "Infos".
+model AufgabenVorlage {
+  id             String            @id @default(cuid())
+  titel          String
+  /// Sanitiertes HTML, wie Auftrag.beschreibung/Aufgabe.beschreibung.
+  beschreibung   String?
+  prioritaet     AufgabePrioritaet @default(MITTEL)
+  faelligInTagen Int?
+  aktiv          Boolean           @default(true)
+  erstelltVonId  String
+  erstelltAm     DateTime          @default(now())
+  aktualisiertAm DateTime          @updatedAt
+
+  erstelltVon Person @relation("AufgabenVorlageErsteller", fields: [erstelltVonId], references: [benutzername])
+
+  benutzbarPersonen    AufgabenVorlageBenutzbarPerson[]
+  benutzbarGruppen     AufgabenVorlageBenutzbarGruppe[]
+  benutzbarAbteilungen AufgabenVorlageBenutzbarAbteilung[]
+
+  @@index([aktiv])
+}
+
+model AufgabenVorlageBenutzbarPerson {
+  id        String @id @default(cuid())
+  vorlageId String
+  personId  String
+
+  vorlage AufgabenVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  person  Person          @relation(fields: [personId], references: [benutzername])
+
+  @@unique([vorlageId, personId])
+  @@index([personId])
+}
+
+model AufgabenVorlageBenutzbarGruppe {
+  id        String @id @default(cuid())
+  vorlageId String
+  gruppeId  String
+
+  vorlage AufgabenVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  gruppe  Gruppe          @relation(fields: [gruppeId], references: [id])
+
+  @@unique([vorlageId, gruppeId])
+  @@index([gruppeId])
+}
+
+model AufgabenVorlageBenutzbarAbteilung {
+  id          String @id @default(cuid())
+  vorlageId   String
+  abteilungId String
+
+  vorlage   AufgabenVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  abteilung Abteilung       @relation(fields: [abteilungId], references: [id])
+
+  @@unique([vorlageId, abteilungId])
+  @@index([abteilungId])
+}
+
 // =============================================================================
 //  MODUL — Projekte (dritter Unterbereich von "Aufgaben")
 // =============================================================================
@@ -1467,7 +1542,8 @@ model InfoKategorie {
   name  String  @unique
   aktiv Boolean @default(true)
 
-  infos Info[]
+  infos        Info[]
+  infoVorlages InfoVorlage[]
 }
 
 /// Eine Firmenmitteilung. Empfänger sind Personen und/oder Gruppen
@@ -1700,6 +1776,81 @@ model InfoUmfrageStimme {
   person Person            @relation(fields: [personId], references: [benutzername])
 
   @@unique([optionId, personId])
+}
+
+/// Vorlage für eine neue Info (Rückmeldung 2026-10-01) — reiner Aufbau/
+/// Inhalt (Titel, Text, Kategorie, Bestätigungs-/Kommentar-Einstellung),
+/// bewusst KEIN Empfänger: der bleibt beim Anlegen jedes Mal frei wählbar,
+/// genau wie bei einer Formular-Vorlage die Elemente feststehen, aber nie
+/// wer sie ausfüllt. Erstellen/Bearbeiten nur Wissensmanager (siehe
+/// darfInfoVorlagenVerwalten) — Benutzen dagegen jede Person mit der
+/// Berechtigung "Infos", eingeschränkt auf `benutzbar*`, falls dort
+/// Einträge stehen (leer = für alle offen, anders als bei
+/// FormularBenutzbarPerson/-Gruppe/-Abteilung, wo leer "für niemanden"
+/// bedeutet — hier soll die Ausnahme ("nur für die Praxis") explizit
+/// sein, nicht der Normalfall). "Adminbereich"/"Admin" umgehen die
+/// Einschränkung immer (siehe infoVorlageSichtbarFuer).
+model InfoVorlage {
+  id                String   @id @default(cuid())
+  titel             String
+  /// Sanitiertes HTML, wie Info.inhalt — bewusst OHNE Inline-Bilder in
+  /// der ersten Version (anders als FormularVorlage.beschreibung), um den
+  /// Umfang klein zu halten; bei Bedarf später ein InfoVorlageBild analog
+  /// zu FormularVorlageBild ergänzen.
+  inhalt            String?
+  kategorieId       String?
+  mitBestaetigung   Boolean  @default(false)
+  kommentareErlaubt Boolean  @default(true)
+  aktiv             Boolean  @default(true)
+  erstelltVonId     String
+  erstelltAm        DateTime @default(now())
+  aktualisiertAm    DateTime @updatedAt
+
+  erstelltVon Person         @relation("InfoVorlageErsteller", fields: [erstelltVonId], references: [benutzername])
+  kategorie   InfoKategorie? @relation(fields: [kategorieId], references: [id])
+
+  benutzbarPersonen    InfoVorlageBenutzbarPerson[]
+  benutzbarGruppen     InfoVorlageBenutzbarGruppe[]
+  benutzbarAbteilungen InfoVorlageBenutzbarAbteilung[]
+
+  @@index([aktiv])
+  @@index([kategorieId])
+}
+
+model InfoVorlageBenutzbarPerson {
+  id        String @id @default(cuid())
+  vorlageId String
+  personId  String
+
+  vorlage InfoVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  person  Person      @relation(fields: [personId], references: [benutzername])
+
+  @@unique([vorlageId, personId])
+  @@index([personId])
+}
+
+model InfoVorlageBenutzbarGruppe {
+  id        String @id @default(cuid())
+  vorlageId String
+  gruppeId  String
+
+  vorlage InfoVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  gruppe  Gruppe      @relation(fields: [gruppeId], references: [id])
+
+  @@unique([vorlageId, gruppeId])
+  @@index([gruppeId])
+}
+
+model InfoVorlageBenutzbarAbteilung {
+  id          String @id @default(cuid())
+  vorlageId   String
+  abteilungId String
+
+  vorlage   InfoVorlage @relation(fields: [vorlageId], references: [id], onDelete: Cascade)
+  abteilung Abteilung   @relation(fields: [abteilungId], references: [id])
+
+  @@unique([vorlageId, abteilungId])
+  @@index([abteilungId])
 }
 
 // =============================================================================

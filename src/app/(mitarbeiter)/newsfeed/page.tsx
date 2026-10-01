@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -6,8 +8,9 @@ import { InfoEntwuerfeDialog } from "@/components/info-entwuerfe-dialog"
 import { NewsfeedListe } from "@/components/newsfeed-liste"
 import type { InfoFormularOptionen } from "@/components/info-form-felder"
 import { infosFuerPerson, alleInfos, eigeneInfoEntwuerfe, UNTERNEHMENSNAME } from "@/lib/infos/abfragen"
-import { istGeschaeftsfuehrung } from "@/lib/infos/sichtbarkeit"
+import { istGeschaeftsfuehrung, darfInfoVorlagenVerwalten } from "@/lib/infos/sichtbarkeit"
 import { infoErstellen, infoAlsEntwurfSpeichern, infoAktualisieren, infoEntwurfLoeschen, infoAnhangLoeschen } from "@/lib/infos/aktionen"
+import { verwendbareInfoVorlagen } from "@/lib/infos/vorlagen-abfragen"
 import { richTextZuText } from "@/lib/rich-text"
 
 const FEHLER_TEXTE: Record<string, string> = {
@@ -46,9 +49,10 @@ export default async function NewsfeedSeite({
   const kontext = await berechtigung()
   const { fehler, info: initialInfoId, neu } = await searchParams
   const darfErstellen = kontext.berechtigungen.includes("Infos")
+  const darfVorlagenVerwalten = darfInfoVorlagenVerwalten(kontext)
   const brauchtOptionen = kontext.berechtigungen.some((b) => RELEVANTE_BERECHTIGUNGEN.includes(b))
 
-  const [infos, entwuerfe, darfAlsUnternehmen, personen, gruppen, abteilungen, kategorien] = await Promise.all([
+  const [infos, entwuerfe, darfAlsUnternehmen, personen, gruppen, abteilungen, kategorien, vorlagen] = await Promise.all([
     kontext.adminModusAktiv ? alleInfos(kontext) : infosFuerPerson(kontext),
     darfErstellen ? eigeneInfoEntwuerfe(kontext.personId) : Promise.resolve([]),
     brauchtOptionen ? istGeschaeftsfuehrung(kontext.personId) : Promise.resolve(false),
@@ -68,6 +72,7 @@ export default async function NewsfeedSeite({
     brauchtOptionen
       ? prisma.infoKategorie.findMany({ where: { aktiv: true }, orderBy: { name: "asc" } })
       : Promise.resolve([]),
+    darfErstellen ? verwendbareInfoVorlagen(kontext) : Promise.resolve([]),
   ])
 
   const optionen: InfoFormularOptionen = {
@@ -89,6 +94,14 @@ export default async function NewsfeedSeite({
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ueberschrift">Newsfeed</h1>
         <div className="flex shrink-0 items-center gap-2">
+          {darfVorlagenVerwalten && (
+            <Link
+              href="/newsfeed/vorlagen"
+              className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100 content-center"
+            >
+              Vorlagen verwalten
+            </Link>
+          )}
           {darfErstellen && entwuerfe.length > 0 && (
             <InfoEntwuerfeDialog
               entwuerfe={entwuerfe}
@@ -103,6 +116,7 @@ export default async function NewsfeedSeite({
               optionen={optionen}
               erstellenAktion={infoErstellen}
               entwurfSpeichernAktion={infoAlsEntwurfSpeichern}
+              vorlagen={vorlagen}
               autoOeffnen={neu === "1"}
             />
           )}

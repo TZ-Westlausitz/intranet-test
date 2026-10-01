@@ -40,6 +40,9 @@ import { AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAET_NAMEN } from "@/lib/aufg
 import { AUFGABE_STATUS_KLASSEN, AUFGABE_STATUS_NAMEN } from "@/lib/projekte-optionen"
 import { richTextZuText } from "@/lib/rich-text"
 import { datumIsoAusDate, berlinerTagesbeginn } from "@/lib/datum"
+import { verwendbareAufgabenVorlagen } from "@/lib/aufgaben-vorlagen/abfragen"
+import { darfAufgabenVorlagenVerwalten } from "@/lib/aufgaben-vorlagen/sichtbarkeit"
+import { AufgabenVorlageAuswahlFeld } from "@/components/aufgaben-vorlage-auswahl-feld"
 
 type Ansicht = "aufgaben" | "todos"
 
@@ -251,10 +254,11 @@ function AuftragInhalt({ auftrag, heute, name }: { auftrag: AuftragMitBeziehung;
 export default async function AufgabenSeite({
   searchParams,
 }: {
-  searchParams: Promise<{ fehler?: string; neu?: string; auftrag?: string; ansicht?: string }>
+  searchParams: Promise<{ fehler?: string; neu?: string; auftrag?: string; ansicht?: string; vorlage?: string }>
 }) {
   const kontext = await berechtigung()
-  const { fehler, neu, auftrag: zielAuftragId, ansicht: ansichtParam } = await searchParams
+  const { fehler, neu, auftrag: zielAuftragId, ansicht: ansichtParam, vorlage: vorlageParam } = await searchParams
+  const darfAuftraegeZuweisenVorab = kontext.berechtigungen.includes("Aufgaben")
 
   const heute = berlinerTagesbeginn()
 
@@ -267,6 +271,7 @@ export default async function AufgabenSeite({
     firmenweiteProjektAufgabenOffen,
     projekte,
     eigeneAufgaben,
+    aufgabenVorlagen,
   ] = await Promise.all([
     kontext.adminModusAktiv ? Promise.resolve(null) : auftraegeFuerPerson(kontext.personId),
     kontext.adminModusAktiv ? alleOffenenAuftraege() : Promise.resolve(null),
@@ -280,6 +285,7 @@ export default async function AufgabenSeite({
     kontext.adminModusAktiv ? alleOffenenProjektAufgaben() : Promise.resolve(null),
     kontext.adminModusAktiv ? alleProjekte() : projekteFuerPerson(kontext.personId),
     kontext.adminModusAktiv ? Promise.resolve(null) : aufgabenFuerPerson(kontext.personId),
+    darfAuftraegeZuweisenVorab ? verwendbareAufgabenVorlagen(kontext) : Promise.resolve([]),
   ])
   const { zugewiesenOffen, zugewiesenErledigt, vergebenOffen, vergebenErledigt } = eigeneAuftraege ?? {
     zugewiesenOffen: [],
@@ -291,7 +297,18 @@ export default async function AufgabenSeite({
   const { offen: todosOffen, erledigt: todosErledigt } = eigeneAufgaben ?? { offen: [], erledigt: [] }
   const personenAnzeige = personen.map((p) => ({ id: p.benutzername, name: `${p.vorname} ${p.nachname}` }))
   const zeigeProjekteKachel = projekte.length > 0 || kontext.berechtigungen.includes("Projektmanager")
-  const darfAuftraegeZuweisen = kontext.berechtigungen.includes("Aufgaben")
+  const darfAuftraegeZuweisen = darfAuftraegeZuweisenVorab
+  const darfVorlagenVerwalten = darfAufgabenVorlagenVerwalten(kontext)
+  // Vorlagen-Auswahl im To-do-Formular (Rückmeldung 2026-10-01: dort NUR
+  // mit der Berechtigung "Aufgaben", obwohl das Anlegen eines To-dos
+  // selbst für alle offen ist — Vorlagen bleiben bewusst an dieselbe
+  // Berechtigung gekoppelt wie beim Auftrag-Zuweisen, keine zweite,
+  // laxere Schwelle). `vorlage`-Query-Parameter statt Dialog-State: das
+  // To-do-Formular ist inline auf der Seite, kein Pop-up wie bei
+  // AuftragErstellenDialog — derselbe Mechanismus wie `?ansicht=` oben.
+  const gewaehlteAufgabenVorlage = darfAuftraegeZuweisenVorab
+    ? (aufgabenVorlagen.find((v) => v.id === vorlageParam) ?? null)
+    : null
   // Für die Admin-Modus-Übersicht (zwei firmenweite Karten statt zwei
   // persönlicher Spalten) bestimmt das weiterhin, ob die zweite Karte
   // überhaupt etwas zu zeigen hat — die persönliche Ansicht ist dagegen
@@ -503,11 +520,33 @@ export default async function AufgabenSeite({
           )}
         </div>
 
+        {darfAuftraegeZuweisenVorab && aufgabenVorlagen.length > 0 && (
+          <div className="mt-3">
+            <AufgabenVorlageAuswahlFeld
+              vorlagen={aufgabenVorlagen}
+              ausgewaehlteVorlageId={vorlageParam ?? ""}
+              ansicht={ansicht}
+            />
+          </div>
+        )}
         <form
           action={aufgabeErstellen}
           className="mt-3 flex flex-col gap-3 rounded-lg border border-flaeche-100 bg-flaeche-schwach p-3"
         >
-          <AufgabeFormFelder standardwerte={LEERE_AUFGABE_STANDARDWERTE} />
+          <AufgabeFormFelder
+            key={vorlageParam ?? ""}
+            standardwerte={
+              gewaehlteAufgabenVorlage
+                ? {
+                    ...LEERE_AUFGABE_STANDARDWERTE,
+                    titel: gewaehlteAufgabenVorlage.titel,
+                    beschreibung: gewaehlteAufgabenVorlage.beschreibung ?? "",
+                    prioritaet: gewaehlteAufgabenVorlage.prioritaet,
+                    faelligAm: gewaehlteAufgabenVorlage.faelligAm ?? "",
+                  }
+                : LEERE_AUFGABE_STANDARDWERTE
+            }
+          />
           <button
             type="submit"
             className="ml-auto h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
@@ -657,6 +696,7 @@ export default async function AufgabenSeite({
                 personen={personenAnzeige}
                 erstellenAktion={auftragErstellen}
                 entwurfSpeichernAktion={auftragAlsEntwurfSpeichern}
+                vorlagen={aufgabenVorlagen}
                 autoOeffnen={neu === "1"}
               />
             )}
@@ -777,7 +817,17 @@ export default async function AufgabenSeite({
       }
     >
       <ZielHervorheben zielId={zielAuftragId} />
-      <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Aufgaben</h1>
+      <div className="flex items-center justify-center gap-3 md:justify-between">
+        <h1 className="text-2xl font-semibold text-ueberschrift">Aufgaben</h1>
+        {darfVorlagenVerwalten && (
+          <Link
+            href="/aufgaben/vorlagen"
+            className="hidden h-9 shrink-0 items-center rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100 md:flex"
+          >
+            Vorlagen verwalten
+          </Link>
+        )}
+      </div>
 
       {!kontext.adminModusAktiv && (
         <nav aria-label="Ansicht wählen" className="mt-6 flex border-b border-rand text-sm font-medium md:hidden">

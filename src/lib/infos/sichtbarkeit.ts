@@ -159,6 +159,43 @@ export function darfInfoLoeschen(kontext: { berechtigungen: string[] }): boolean
   return kontext.berechtigungen.includes("Löschen & Bearbeiten")
 }
 
+/** Reine Boolean-Prüfung wie darfFormulareVerwalten — wer Wissensmanager ist, darf Info-Vorlagen anlegen, bearbeiten und löschen. */
+export function darfInfoVorlagenVerwalten(kontext: { berechtigungen: string[] }): boolean {
+  return kontext.berechtigungen.includes("Wissensmanager")
+}
+
+/**
+ * Sichtbarkeit einer InfoVorlage beim Anlegen einer Info (Rückmeldung
+ * 2026-10-01) — anders als bei FormularBenutzbarPerson/-Gruppe/-Abteilung
+ * bedeutet "kein Benutzbar-Eintrag" hier ausdrücklich "für alle mit der
+ * Berechtigung 'Infos' offen", nicht "für niemanden": die Einschränkung
+ * ("nur für die Praxis") soll die bewusste Ausnahme bleiben, die man
+ * aktiv einträgt, nicht der Normalfall, den man jedes Mal erst
+ * freischalten muss. "Adminbereich"/"Admin" umgehen eine gesetzte
+ * Einschränkung immer, unabhängig von der eigenen Gruppen-/
+ * Abteilungszugehörigkeit.
+ */
+export function infoVorlageSichtbarFuer(kontext: { personId: string; berechtigungen: string[] }): Prisma.InfoVorlageWhereInput {
+  if (kontext.berechtigungen.includes("Adminbereich") || kontext.berechtigungen.includes("Admin")) return {}
+  const jetzt = new Date()
+  return {
+    OR: [
+      { benutzbarPersonen: { none: {} }, benutzbarGruppen: { none: {} }, benutzbarAbteilungen: { none: {} } },
+      { benutzbarPersonen: { some: { personId: kontext.personId } } },
+      { benutzbarGruppen: { some: { gruppe: { mitglieder: { some: { personId: kontext.personId } } } } } },
+      {
+        benutzbarAbteilungen: {
+          some: {
+            abteilung: {
+              zugehoerigkeiten: { some: { personId: kontext.personId, OR: [{ bisDatum: null }, { bisDatum: { gt: jetzt } }] } },
+            },
+          },
+        },
+      },
+    ],
+  }
+}
+
 /**
  * Deduplizierte Menge der effektiven, noch aktiven Empfänger einer Info
  * (Personen ∪ aktive Gruppenmitglieder ∪ aktiv Abteilungs-Zugehörige,
