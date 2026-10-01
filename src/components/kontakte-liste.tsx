@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Search } from "lucide-react"
 
 import { InfoAvatar } from "@/components/info-avatar"
 import { KontaktAnzeigenDialog, type KontaktAnzeigenDialogHandle } from "@/components/kontakt-anzeigen-dialog"
@@ -230,13 +230,17 @@ export function KontakteListe({
   return (
     <>
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <input
-          type="text"
-          value={suchtext}
-          onChange={(ereignis) => setSuchtext(ereignis.target.value)}
-          placeholder="Name suchen …"
-          className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
-        />
+        <div className="relative flex-1">
+          <Search aria-hidden className="pointer-events-none absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-tertiaer" />
+          <input
+            type="text"
+            value={suchtext}
+            onChange={(ereignis) => setSuchtext(ereignis.target.value)}
+            placeholder="Name suchen …"
+            aria-label="Name suchen"
+            className="h-9 w-full rounded-lg border border-flaeche-300 pr-2 pl-8 text-sm"
+          />
+        </div>
         <AbteilungGruppeFilter abteilungen={abteilungen} gruppen={gruppen} wert={filter} onChange={setFilter} />
       </div>
 
