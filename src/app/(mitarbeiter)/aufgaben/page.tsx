@@ -41,6 +41,8 @@ import { AUFGABE_STATUS_KLASSEN, AUFGABE_STATUS_NAMEN } from "@/lib/projekte-opt
 import { richTextZuText } from "@/lib/rich-text"
 import { datumIsoAusDate, berlinerTagesbeginn } from "@/lib/datum"
 
+type Ansicht = "aufgaben" | "todos" | "projekte"
+
 const FEHLER_TEXTE: Record<string, string> = {
   pflichtfeld: "Bitte einen Titel eintragen und eine Person auswählen.",
   todoPflichtfeld: "Bitte einen Titel eingeben.",
@@ -221,28 +223,38 @@ function AuftragInhalt({ auftrag, heute, name }: { auftrag: AuftragMitBeziehung;
  *
  * Die einzelnen Karten stehen dafür als JSX-Bausteine (blockDirZugewiesen
  * usw.) VOR dem return und werden je nach Spaltenzahl nur unterschiedlich
- * auf die Spalten verteilt, nicht dupliziert. Auf dem Handy bleibt in
- * beiden Fällen alles einspaltig gestapelt (`grid-cols-1`, erst ab `md:`
- * mehrspaltig) — bewusst EIN Grid mit CSS-Breakpoints statt mehrerer
- * komplett getrennter `<main>`-Bäume wie bei /formulare: Diese Seite hat
- * ein `autoOeffnen`-Dialog (AuftragErstellenDialog), und mehrere parallel
- * im DOM stehende Kopien davon hätten dasselbe Doppel-Dialog-Problem wie
- * seinerzeit bei der Kontaktstelle (siehe Memory
- * kontaktstelle-meldestelle-baustein) — ein einziger Baum mit reinem
- * CSS-Umbruch vermeidet das von vornherein.
+ * auf die Spalten verteilt, nicht dupliziert — bewusst EIN Grid mit
+ * CSS-Breakpoints statt mehrerer komplett getrennter `<main>`-Bäume wie
+ * bei /formulare: Diese Seite hat ein `autoOeffnen`-Dialog
+ * (AuftragErstellenDialog), und mehrere parallel im DOM stehende Kopien
+ * davon hätten dasselbe Doppel-Dialog-Problem wie seinerzeit bei der
+ * Kontaktstelle (siehe Memory kontaktstelle-meldestelle-baustein) — ein
+ * einziger Baum mit reinem CSS-Umbruch vermeidet das von vornherein.
+ *
+ * Auf dem Handy (Rückmeldung 2026-10-01, dasselbe Vorbild wie bei
+ * /formulare) deshalb KEIN zweiter Baum, sondern ein Tab-Umschalter
+ * (Aufgaben/To-Dos/Meine Projekte) über `?ansicht=`, der die ohnehin
+ * vorhandenen Spalten-Bausteine innerhalb des einen Grids per
+ * `hidden md:flex` (ganze Spalte) bzw. `md:contents` (einzelner Block
+ * innerhalb einer gemischten Spalte wie "Meine To-Dos" + "Von dir
+ * vergeben" im Zweispalten-Fall) ein-/ausblendet. Jeder Block bleibt
+ * dabei exakt einmal im DOM, nur seine CSS-Sichtbarkeit ändert sich nach
+ * Breakpoint und `ansicht`. Ab `md:` ignorieren alle diese Klassen
+ * `ansicht` und zeigen wieder alles gleichzeitig — die Spalten-Aufteilung
+ * selbst bleibt unverändert.
  *
  * Der Admin-Modus (eigene, firmenweite Übersicht statt der persönlichen
- * Spalten) ist davon unabhängig und bleibt bei seiner eigenen
- * Zweispalten-Logik (`seiteZweispaltig`, prüft nur, ob die zweite
+ * Spalten) ist davon unabhängig, bekommt keine Tabs und bleibt bei seiner
+ * eigenen Zweispalten-Logik (`seiteZweispaltig`, prüft nur, ob die zweite
  * Firmenkarte etwas zu zeigen hat).
  */
 export default async function AufgabenSeite({
   searchParams,
 }: {
-  searchParams: Promise<{ fehler?: string; neu?: string; auftrag?: string }>
+  searchParams: Promise<{ fehler?: string; neu?: string; auftrag?: string; ansicht?: string }>
 }) {
   const kontext = await berechtigung()
-  const { fehler, neu, auftrag: zielAuftragId } = await searchParams
+  const { fehler, neu, auftrag: zielAuftragId, ansicht: ansichtParam } = await searchParams
 
   const heute = berlinerTagesbeginn()
 
@@ -291,6 +303,22 @@ export default async function AufgabenSeite({
   // To-Dos" mit eingesammelt), sonst wie bisher zwei — siehe Doku-Kommentar
   // oben.
   const persoenlicheMaxBreite = darfAuftraegeZuweisen ? " md:max-w-6xl" : " md:max-w-4xl"
+
+  // Tab-Umschalter auf dem Handy (Rückmeldung 2026-10-01, dasselbe Muster
+  // wie /formulare) — NUR für die persönliche Ansicht, der Admin-Modus
+  // bleibt bei seiner eigenen, einfachen Firmenweite-Übersicht. "Projekte"
+  // fehlt als Tab ganz, wenn die Person nichts damit zu tun hat
+  // (zeigeProjekteKachel). Wichtig: anders als bei /formulare gibt es hier
+  // NICHT zwei getrennte Mobile/Desktop-Bäume (siehe Doku-Kommentar oben,
+  // AuftragErstellenDialog-Problem) — die Tabs blenden stattdessen
+  // Abschnitte INNERHALB des einen Grids per CSS aus (`hidden md:flex`
+  // bzw. `md:contents`), jeder Block bleibt genau einmal im DOM.
+  const ansichten: { key: Ansicht; label: string }[] = [
+    { key: "aufgaben", label: "Aufgaben" },
+    { key: "todos", label: "To-Dos" },
+    ...(zeigeProjekteKachel ? [{ key: "projekte" as const, label: "Meine Projekte" }] : []),
+  ]
+  const ansicht: Ansicht = ansichten.some((tab) => tab.key === ansichtParam) ? (ansichtParam as Ansicht) : "aufgaben"
 
   // Die drei/zwei Spalten-Bausteine der persönlichen Ansicht als JSX-Werte
   // statt inline im Grid — so werden sie je nach darfAuftraegeZuweisen nur
@@ -746,10 +774,31 @@ export default async function AufgabenSeite({
       <ZielHervorheben zielId={zielAuftragId} />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Aufgaben</h1>
 
+      {!kontext.adminModusAktiv && (
+        <nav aria-label="Ansicht wählen" className="mt-6 flex border-b border-rand text-sm font-medium md:hidden">
+          {ansichten.map((tab) => (
+            <Link
+              key={tab.key}
+              href={`/aufgaben?ansicht=${tab.key}`}
+              aria-current={ansicht === tab.key ? "page" : undefined}
+              className={
+                "flex-1 border-b-2 px-2 py-3 text-center transition " +
+                (ansicht === tab.key ? "border-marke-gruen-dunkel text-ueberschrift" : "border-transparent text-tertiaer hover:text-primaer")
+              }
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </nav>
+      )}
+
       {zeigeProjekteKachel && (
         <Link
           href="/aufgaben/projekte"
-          className="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+          className={
+            "mt-6 items-center justify-between gap-3 rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen " +
+            (kontext.adminModusAktiv || ansicht === "projekte" ? "flex" : "hidden md:flex")
+          }
         >
           <div>
             <h2 className="text-lg font-semibold text-ueberschrift">
@@ -777,22 +826,31 @@ export default async function AufgabenSeite({
       {!kontext.adminModusAktiv && (
         darfAuftraegeZuweisen ? (
           <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3 md:items-start">
-            <div className="flex flex-col gap-4">{blockVonDirVergeben}</div>
-            <div className="flex flex-col gap-4">
+            <div className={"flex flex-col gap-4 " + (ansicht === "aufgaben" ? "" : "hidden md:flex")}>
+              {blockVonDirVergeben}
+            </div>
+            <div className={"flex flex-col gap-4 " + (ansicht === "aufgaben" ? "" : "hidden md:flex")}>
               {blockDirZugewiesen}
               {blockAusProjekten}
             </div>
-            <div className="flex flex-col gap-4">{blockMeineTodos}</div>
+            <div className={"flex flex-col gap-4 " + (ansicht === "todos" ? "" : "hidden md:flex")}>
+              {blockMeineTodos}
+            </div>
           </div>
         ) : (
           <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 md:items-start">
-            <div className="flex flex-col gap-4">
+            <div className={"flex flex-col gap-4 " + (ansicht === "aufgaben" ? "" : "hidden md:flex")}>
               {blockDirZugewiesen}
               {blockAusProjekten}
             </div>
+            {/* Diese Spalte mischt auf dem Desktop zwei Themen (To-Dos +
+                Von dir vergeben) — die Tabs auf dem Handy brauchen sie
+                aber einzeln, deshalb hier zwei eigene, je per
+                `md:contents` transparente Wrapper statt eines
+                gemeinsamen "hidden md:flex" auf der ganzen Spalte. */}
             <div className="flex flex-col gap-4">
-              {blockMeineTodos}
-              {blockVonDirVergeben}
+              <div className={ansicht === "todos" ? "contents" : "hidden md:contents"}>{blockMeineTodos}</div>
+              <div className={ansicht === "aufgaben" ? "contents" : "hidden md:contents"}>{blockVonDirVergeben}</div>
             </div>
           </div>
         )
