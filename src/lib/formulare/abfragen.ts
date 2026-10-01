@@ -1,3 +1,4 @@
+import { FormularEinreichungStatus } from "@/generated/prisma/enums"
 import { prisma } from "@/lib/db"
 import { formularSichtbarFuer, formularEmpfaengerFuer, istFormularEmpfaenger } from "@/lib/formulare/sichtbarkeit"
 
@@ -29,22 +30,46 @@ export async function formularVorlagenFuerKachel(vorlagenIds: string[], kontext:
   return vorlagenIds.map((id) => nachId.get(id)).filter((v): v is NonNullable<typeof v> => v !== undefined)
 }
 
-/** Für Spalte 2 — von der Person selbst eingereichte Formulare. */
-export async function meineEinreichungen(kontext: FormularKontext) {
-  return prisma.formularEinreichung.findMany({
-    where: { eingereichtVonId: kontext.personId },
-    include: { vorlage: { select: { titel: true } } },
-    orderBy: { eingereichtAm: "desc" },
-  })
-}
+const EINREICHUNG_UEBERSICHT_INCLUDE = {
+  vorlage: { select: { titel: true } },
+  eingereichtVon: { select: { vorname: true, nachname: true } },
+} as const
 
-/** Für Spalte 3 — Einreichungen, deren Vorlage die Person (direkt, über Gruppe oder Abteilung) als Empfänger hinterlegt hat. */
-export async function anMichAdressierteEinreichungen(kontext: FormularKontext) {
-  return prisma.formularEinreichung.findMany({
-    where: { vorlage: formularEmpfaengerFuer(kontext.personId) },
-    include: { vorlage: { select: { titel: true } }, eingereichtVon: { select: { vorname: true, nachname: true } } },
-    orderBy: { eingereichtAm: "desc" },
-  })
+/**
+ * Für Spalte 2 ("Offene Formulare") und Spalte 3 ("Erledigt") — eigene
+ * und an die Person adressierte Einreichungen zusammengeführt
+ * (Rückmeldung 2026-10-01: die Spalte entscheidet sich über den Status,
+ * nicht mehr über die Richtung "von mir"/"an mich"). Eine Einreichung,
+ * bei der die Person sich selbst als Empfänger eingetragen hat, taucht
+ * sonst doppelt auf — deshalb Zusammenführung über eine Map nach `id`.
+ * `vonMir` sagt der Oberfläche, ob der Name der einreichenden Person
+ * angezeigt werden muss oder nicht.
+ */
+export async function meineUndAdressierteEinreichungen(kontext: FormularKontext) {
+  const [eigene, adressiert] = await Promise.all([
+    prisma.formularEinreichung.findMany({
+      where: { eingereichtVonId: kontext.personId },
+      include: EINREICHUNG_UEBERSICHT_INCLUDE,
+      orderBy: { eingereichtAm: "desc" },
+    }),
+    prisma.formularEinreichung.findMany({
+      where: { vorlage: formularEmpfaengerFuer(kontext.personId) },
+      include: EINREICHUNG_UEBERSICHT_INCLUDE,
+      orderBy: { eingereichtAm: "desc" },
+    }),
+  ])
+
+  const nachId = new Map<string, (typeof eigene)[number]>()
+  for (const einreichung of [...eigene, ...adressiert]) nachId.set(einreichung.id, einreichung)
+
+  const alle = [...nachId.values()]
+    .map((einreichung) => ({ ...einreichung, vonMir: einreichung.eingereichtVonId === kontext.personId }))
+    .sort((a, b) => b.eingereichtAm.getTime() - a.eingereichtAm.getTime())
+
+  return {
+    offen: alle.filter((einreichung) => einreichung.status !== FormularEinreichungStatus.ERLEDIGT),
+    erledigt: alle.filter((einreichung) => einreichung.status === FormularEinreichungStatus.ERLEDIGT),
+  }
 }
 
 /** Für die Formulare-Kachel auf der Startseite — was sich seit dem letzten Blick geändert haben könnte: eigene noch nicht erledigte Einreichungen + an die Person adressierte, noch gar nicht angefasste Einreichungen (Rückmeldung 2026-09-28, "Stand statt Katalog"). */

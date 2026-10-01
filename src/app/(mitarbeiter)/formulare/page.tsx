@@ -4,7 +4,7 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { darfFormulareVerwalten } from "@/lib/formulare/sichtbarkeit"
-import { verfuegbareFormulare, meineEinreichungen, anMichAdressierteEinreichungen } from "@/lib/formulare/abfragen"
+import { verfuegbareFormulare, meineUndAdressierteEinreichungen } from "@/lib/formulare/abfragen"
 
 const STATUS_LABEL: Record<string, string> = { OFFEN: "Offen", IN_BEARBEITUNG: "In Bearbeitung", ERLEDIGT: "Erledigt" }
 const STATUS_FARBE: Record<string, string> = {
@@ -23,11 +23,13 @@ function StatusChip({ status }: { status: string }) {
 
 /**
  * Einstieg in den Formulare-Baustein — drei Spalten: links die für die
- * Person freigeschalteten Vorlagen, in der Mitte die eigenen
- * Einreichungen, rechts die an sie adressierten. Verwaltung (Vorlagen
- * anlegen/bearbeiten) ist ein eigener Bereich, nicht hier inline — bei
- * potenziell vielen Formularen passt eine Tabelle besser als ein
- * Kachel-"+"-Muster (siehe /formulare/verwalten).
+ * Person freigeschalteten Vorlagen, in der Mitte alle noch offenen
+ * Einreichungen (eigene wie an die Person adressierte zusammen, Status
+ * entscheidet die Spalte statt der Richtung), rechts alle erledigten
+ * (Rückmeldung 2026-10-01). Verwaltung (Vorlagen anlegen/bearbeiten) ist
+ * ein eigener Bereich, nicht hier inline — bei potenziell vielen
+ * Formularen passt eine Tabelle besser als ein Kachel-"+"-Muster (siehe
+ * /formulare/verwalten).
  *
  * Ab Tablet/Desktop (`md:` aufwärts) dasselbe Kachel-Design wie die
  * Startseite (src/app/page.tsx) — weiße Karten mit farbigem oberen Rand
@@ -41,10 +43,9 @@ export default async function FormulareSeite() {
   const kontext = await berechtigung()
   const darfVerwalten = darfFormulareVerwalten(kontext)
 
-  const [verfuegbar, meine, adressiert] = await Promise.all([
+  const [verfuegbar, { offen, erledigt }] = await Promise.all([
     verfuegbareFormulare(kontext),
-    meineEinreichungen(kontext),
-    anMichAdressierteEinreichungen(kontext),
+    meineUndAdressierteEinreichungen(kontext),
   ])
 
   const kopfzeile = (
@@ -90,18 +91,23 @@ export default async function FormulareSeite() {
           </div>
 
           <div className="rounded-xl border border-rand bg-flaeche p-4">
-            <h2 className="text-sm font-semibold text-ueberschrift">Von mir ausgefüllt</h2>
-            {meine.length === 0 ? (
-              <p className="mt-3 text-sm text-sekundaer">Noch nichts eingereicht.</p>
+            <h2 className="text-sm font-semibold text-ueberschrift">Offene Formulare</h2>
+            {offen.length === 0 ? (
+              <p className="mt-3 text-sm text-sekundaer">Nichts offen.</p>
             ) : (
               <ul className="mt-3 flex flex-col gap-2">
-                {meine.map((einreichung) => (
+                {offen.map((einreichung) => (
                   <li key={einreichung.id}>
                     <Link
                       href={`/formulare/einreichungen/${einreichung.id}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-rand px-3 py-2 text-sm text-primaer transition hover:border-marke-gruen hover:text-ueberschrift"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-rand px-3 py-2 text-sm text-primaer transition hover:border-marke-orange hover:text-ueberschrift"
                     >
-                      {einreichung.vorlage.titel}
+                      <span>
+                        {einreichung.vorlage.titel}
+                        <span className="block text-xs text-tertiaer">
+                          {einreichung.vonMir ? "Von dir" : `${einreichung.eingereichtVon.vorname} ${einreichung.eingereichtVon.nachname}`}
+                        </span>
+                      </span>
                       <StatusChip status={einreichung.status} />
                     </Link>
                   </li>
@@ -111,24 +117,21 @@ export default async function FormulareSeite() {
           </div>
 
           <div className="rounded-xl border border-rand bg-flaeche p-4">
-            <h2 className="text-sm font-semibold text-ueberschrift">An mich adressiert</h2>
-            {adressiert.length === 0 ? (
-              <p className="mt-3 text-sm text-sekundaer">Nichts an dich adressiert.</p>
+            <h2 className="text-sm font-semibold text-ueberschrift">Erledigt</h2>
+            {erledigt.length === 0 ? (
+              <p className="mt-3 text-sm text-sekundaer">Noch nichts erledigt.</p>
             ) : (
               <ul className="mt-3 flex flex-col gap-2">
-                {adressiert.map((einreichung) => (
+                {erledigt.map((einreichung) => (
                   <li key={einreichung.id}>
                     <Link
                       href={`/formulare/einreichungen/${einreichung.id}`}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-rand px-3 py-2 text-sm text-primaer transition hover:border-marke-gruen hover:text-ueberschrift"
+                      className="block rounded-lg border border-rand px-3 py-2 text-sm text-primaer transition hover:border-marke-gruen hover:text-ueberschrift"
                     >
-                      <span>
-                        {einreichung.vorlage.titel}
-                        <span className="block text-xs text-tertiaer">
-                          {einreichung.eingereichtVon.vorname} {einreichung.eingereichtVon.nachname}
-                        </span>
+                      {einreichung.vorlage.titel}
+                      <span className="block text-xs text-tertiaer">
+                        {einreichung.vonMir ? "Von dir" : `${einreichung.eingereichtVon.vorname} ${einreichung.eingereichtVon.nachname}`}
                       </span>
-                      <StatusChip status={einreichung.status} />
                     </Link>
                   </li>
                 ))}
@@ -167,34 +170,13 @@ export default async function FormulareSeite() {
                 )}
               </section>
 
-              <section className="flex min-h-0 flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen-dunkel bg-flaeche p-4 shadow-sm">
-                <h2 className="shrink-0 text-lg font-semibold text-ueberschrift">Von mir ausgefüllt</h2>
-                {meine.length === 0 ? (
-                  <p className="mt-2 text-sm text-sekundaer">Noch nichts eingereicht.</p>
-                ) : (
-                  <ul className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-                    {meine.map((einreichung) => (
-                      <li key={einreichung.id}>
-                        <Link
-                          href={`/formulare/einreichungen/${einreichung.id}`}
-                          className="flex items-center justify-between gap-2 rounded-xl border border-rand px-3 py-2.5 text-sm text-primaer transition hover:border-marke-gruen-dunkel hover:text-ueberschrift"
-                        >
-                          <span className="truncate">{einreichung.vorlage.titel}</span>
-                          <StatusChip status={einreichung.status} />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-
               <section className="flex min-h-0 flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4 shadow-sm">
-                <h2 className="shrink-0 text-lg font-semibold text-ueberschrift">An mich adressiert</h2>
-                {adressiert.length === 0 ? (
-                  <p className="mt-2 text-sm text-sekundaer">Nichts an dich adressiert.</p>
+                <h2 className="shrink-0 text-lg font-semibold text-ueberschrift">Offene Formulare</h2>
+                {offen.length === 0 ? (
+                  <p className="mt-2 text-sm text-sekundaer">Nichts offen.</p>
                 ) : (
                   <ul className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-                    {adressiert.map((einreichung) => (
+                    {offen.map((einreichung) => (
                       <li key={einreichung.id}>
                         <Link
                           href={`/formulare/einreichungen/${einreichung.id}`}
@@ -203,10 +185,35 @@ export default async function FormulareSeite() {
                           <span className="min-w-0">
                             <span className="block truncate">{einreichung.vorlage.titel}</span>
                             <span className="block truncate text-xs text-tertiaer">
-                              {einreichung.eingereichtVon.vorname} {einreichung.eingereichtVon.nachname}
+                              {einreichung.vonMir ? "Von dir" : `${einreichung.eingereichtVon.vorname} ${einreichung.eingereichtVon.nachname}`}
                             </span>
                           </span>
                           <StatusChip status={einreichung.status} />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+
+              <section className="flex min-h-0 flex-col rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm">
+                <h2 className="shrink-0 text-lg font-semibold text-ueberschrift">Erledigt</h2>
+                {erledigt.length === 0 ? (
+                  <p className="mt-2 text-sm text-sekundaer">Noch nichts erledigt.</p>
+                ) : (
+                  <ul className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+                    {erledigt.map((einreichung) => (
+                      <li key={einreichung.id}>
+                        <Link
+                          href={`/formulare/einreichungen/${einreichung.id}`}
+                          className="flex items-center justify-between gap-2 rounded-xl border border-rand px-3 py-2.5 text-sm text-primaer transition hover:border-marke-gruen hover:text-ueberschrift"
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate">{einreichung.vorlage.titel}</span>
+                            <span className="block truncate text-xs text-tertiaer">
+                              {einreichung.vonMir ? "Von dir" : `${einreichung.eingereichtVon.vorname} ${einreichung.eingereichtVon.nachname}`}
+                            </span>
+                          </span>
                         </Link>
                       </li>
                     ))}
