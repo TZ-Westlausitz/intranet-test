@@ -1,14 +1,11 @@
-import Link from "next/link"
-import { BellOff, Users } from "lucide-react"
-
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { ChatNeueNachrichtDialog } from "@/components/chat-neue-nachricht-dialog"
 import { ChatNeueGruppeDialog } from "@/components/chat-neue-gruppe-dialog"
+import { ChatKonversationenListe } from "@/components/chat-konversationen-liste"
 import { meineKonversationen } from "@/lib/chat/abfragen"
 import { direktkonversationOeffnen, gruppenchatOeffnen, gruppenchatErstellen, konversationArchivieren } from "@/lib/chat/aktionen"
-import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
 
 /**
  * Konversationsübersicht — Direktnachrichten ("+ Neuer Chat", genau zwei
@@ -20,6 +17,10 @@ import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
  * Verschlüsselung (siehe Plan/Memory chat-baustein) — deshalb ist eine
  * echte Vorschauzeile hier möglich, anders als bei einer verschlüsselten
  * Variante.
+ *
+ * Suche (Rückmeldung 2026-10-01, Lupensymbol im Suchfeld) + die eigentliche
+ * Listendarstellung stecken in ChatKonversationenListe (Client Component,
+ * siehe dort) — diese Seite lädt nur die Daten und reicht sie durch.
  */
 export default async function ChatUebersichtSeite({
   searchParams,
@@ -62,99 +63,14 @@ export default async function ChatUebersichtSeite({
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col gap-2">
-        {aktive.length === 0 && archivierte.length === 0 && (
-          <p className="text-sm text-sekundaer">Noch keine Konversationen.</p>
-        )}
-
-        {aktive.map((k) => (
-          <KonversationZeile key={k.konversationId ?? k.gruppeId} konversation={k} gruppenchatOeffnenAktion={gruppenchatOeffnen} />
-        ))}
-      </div>
-
-      {archivierte.length > 0 && (
-        <details className="mt-6 rounded-xl border border-rand bg-flaeche">
-          <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-sekundaer">
-            Archivierte Chats ({archivierte.length})
-          </summary>
-          <div className="flex flex-col gap-2 border-t border-rand p-2">
-            {archivierte.map((k) => (
-              <div key={k.konversationId} className="flex items-center gap-2">
-                <Link
-                  href={`/chat/${k.konversationId}`}
-                  className="min-w-0 flex-1 rounded-xl border border-rand bg-flaeche p-4 text-left transition hover:border-marke-gruen"
-                >
-                  <KonversationInhalt konversation={k} />
-                </Link>
-                <form action={konversationArchivieren.bind(null, k.konversationId as string, false)}>
-                  <button
-                    type="submit"
-                    className="h-9 shrink-0 rounded-lg px-2.5 text-xs font-medium text-sekundaer transition hover:bg-flaeche-100"
-                  >
-                    Wiederherstellen
-                  </button>
-                </form>
-              </div>
-            ))}
-          </div>
-        </details>
-      )}
+      <ChatKonversationenListe
+        aktive={aktive}
+        archivierte={archivierte}
+        gruppenchatOeffnenAktion={gruppenchatOeffnen}
+        konversationArchivierenAktion={konversationArchivieren}
+      />
 
       <ZurueckButton />
     </main>
-  )
-}
-
-type KonversationAnzeige = Awaited<ReturnType<typeof meineKonversationen>>[number]
-
-/** Titel(+Symbole)/Vorschauzeile — ausgelagert für Wiederverwendung in der archivierten Box. */
-function KonversationInhalt({ konversation: k }: { konversation: KonversationAnzeige }) {
-  return (
-    <>
-      <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1 truncate text-sm font-medium text-ueberschrift">
-          {k.istGruppe && <Users className="h-4 w-4 shrink-0 text-sekundaer" aria-hidden />}
-          {k.stumm && <BellOff className="h-4 w-4 shrink-0 text-tertiaer" aria-hidden />}
-          {k.titel}
-        </p>
-        {k.letzteNachricht && (
-          <p className="shrink-0 text-xs text-tertiaer">
-            {formatiereDatumAusDate(k.letzteNachricht.erstelltAm)}, {zeitAusDate(k.letzteNachricht.erstelltAm)}
-          </p>
-        )}
-      </div>
-      {k.letzteNachricht ? (
-        <p className="truncate text-sm text-sekundaer">
-          {k.letzteNachricht.von}: {k.letzteNachricht.text}
-        </p>
-      ) : (
-        <p className="text-sm text-tertiaer">Noch keine Nachrichten.</p>
-      )}
-    </>
-  )
-}
-
-/** Eine Zeile der aktiven Liste — Link bei bereits geöffneter Konversation, sonst ein Button, der `gruppenchatOeffnen` anstößt (Muster oben unverändert). */
-function KonversationZeile({
-  konversation: k,
-  gruppenchatOeffnenAktion,
-}: {
-  konversation: KonversationAnzeige
-  gruppenchatOeffnenAktion: (gruppeId: string) => void
-}) {
-  const klasse =
-    "flex flex-col gap-0.5 rounded-xl border bg-flaeche p-4 text-left transition hover:border-marke-gruen " +
-    (k.ungelesen ? "border-marke-gruen bg-marke-gruen/5" : "border-rand")
-
-  return k.konversationId ? (
-    <Link href={`/chat/${k.konversationId}`} className={klasse}>
-      <KonversationInhalt konversation={k} />
-    </Link>
-  ) : (
-    <form action={gruppenchatOeffnenAktion.bind(null, k.gruppeId as string)}>
-      <button type="submit" className={klasse + " w-full"}>
-        <KonversationInhalt konversation={k} />
-      </button>
-    </form>
   )
 }
