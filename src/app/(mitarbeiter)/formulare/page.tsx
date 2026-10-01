@@ -70,7 +70,7 @@ export default async function FormulareSeite() {
         {kopfzeile}
 
         <div className="mt-6 flex flex-col gap-6">
-          <div className="rounded-xl border border-rand bg-flaeche p-4">
+          <div className="rounded-xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4">
             <h2 className="text-sm font-semibold text-ueberschrift">Verfügbare Formulare</h2>
             {verfuegbar.length === 0 ? (
               <p className="mt-3 text-sm text-sekundaer">Keine Formulare für dich freigeschaltet.</p>
@@ -90,7 +90,7 @@ export default async function FormulareSeite() {
             )}
           </div>
 
-          <div className="rounded-xl border border-rand bg-flaeche p-4">
+          <div className="rounded-xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4">
             <h2 className="text-sm font-semibold text-ueberschrift">Offene Formulare</h2>
             {offen.length === 0 ? (
               <p className="mt-3 text-sm text-sekundaer">Nichts offen.</p>
@@ -116,7 +116,7 @@ export default async function FormulareSeite() {
             )}
           </div>
 
-          <div className="rounded-xl border border-rand bg-flaeche p-4">
+          <div className="rounded-xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4">
             <h2 className="text-sm font-semibold text-ueberschrift">Erledigt</h2>
             {erledigt.length === 0 ? (
               <p className="mt-3 text-sm text-sekundaer">Noch nichts erledigt.</p>
