@@ -36,39 +36,50 @@ const EINREICHUNG_UEBERSICHT_INCLUDE = {
 } as const
 
 /**
- * Für Spalte 2 ("Offene Formulare") und Spalte 3 ("Erledigt") — eigene
- * und an die Person adressierte Einreichungen zusammengeführt
- * (Rückmeldung 2026-10-01: die Spalte entscheidet sich über den Status,
- * nicht mehr über die Richtung "von mir"/"an mich"). Eine Einreichung,
- * bei der die Person sich selbst als Empfänger eingetragen hat, taucht
- * sonst doppelt auf — deshalb Zusammenführung über eine Map nach `id`.
- * `vonMir` sagt der Oberfläche, ob der Name der einreichenden Person
- * angezeigt werden muss oder nicht.
+ * Für die Tabs/Spalten "Offene Formulare" und "Erledigt" — eigene und an
+ * die Person adressierte Einreichungen zusammengeführt (Rückmeldung
+ * 2026-10-01: die Spalte entscheidet sich über den Status, nicht mehr
+ * über die Richtung "von mir"/"an mich"). Eine Einreichung, bei der die
+ * Person sich selbst als Empfänger eingetragen hat, taucht sonst doppelt
+ * auf — deshalb Zusammenführung über eine Map nach `id`. `vonMir` sagt
+ * der Oberfläche, ob der Name der einreichenden Person angezeigt werden
+ * muss oder nicht.
+ *
+ * Im Admin-Modus (`firmenweit`, Rückmeldung 2026-10-01) zählt weder
+ * Einreichende/-r noch Empfänger — es werden alle Einreichungen der
+ * Firma geladen, unabhängig von Vorlage und Person.
  */
-export async function meineUndAdressierteEinreichungen(kontext: FormularKontext) {
-  const [eigene, adressiert] = await Promise.all([
-    prisma.formularEinreichung.findMany({
-      where: { eingereichtVonId: kontext.personId },
-      include: EINREICHUNG_UEBERSICHT_INCLUDE,
-      orderBy: { eingereichtAm: "desc" },
-    }),
-    prisma.formularEinreichung.findMany({
-      where: { vorlage: formularEmpfaengerFuer(kontext.personId) },
-      include: EINREICHUNG_UEBERSICHT_INCLUDE,
-      orderBy: { eingereichtAm: "desc" },
-    }),
-  ])
+export async function offeneUndErledigteEinreichungen(kontext: FormularKontext, firmenweit: boolean) {
+  const alle = firmenweit
+    ? await prisma.formularEinreichung.findMany({
+        include: EINREICHUNG_UEBERSICHT_INCLUDE,
+        orderBy: { eingereichtAm: "desc" },
+      })
+    : await (async () => {
+        const [eigene, adressiert] = await Promise.all([
+          prisma.formularEinreichung.findMany({
+            where: { eingereichtVonId: kontext.personId },
+            include: EINREICHUNG_UEBERSICHT_INCLUDE,
+            orderBy: { eingereichtAm: "desc" },
+          }),
+          prisma.formularEinreichung.findMany({
+            where: { vorlage: formularEmpfaengerFuer(kontext.personId) },
+            include: EINREICHUNG_UEBERSICHT_INCLUDE,
+            orderBy: { eingereichtAm: "desc" },
+          }),
+        ])
+        const nachId = new Map<string, (typeof eigene)[number]>()
+        for (const einreichung of [...eigene, ...adressiert]) nachId.set(einreichung.id, einreichung)
+        return [...nachId.values()]
+      })()
 
-  const nachId = new Map<string, (typeof eigene)[number]>()
-  for (const einreichung of [...eigene, ...adressiert]) nachId.set(einreichung.id, einreichung)
-
-  const alle = [...nachId.values()]
+  const sortiert = alle
     .map((einreichung) => ({ ...einreichung, vonMir: einreichung.eingereichtVonId === kontext.personId }))
     .sort((a, b) => b.eingereichtAm.getTime() - a.eingereichtAm.getTime())
 
   return {
-    offen: alle.filter((einreichung) => einreichung.status !== FormularEinreichungStatus.ERLEDIGT),
-    erledigt: alle.filter((einreichung) => einreichung.status === FormularEinreichungStatus.ERLEDIGT),
+    offen: sortiert.filter((einreichung) => einreichung.status !== FormularEinreichungStatus.ERLEDIGT),
+    erledigt: sortiert.filter((einreichung) => einreichung.status === FormularEinreichungStatus.ERLEDIGT),
   }
 }
 
