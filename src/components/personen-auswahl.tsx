@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useId, useMemo, useRef, useState } from "react"
+import { Search } from "lucide-react"
 
 import type { Person } from "@/components/termin-form-felder"
 
@@ -127,25 +128,28 @@ export function PersonenAuswahl({
         </div>
       )}
 
-      <input
-        id={`${id}-suche`}
-        type="text"
-        role="combobox"
-        aria-expanded={geoeffnet}
-        aria-controls={`${id}-liste`}
-        aria-autocomplete="list"
-        value={suchtext}
-        onChange={(ereignis) => {
-          setSuchtext(ereignis.target.value)
-          setGeoeffnet(true)
-          setHervorgehoben(0)
-        }}
-        onFocus={() => setGeoeffnet(true)}
-        onBlur={() => window.setTimeout(() => setGeoeffnet(false), 150)}
-        onKeyDown={beiTaste}
-        placeholder="Person suchen …"
-        className="h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
-      />
+      <div className="relative">
+        <Search aria-hidden className="pointer-events-none absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-tertiaer" />
+        <input
+          id={`${id}-suche`}
+          type="text"
+          role="combobox"
+          aria-expanded={geoeffnet}
+          aria-controls={`${id}-liste`}
+          aria-autocomplete="list"
+          value={suchtext}
+          onChange={(ereignis) => {
+            setSuchtext(ereignis.target.value)
+            setGeoeffnet(true)
+            setHervorgehoben(0)
+          }}
+          onFocus={() => setGeoeffnet(true)}
+          onBlur={() => window.setTimeout(() => setGeoeffnet(false), 150)}
+          onKeyDown={beiTaste}
+          placeholder="Person suchen …"
+          className="h-9 w-full rounded-lg border border-flaeche-300 pr-2 pl-8 text-sm"
+        />
+      </div>
 
       {geoeffnet && (
         <div
