@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { KontaktProfil } from "@/components/kontakt-profil"
 import { personKontaktDetail } from "@/lib/kontakte/abfragen"
@@ -30,8 +29,6 @@ export default async function KontaktDetailSeite({ params }: { params: Promise<{
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
-
       <div className="rounded-xl border border-rand bg-flaeche p-5">
         <KontaktProfil person={person} eigenePersonId={kontext.personId} />
       </div>

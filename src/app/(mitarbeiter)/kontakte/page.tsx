@@ -1,6 +1,5 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { KontakteListe } from "@/components/kontakte-liste"
 import { aktivePersonenUebersicht } from "@/lib/kontakte/abfragen"
@@ -24,7 +23,6 @@ export default async function KontakteSeite() {
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Kontakte</h1>
 
       <KontakteListe personen={personen} abteilungen={abteilungen} gruppen={gruppen} eigenePersonId={kontext.personId} />

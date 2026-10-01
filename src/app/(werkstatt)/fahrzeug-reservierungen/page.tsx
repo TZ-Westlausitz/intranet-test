@@ -6,7 +6,6 @@ import { prisma } from "@/lib/db"
 import { AusleiheStatus } from "@/generated/prisma/enums"
 import { fuhrparkNavigation } from "@/lib/fuhrpark/abfragen"
 import { fuhrparkRechte } from "@/lib/fuhrpark/zugriff"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 
 type Kachel = {
@@ -101,7 +100,6 @@ export default async function FahrzeugeSeite() {
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Fahrzeuge</h1>
 
       <div className="mt-6">

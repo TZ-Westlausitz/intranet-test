@@ -3,7 +3,6 @@ import { BellOff, Users } from "lucide-react"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { ChatNeueNachrichtDialog } from "@/components/chat-neue-nachricht-dialog"
 import { ChatNeueGruppeDialog } from "@/components/chat-neue-gruppe-dialog"
@@ -51,7 +50,6 @@ export default async function ChatUebersichtSeite({
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ueberschrift">Chat</h1>
         <div className="flex gap-2">

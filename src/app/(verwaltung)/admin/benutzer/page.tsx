@@ -1,6 +1,5 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { PersonErstellenFormular } from "@/components/admin/person-erstellen-formular"
 import { BenutzerListe } from "@/components/admin/benutzer-liste"
@@ -71,7 +70,6 @@ export default async function BenutzerSeite() {
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Benutzer</h1>
 
       <div className="mt-6">

@@ -21,7 +21,6 @@ import { Schadensskizze } from "@/components/schadensskizze"
 import { FahrzeugFormularFelder } from "@/components/fuhrpark/fahrzeug-formular"
 import { TerminVorschlagenDialog } from "@/components/fuhrpark/termin-vorschlagen-dialog"
 import { TerminvorschlagKarte } from "@/components/fuhrpark/terminvorschlag-karte"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
@@ -76,8 +75,6 @@ export default async function FahrzeugProfilSeite({
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
-      <Kopfleiste />
-
       <p className="text-sm">
         <Link href="/fuhrpark" className="text-sekundaer hover:text-marke-gruen-dunkel">
           ← Fuhrpark

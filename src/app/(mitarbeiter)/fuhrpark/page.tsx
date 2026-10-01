@@ -8,7 +8,6 @@ import { fristStatus, schlimmsteStufe, type FristStufe } from "@/lib/fuhrpark/fr
 import { fuhrparkRechte } from "@/lib/fuhrpark/zugriff"
 import { FuhrparkListe } from "@/components/fuhrpark/fuhrpark-liste"
 import { FahrzeugLoeschenButton } from "@/components/fuhrpark/fahrzeug-loeschen-button"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 
 const REIHENFOLGE: Record<FristStufe, number> = { ueberfaellig: 0, bald: 1, ok: 2, offen: 3 }
@@ -56,7 +55,6 @@ export default async function FuhrparkSeite({ searchParams }: { searchParams: Pr
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
-      <Kopfleiste />
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ueberschrift">Fuhrpark</h1>
         {darfBearbeiten && (

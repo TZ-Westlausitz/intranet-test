@@ -5,7 +5,6 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { AusleiheStatus, Protokollrichtung } from "@/generated/prisma/enums"
 import { STATUS_TEXT, NAECHSTER_SCHRITT } from "@/lib/ausleihe-status"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
 
@@ -98,7 +97,6 @@ export default async function AusleiheSeite({
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
       <p className="text-sm text-sekundaer">Ausleihe {ausleihe.vorgangsnummer}</p>
       <h1 className="text-2xl font-semibold text-ueberschrift">
         {ausleihe.fahrzeug.bezeichnung}

@@ -3,7 +3,6 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { ArtikelErstellenDialog } from "@/components/artikel-erstellen-dialog"
 import { ArtikelListe } from "@/components/artikel-liste"
@@ -50,7 +49,6 @@ export default async function WissensUnterordnerSeite({
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-10">
-      <Kopfleiste />
       <p className="text-sm text-sekundaer">
         <Link href={`/wissen/${ordnerId}`} className="hover:underline">
           {unterordner.ordner.name}

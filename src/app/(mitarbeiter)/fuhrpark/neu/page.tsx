@@ -2,7 +2,6 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { fuhrparkFormularOptionen } from "@/lib/fuhrpark/abfragen"
 import { fahrzeugAnlegen } from "@/lib/fuhrpark/aktionen"
 import { FahrzeugFormularFelder } from "@/components/fuhrpark/fahrzeug-formular"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
@@ -21,7 +20,6 @@ export default async function NeuesFahrzeugSeite({ searchParams }: { searchParam
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Neues Fahrzeug</h1>
 
       {fehler && (

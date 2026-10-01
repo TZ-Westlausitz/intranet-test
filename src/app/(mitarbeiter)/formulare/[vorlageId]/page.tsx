@@ -2,7 +2,6 @@ import { notFound } from "next/navigation"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { Hinweis } from "@/components/hinweis"
 import { FormularAusfuellen } from "@/components/formular-ausfuellen"
@@ -36,8 +35,6 @@ export default async function FormularAusfuellenSeite({
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
-
       {fehler && <div className="mt-4"><Hinweis>{FEHLER_TEXTE[fehler] ?? "Das hat nicht geklappt."}</Hinweis></div>}
 
       <div className="mt-6">

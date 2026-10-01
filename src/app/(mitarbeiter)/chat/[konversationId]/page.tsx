@@ -2,7 +2,6 @@ import { notFound } from "next/navigation"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { ChatKonversationAnsicht } from "@/components/chat-konversation-ansicht"
 import { ChatKonversationMenuDialog } from "@/components/chat-konversation-menu-dialog"
@@ -92,7 +91,6 @@ export default async function ChatKonversationSeite({ params }: { params: Promis
     // Handy-Höhe `100vh - 2.5rem` wäre dort um die Kopfzeile zu hoch — die
     // Seite scrollte unnötig und die Eingabezeile saß knapp am Rand.
     <main className="mx-auto flex h-[calc(100vh-2.5rem)] max-w-2xl flex-col px-5 py-10 md:h-full md:py-6">
-      <Kopfleiste />
       <ChatKonversationMenuDialog
         titel={titel}
         konversationId={konversationId}

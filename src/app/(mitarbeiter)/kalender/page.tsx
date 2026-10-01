@@ -2,7 +2,6 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { ZielHervorheben } from "@/components/ziel-hervorheben"
 import { KalenderMonate, type MonatAnzeige } from "@/components/kalender-monate"
@@ -276,7 +275,6 @@ export default async function KalenderSeite({
 
   return (
     <main className="mx-auto max-w-6xl px-5 py-10">
-      <Kopfleiste />
       <ZielHervorheben zielId={zielTerminId} oeffnen />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Kalender</h1>
 

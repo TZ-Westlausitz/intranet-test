@@ -3,7 +3,6 @@ import { AlertTriangle, Check, Paperclip } from "lucide-react"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { AuftragKommentare, type AuftragKommentarAnzeige } from "@/components/auftrag-kommentare"
 import { AuftragErstellenDialog } from "@/components/auftrag-erstellen-dialog"
@@ -744,7 +743,6 @@ export default async function AufgabenSeite({
         (kontext.adminModusAktiv ? (seiteZweispaltig ? " md:max-w-4xl" : "") : persoenlicheMaxBreite)
       }
     >
-      <Kopfleiste />
       <ZielHervorheben zielId={zielAuftragId} />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Aufgaben</h1>
 

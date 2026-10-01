@@ -109,10 +109,13 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         */}
         <div className="md:flex md:h-dvh md:flex-col md:overflow-hidden">
           {/* Grüner Akzentbalken ganz oben — auf dem Handy hier statt in
-              Kopfleiste, damit er wie auf dem Desktop randlos über die volle
-              Breite geht und nicht durch das "px-5" der Seiten eingerückt
-              wird. Kopfleiste (Logo, Drei-Striche-Menü, BenutzerMenu) bleibt
-              weiterhin dort, wo sie schon steht. */}
+              einer eigenen Kopfzeile, damit er wie auf dem Desktop randlos
+              über die volle Breite geht und nicht durch das "px-5" der
+              Seiten eingerückt wird. Das eigene Logo darüber (Komponente
+              Kopfleiste) ist seit Rückmeldung 2026-10-01 auf dem Handy
+              komplett entfernt — zu viel Leerraum unter dem Statusbalken,
+              und das Logo steht ohnehin schon auf dem Homescreen-Icon. Der
+              Akzentbalken ist jetzt die einzige mobile Kopfzeile. */}
           {/* dark:bg-none dark:bg-background (Rückmeldung 2026-09-11): im
               Dunkel-Modus kein bunter Verlauf mehr, sondern derselbe dunkle
               Ton wie die Kopfzeile direkt darunter — bg-none entfernt den

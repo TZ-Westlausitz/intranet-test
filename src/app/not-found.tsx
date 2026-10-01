@@ -1,7 +1,5 @@
 import Link from "next/link"
 
-import { Kopfleiste } from "@/components/kopfleiste"
-
 /**
  * Eigene 404-Seite statt Next.js' eingebauter Standardseite (Rückmeldung
  * 2026-09-18: Screenshot zeigte die nackte "This page could not be
@@ -11,16 +9,12 @@ import { Kopfleiste } from "@/components/kopfleiste"
  * kein "Erneut versuchen" wie bei error.tsx: Ein erneuter Versuch ändert
  * an einer nicht existierenden Route nichts.
  *
- * `<Kopfleiste />` + vertikale Zentrierung ergänzt (Rückmeldung
- * 2026-09-18): Ohne sie fehlte auf Mobile das Logo, das jede andere
- * Seite hat, und der Inhalt klebte oben links über viel Leerraum statt
- * wie ein bewusster Leer-Zustand zu wirken.
+ * Vertikale Zentrierung (Rückmeldung 2026-09-18), damit der Inhalt wie
+ * ein bewusster Leer-Zustand statt wie ein Darstellungsfehler wirkt.
  */
 export default function NichtGefundenSeite() {
   return (
     <main className="mx-auto max-w-2xl px-5 py-6">
-      <Kopfleiste />
-
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-flaeche-200 text-sekundaer">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6" aria-hidden>

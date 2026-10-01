@@ -14,8 +14,8 @@ type UpdateEintrag = { id: string; name: string; zeitpunkt: Date; art: "neu" | "
  * Nur die Desktop-Fassung: der Adminbereich ist ausdrücklich ein
  * Desktop-Werkzeug (genau wie im alten Intranet app.ueberblick.io) — der
  * "Admin"-Link im Benutzermenü erscheint ohnehin nur im festen
- * Desktop-Header, nicht in der mobilen Kopfleiste (siehe Memory
- * mobile-kopfleiste-fehlende-parity).
+ * Desktop-Header, auf dem Handy gibt es dafür keine Entsprechung (siehe
+ * Memory mobile-kopfleiste-fehlende-parity).
  *
  * Fünf Kacheln: links Benutzer-Übersicht und Gruppen/Abteilungen
  * (grün), mittig Berechtigungen und Orte/Kategorien (orange), rechts eine

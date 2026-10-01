@@ -9,18 +9,18 @@ import { abmelden } from "@/lib/auth/aktionen"
 
 /**
  * Ausklappbares Menü (Profil, Admin, Einstellungen, Kontaktstelle,
- * Ausloggen) hinter dem Namen — aus der Kopfleiste herausgelöst, damit
- * dieselbe Funktion auch im festen Desktop-Header (src/app/layout.tsx)
- * verfügbar ist, statt sie dort zu duplizieren.
+ * Ausloggen) hinter dem Namen — ursprünglich aus einer mobilen Kopfzeile
+ * herausgelöst, inzwischen (Rückmeldung 2026-10-01: Logo auf dem Handy
+ * komplett entfernt) nur noch im festen Desktop-Header
+ * (src/app/layout.tsx) verwendet; auf dem Handy übernimmt /menu dieselbe
+ * Funktion als eigene Seite.
  *
  * `istAdmin` blendet den Admin-Link aus, wenn die Person die Berechtigung
  * "Adminbereich" nicht hat — reine Anzeige-Entscheidung wie bei jedem
  * anderen ausgeblendeten Menüpunkt, kein Ersatz für die echte Rechteprüfung
  * (Regel 5): jede Admin-Seite und jede ihrer Server Actions ruft
  * `berechtigung({ benoetigteBerechtigung: "Adminbereich" })` selbst noch
- * einmal auf. Optional
- * mit Default `false`, damit bestehende Aufrufe (z. B. die mobile
- * Kopfleiste) unverändert weiterlaufen.
+ * einmal auf. Optional mit Default `false`.
  *
  * `adminModusAktiv` färbt die Hover-Akzente orange statt grün, solange der
  * Admin-Modus an ist (siehe AdminModusSchalter) — dieselbe Erinnerung wie

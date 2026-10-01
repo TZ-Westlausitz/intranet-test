@@ -8,7 +8,7 @@ import { berechtigung } from "./berechtigung"
 import { prisma } from "@/lib/db"
 
 /**
- * Eigene Datei statt einer Inline-Funktion in der Kopfleiste: Die Kopfleiste
+ * Eigene Datei statt einer Inline-Funktion in BenutzerMenu: BenutzerMenu
  * ist eine Client-Komponente (braucht den Auf/Zu-Zustand des Menüs), und
  * "use server"-Funktionen können nicht in einer "use client"-Datei stehen.
  */

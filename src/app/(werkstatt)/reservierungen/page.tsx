@@ -5,7 +5,6 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { dateiLoeschen } from "@/lib/ablage"
 import { AusleiheStatus } from "@/generated/prisma/enums"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { StatusBadge } from "@/components/status-badge"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { TestphaseLoeschenButton } from "@/components/testphase-loeschen-button"
@@ -79,7 +78,6 @@ export default async function ReservierungenSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Reservierungen</h1>
       <p className="mt-1 text-sm text-primaer">Bestätigte Ausleihen</p>
 

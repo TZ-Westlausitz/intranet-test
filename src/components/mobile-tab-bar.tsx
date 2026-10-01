@@ -23,9 +23,9 @@ function istAktiv(pathname: string, href: string): boolean {
  * Newsfeed-Punkt) und Menü (Profil, Einstellungen, Kontakte, Wissen,
  * Benachrichtigungen — siehe /menu). Alle übrigen Bausteine (Formulare,
  * Kalender, Fahrzeuge, To-Do-Liste, Geplante Aktionen) bleiben weiterhin
- * über das Drei-Striche-Menü in Kopfleiste erreichbar — diese Leiste ersetzt
- * es nicht, sie ergänzt nur die vier meistgebrauchten Ziele um einen
- * Daumen-erreichbaren Weg.
+ * über die Kachelreihe auf der Startseite erreichbar (src/app/page.tsx) —
+ * diese Leiste ersetzt sie nicht, sie ergänzt nur die vier meistgebrauchten
+ * Ziele um einen Daumen-erreichbaren Weg.
  *
  * Das schwebende "+" (MobileSchnellmenu) ist bewusst KEIN fünfter Punkt
  * hier drin, sondern ein eigenes, separat positioniertes Element — genau

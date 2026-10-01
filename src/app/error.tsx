@@ -2,8 +2,6 @@
 
 import Link from "next/link"
 
-import { Kopfleiste } from "@/components/kopfleiste"
-
 /**
  * Fängt jeden nicht behandelten Fehler in einer Seite ab — bisher gab es
  * dafür keine Boundary, weder hier noch für einzelne Bereiche. Ohne sie
@@ -17,15 +15,12 @@ import { Kopfleiste } from "@/components/kopfleiste"
  * nur `message` + `digest` durch, nie den ursprünglichen Fehlertyp — daher
  * ein bewusst allgemeiner Text statt einer Unterscheidung nach Fehlerart.
  *
- * `<Kopfleiste />` + vertikale Zentrierung + Warnsymbol ergänzt
- * (Rückmeldung 2026-09-18) — dieselbe Behandlung wie not-found.tsx, aus
- * demselben Grund: Logo fehlte auf Mobile, Inhalt klebte oben links.
+ * Vertikale Zentrierung + Warnsymbol (Rückmeldung 2026-09-18) — dieselbe
+ * Behandlung wie not-found.tsx.
  */
 export default function FehlerSeite({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
   return (
     <main className="mx-auto max-w-2xl px-5 py-6">
-      <Kopfleiste />
-
       <div className="flex min-h-[60vh] flex-col items-center justify-center text-center">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-marke-orange/15 text-marke-orange">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6" aria-hidden>

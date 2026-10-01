@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
 import {
@@ -60,7 +59,6 @@ export default async function MeldungDetailSeite({ params }: { params: Promise<{
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
       <div className="flex items-start justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ueberschrift">{meldung.titel}</h1>
         {/* Der Melder sieht nur den Status (Rückmeldung 2026-09-22) — die

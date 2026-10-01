@@ -1,7 +1,6 @@
 import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { Hinweis } from "@/components/hinweis"
@@ -73,7 +72,6 @@ export default async function ProjekteSeite({
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">
         {kontext.adminModusAktiv ? "Alle Projekte (Firma)" : "Projekte"}
       </h1>

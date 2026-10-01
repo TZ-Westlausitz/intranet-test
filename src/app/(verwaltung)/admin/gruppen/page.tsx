@@ -1,6 +1,5 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { gruppeErstellen, gruppeUmbenennen, gruppeAktivSetzen } from "@/lib/admin/gruppen-aktionen"
@@ -43,7 +42,6 @@ export default async function GruppenUndAbteilungenSeite() {
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Gruppen &amp; Abteilungen</h1>
 
       <div className="mt-6 grid grid-cols-1 gap-8 md:landscape:grid-cols-2">

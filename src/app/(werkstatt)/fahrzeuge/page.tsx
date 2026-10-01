@@ -2,7 +2,6 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 
 /**
@@ -20,7 +19,6 @@ export default async function Fahrzeuguebersicht() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Fahrzeugausleihe</h1>
 
       <h2 className="mt-8 text-lg font-medium">Für Privatausleihe freigegeben</h2>

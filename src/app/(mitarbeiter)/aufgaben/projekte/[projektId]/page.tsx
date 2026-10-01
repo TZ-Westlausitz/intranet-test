@@ -3,7 +3,6 @@ import { notFound } from "next/navigation"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { ProjektmitgliedRolle } from "@/generated/prisma/enums"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { Hinweis } from "@/components/hinweis"
@@ -132,8 +131,6 @@ export default async function ProjektDetailSeite({
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-10">
-      <Kopfleiste />
-
       {fehler && (
         <div className="mb-4">
           <Hinweis>{FEHLER_TEXTE[fehler] ?? "Das hat nicht geklappt."}</Hinweis>

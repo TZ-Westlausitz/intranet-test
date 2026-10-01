@@ -4,7 +4,6 @@ import { CheckSquare, ClipboardList, Clock, Truck } from "lucide-react"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { AusleiheStatus } from "@/generated/prisma/enums"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { MONATSNAMEN, istGleicherTag } from "@/lib/kalender"
 import { naechsterTermin, faelligeErinnerungenAnzahl } from "@/lib/termine/abfragen"
 import { aufgabenFuerPerson, naechsteGeplantAufgaben } from "@/lib/aufgaben/abfragen"
@@ -239,8 +238,6 @@ export default async function Startseite() {
           ganze Seite, eine Vorschau lohnt sich dort nicht für jeden
           Baustein gleichermaßen. */}
       <main className="mx-auto max-w-2xl px-5 py-6 md:hidden">
-        <Kopfleiste />
-
         <div className="flex flex-col gap-4">
           {/* Eigene Überschrift+Link-Kopfzeile hier bewusst NICHT nötig —
               NewsfeedHomeKachel bringt "Newsfeed" als Link zu /newsfeed

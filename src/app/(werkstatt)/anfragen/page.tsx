@@ -3,7 +3,6 @@ import { redirect } from "next/navigation"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { AusleiheStatus } from "@/generated/prisma/enums"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
@@ -65,7 +64,6 @@ export default async function AnfragenSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Offene Anfragen</h1>
 
       {anfragen.length === 0 ? (

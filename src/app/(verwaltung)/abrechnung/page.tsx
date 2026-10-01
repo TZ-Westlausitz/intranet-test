@@ -5,7 +5,6 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { formatiereCentAlsEuro } from "@/lib/geld"
 import { AusleiheStatus } from "@/generated/prisma/enums"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
 
@@ -139,7 +138,6 @@ export default async function AbrechnungSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Abrechnung</h1>
       <p className="mt-1 text-sm text-primaer">
         Geldwerter Vorteil aus privater Fahrzeugnutzung — zur Meldung an die

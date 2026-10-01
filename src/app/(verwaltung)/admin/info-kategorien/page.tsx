@@ -2,7 +2,6 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import {
@@ -31,7 +30,6 @@ export default async function InfoKategorienSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
       <div className="flex items-center justify-center gap-3 md:justify-start">
         <h1 className="text-2xl font-semibold text-ueberschrift">Info-Kategorien</h1>
         <Link href="/admin/orte" className="text-sm font-medium text-marke-gruen-dunkel hover:underline">

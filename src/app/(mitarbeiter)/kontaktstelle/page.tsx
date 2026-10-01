@@ -1,7 +1,6 @@
 import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { Hinweis } from "@/components/hinweis"
 import { MeldungErstellenDialog } from "@/components/meldung-erstellen-dialog"
@@ -60,7 +59,6 @@ export default async function KontaktstelleSeite({
     <>
       {/* Handy: einfache, seitenweit scrollende Liste. */}
       <main className="mx-auto max-w-2xl px-5 py-10 md:hidden">
-        <Kopfleiste />
         {kopfzeile(neu === "1")}
 
         {fehler && (

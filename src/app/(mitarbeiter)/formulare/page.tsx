@@ -1,7 +1,6 @@
 import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { darfFormulareVerwalten } from "@/lib/formulare/sichtbarkeit"
 import { verfuegbareFormulare, offeneUndErledigteEinreichungen } from "@/lib/formulare/abfragen"
@@ -170,7 +169,6 @@ export default async function FormulareSeite({ searchParams }: { searchParams: P
     <>
       {/* Handy: Tab-Umschalter + eine seitenweit scrollende Liste je Ansicht. */}
       <main className="mx-auto max-w-2xl px-5 py-10 md:hidden">
-        <Kopfleiste />
         {kopfzeile}
 
         <nav aria-label="Ansicht wählen" className="mt-6 flex border-b border-rand text-sm font-medium">

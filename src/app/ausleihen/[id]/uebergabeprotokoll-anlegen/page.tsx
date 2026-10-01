@@ -12,7 +12,6 @@ import {
   type RuecknahmeEntwurfDaten,
   type Schadenspunkt,
 } from "@/lib/pdf/uebergabeprotokoll"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
@@ -135,7 +134,6 @@ export default async function UebergabeprotokollAnlegenSeite({
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
       <p className="text-sm text-sekundaer">Ausleihe {ausleihe.vorgangsnummer}</p>
       <h1 className="text-2xl font-semibold text-ueberschrift">Übergabeprotokoll</h1>
 

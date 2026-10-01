@@ -2,7 +2,6 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { abmelden } from "@/lib/auth/aktionen"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { BenachrichtigungenListe } from "@/components/benachrichtigungen-liste"
 import { neuesteBenachrichtigungen, ungeleseneAnzahl } from "@/lib/benachrichtigungen/abfragen"
 import { benachrichtigungenAlsGelesenMarkieren } from "@/lib/benachrichtigungen/aktionen"
@@ -43,7 +42,6 @@ export default async function MenuSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10 pb-24">
-      <Kopfleiste />
       <h1 className="text-center text-2xl font-semibold text-ueberschrift md:text-left">Menü</h1>
 
       <section className="mt-6 rounded-xl border border-rand bg-flaeche p-4">

@@ -1,6 +1,5 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { OrdnerErstellenDialog } from "@/components/ordner-erstellen-dialog"
 import { WissensOrdnerGrid } from "@/components/wissens-ordner-grid"
@@ -60,7 +59,6 @@ export default async function WissenSeite() {
 
   return (
     <main className="mx-auto max-w-4xl px-5 py-10">
-      <Kopfleiste />
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ueberschrift">Wissen</h1>
         {darfVerwalten && (

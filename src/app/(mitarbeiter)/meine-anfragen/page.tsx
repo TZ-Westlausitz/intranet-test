@@ -2,7 +2,6 @@ import Link from "next/link"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { StatusBadge } from "@/components/status-badge"
 import { ZurueckButton } from "@/components/zurueck-button"
 
@@ -23,7 +22,6 @@ export default async function MeineAnfragenSeite() {
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Meine Anfragen</h1>
       <p className="mt-1 text-sm text-primaer">
         Alle privat angefragten Fahrzeuge, mit Nutzungsvereinbarung und

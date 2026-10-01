@@ -1,5 +1,4 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
-import { Kopfleiste } from "@/components/kopfleiste"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { InfoAvatar } from "@/components/info-avatar"
@@ -37,7 +36,6 @@ export default async function ProfilSeite({
 
   return (
     <main className="mx-auto max-w-2xl px-5 py-10">
-      <Kopfleiste />
       <h1 className="text-2xl font-semibold text-ueberschrift">Profil</h1>
 
       <div className="mt-6 flex flex-col items-center gap-3">
