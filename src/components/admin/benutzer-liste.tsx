@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { Search } from "lucide-react"
 
 import { PersonBearbeitenDialog, type ZugehoerigkeitAnzeige } from "@/components/admin/person-bearbeiten-dialog"
 
@@ -102,13 +103,17 @@ export function BenutzerListe({
   return (
     <>
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-        <input
-          type="text"
-          value={suchtext}
-          onChange={(ereignis) => setSuchtext(ereignis.target.value)}
-          placeholder="Name oder Benutzername suchen …"
-          className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
-        />
+        <div className="relative flex-1">
+          <Search aria-hidden className="pointer-events-none absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-tertiaer" />
+          <input
+            type="text"
+            value={suchtext}
+            onChange={(ereignis) => setSuchtext(ereignis.target.value)}
+            placeholder="Name oder Benutzername suchen …"
+            aria-label="Name oder Benutzername suchen"
+            className="h-9 w-full rounded-lg border border-flaeche-300 pr-2 pl-8 text-sm"
+          />
+        </div>
         <select
           value={abteilungFilter}
           onChange={(ereignis) => setAbteilungFilter(ereignis.target.value)}
