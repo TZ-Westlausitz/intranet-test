@@ -295,7 +295,7 @@ export default async function KalenderSeite({
           Termin anlegen zum ersten, Monatsnavigation zum mittleren,
           Monat/Jahr-Sprung zum dritten. Auf dem Handy einfach gestapelt. */}
       <div className="mt-6 grid grid-cols-1 items-center gap-4 md:grid-cols-3">
-        <div className="flex justify-center md:justify-start">
+        <div className="flex flex-wrap items-center justify-center gap-2 md:justify-start">
           <TerminDialog
             personen={personenAnzeige}
             aktion={terminErstellen}
@@ -303,6 +303,13 @@ export default async function KalenderSeite({
             rueckkehrMonat={monatIndex0 + 1}
             autoOeffnen={neu === "1"}
           />
+          {/* Ohne Parameter öffnet der Kalender den aktuellen Monat (siehe jahr/monatIndex0 oben). */}
+          <Link
+            href="/kalender"
+            className="flex h-9 items-center rounded-lg border border-rand px-3 text-sm font-medium whitespace-nowrap text-primaer transition hover:border-marke-gruen hover:text-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+          >
+            Heute anzeigen
+          </Link>
         </div>
 
         <div className="flex items-center justify-center gap-3">
@@ -329,7 +336,7 @@ export default async function KalenderSeite({
           </Link>
         </div>
 
-        <form action="/kalender" className="flex items-end justify-center gap-2 md:justify-end">
+        <form key={`${jahr}-${monatIndex0}`} action="/kalender" className="flex items-end justify-center gap-2 md:justify-end">
           <div>
             <label htmlFor="monat" className="block text-xs font-medium text-primaer">
               Monat
