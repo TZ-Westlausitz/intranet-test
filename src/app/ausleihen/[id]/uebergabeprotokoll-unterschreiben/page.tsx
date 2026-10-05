@@ -4,7 +4,7 @@ import { createHash } from "node:crypto"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { dateiAblegen, dateiLoeschen } from "@/lib/ablage"
-import { formatiereDatumAusDate } from "@/lib/datum"
+import { formatiereDatumAusDate, zeitpunktAusEingabe } from "@/lib/datum"
 import {
   ausgabeDatenZuFeldern,
   uebergabeprotokollPdfErzeugen,
@@ -61,7 +61,7 @@ async function uebergabeprotokollUnterschreiben(formData: FormData) {
   const mieterPng = dataUrlZuBytes(mieterDataUrl)
   const firmaPng = dataUrlZuBytes(firmaDataUrl)
 
-  const ortUndDatum = `${ausgabeDaten.ort}, ${formatiereDatumAusDate(new Date(ausgabeDaten.datumUhrzeit))}`
+  const ortUndDatum = `${ausgabeDaten.ort}, ${formatiereDatumAusDate(zeitpunktAusEingabe(ausgabeDaten.datumUhrzeit))}`
 
   // Die aktuell gültige Version — nicht zwingend Version 1, siehe Regel 1.
   const dokumentversion = await prisma.dokumentversion.findFirstOrThrow({
@@ -96,7 +96,7 @@ async function uebergabeprotokollUnterschreiben(formData: FormData) {
         ausleiheId,
         richtung: Protokollrichtung.AUSGABE,
         dokumentversionId: dokumentversion.id,
-        zeitpunkt: new Date(ausgabeDaten.datumUhrzeit),
+        zeitpunkt: zeitpunktAusEingabe(ausgabeDaten.datumUhrzeit),
         ort: ausgabeDaten.ort,
         kilometerstand: Number.parseInt(ausgabeDaten.kilometerstand, 10),
         tankfuellung: ausgabeDaten.tankfuellung as Tankfuellung,
@@ -177,7 +177,7 @@ export default async function UebergabeprotokollUnterschreibenSeite({
         <div className="flex justify-between">
           <dt>Ort, Datum</dt>
           <dd className="font-medium text-primaer">
-            {ausgabeDaten.ort}, {formatiereDatumAusDate(new Date(ausgabeDaten.datumUhrzeit))}
+            {ausgabeDaten.ort}, {formatiereDatumAusDate(zeitpunktAusEingabe(ausgabeDaten.datumUhrzeit))}
           </dd>
         </div>
       </dl>

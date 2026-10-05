@@ -13,7 +13,8 @@ import { aufgabenGeplantFuerZeitraum } from "@/lib/aufgaben/abfragen"
 import { aufgabeAktualisieren, aufgabeAnhangLoeschen, aufgabeLoeschen } from "@/lib/aufgaben/aktionen"
 import { auftraegeGeplantFuerZeitraum } from "@/lib/auftraege/abfragen"
 import { auftragLoeschen } from "@/lib/auftraege/aktionen"
-import { MONATSNAMEN, istGleicherTag, monatVerschieben, monatsraster } from "@/lib/kalender"
+import { berlinerZeitpunkt, datumIsoAusDate, heutigesDatumIso, teileInBerlinerZeit } from "@/lib/datum"
+import { MONATSNAMEN, monatVerschieben, monatsraster } from "@/lib/kalender"
 
 /**
  * Eigene Kalenderansicht für Infos, Aufgaben und Aufträge mit "Geplant
@@ -33,22 +34,28 @@ export default async function GeplanteAktionenSeite({
   const kontext = await berechtigung()
   const { jahr: jahrParam, monat: monatParam } = await searchParams
 
-  const heute = new Date()
+  // "Heute" und die Tagesgrenzen in Berliner Zeit (Server läuft auf Vercel in UTC).
+  const heuteBerlin = teileInBerlinerZeit(new Date())
+  const heuteIso = heutigesDatumIso()
+  // Ein Kalenderfeld ("2026-11-05") aus dem Raster; die Raster-Daten sind lokale Mitternachten.
+  const rasterTagIso = (datum: Date) =>
+    `${datum.getFullYear()}-${String(datum.getMonth() + 1).padStart(2, "0")}-${String(datum.getDate()).padStart(2, "0")}`
   const jahrGeparst = jahrParam ? Number.parseInt(jahrParam, 10) : NaN
   const monatGeparst = monatParam ? Number.parseInt(monatParam, 10) - 1 : NaN
 
-  const jahr = Number.isInteger(jahrGeparst) ? jahrGeparst : heute.getFullYear()
+  const jahr = Number.isInteger(jahrGeparst) ? jahrGeparst : Number(heuteBerlin.jahr)
   const monatIndex0 =
-    Number.isInteger(monatGeparst) && monatGeparst >= 0 && monatGeparst <= 11 ? monatGeparst : heute.getMonth()
+    Number.isInteger(monatGeparst) && monatGeparst >= 0 && monatGeparst <= 11 ? monatGeparst : Number(heuteBerlin.monat) - 1
 
   const rasterProMonat = [0, 1, 2].map((versatz) => {
     const anker = monatVerschieben(jahr, monatIndex0, versatz)
     return { ...anker, wochen: monatsraster(anker.jahr, anker.monatIndex0) }
   })
 
-  const ersterTag = rasterProMonat[0].wochen[0][0].datum
   const letzteWoche = rasterProMonat[2].wochen[rasterProMonat[2].wochen.length - 1]
-  const letzterTag = letzteWoche[letzteWoche.length - 1].datum
+  // Abfragezeitraum: erster Rasterfeld-Tag 00:00 bis letzter Rasterfeld-Tag 23:59:59 Berliner Zeit.
+  const ersterTag = berlinerZeitpunkt(rasterTagIso(rasterProMonat[0].wochen[0][0].datum))!
+  const letzterTag = berlinerZeitpunkt(rasterTagIso(letzteWoche[letzteWoche.length - 1].datum), "23:59:59")!
 
   const [infos, aufgaben, auftraege, darfAlsUnternehmen, personen, gruppen, abteilungen, kategorien] = await Promise.all([
     infosGeplantFuerZeitraum(kontext, ersterTag, letzterTag),
@@ -84,13 +91,13 @@ export default async function GeplanteAktionenSeite({
     eintraegeProTag.set(tagesSchluessel, liste)
   }
   for (const info of infos) {
-    hinzufuegen(info.veroeffentlichtAm.toDateString(), { typ: "info", info })
+    hinzufuegen(datumIsoAusDate(info.veroeffentlichtAm), { typ: "info", info })
   }
   for (const aufgabe of aufgaben) {
-    hinzufuegen(aufgabe.geplantAm!.toDateString(), { typ: "aufgabe", aufgabe })
+    hinzufuegen(datumIsoAusDate(aufgabe.geplantAm!), { typ: "aufgabe", aufgabe })
   }
   for (const auftrag of auftraege) {
-    hinzufuegen(auftrag.geplantAm!.toDateString(), { typ: "auftrag", auftrag })
+    hinzufuegen(datumIsoAusDate(auftrag.geplantAm!), { typ: "auftrag", auftrag })
   }
   const zeitVonEintrag = (eintrag: GeplanteAktionenEintrag) =>
     (eintrag.typ === "info"
@@ -113,8 +120,8 @@ export default async function GeplanteAktionenSeite({
           datumIso: kalendertag.datum.toISOString(),
           tag: kalendertag.tag,
           imAktuellenMonat: kalendertag.imAktuellenMonat,
-          istHeute: istGleicherTag(kalendertag.datum, heute),
-          eintraege: eintraegeProTag.get(kalendertag.datum.toDateString()) ?? [],
+          istHeute: rasterTagIso(kalendertag.datum) === heuteIso,
+          eintraege: eintraegeProTag.get(rasterTagIso(kalendertag.datum)) ?? [],
         }),
       ),
     ),

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
+import { kalendertagAusEingabe, berlinerZeitpunkt } from "@/lib/datum"
 import { AufgabePrioritaet } from "@/generated/prisma/enums"
 import { richTextSanitisieren } from "@/lib/rich-text"
 import { aufgabeAnhaengePruefen, aufgabeAnhaengeSpeichern, aufgabeAnhangLoeschenIntern } from "@/lib/aufgaben/anhaenge"
@@ -30,8 +31,8 @@ export async function aufgabeErstellen(formData: FormData) {
   const beschreibung = richTextSanitisieren(String(formData.get("beschreibung") ?? "")) || null
 
   const faelligEingabe = String(formData.get("faelligAm") ?? "")
-  const faelligAm = faelligEingabe ? new Date(`${faelligEingabe}T00:00:00`) : null
-  if (faelligAm && Number.isNaN(faelligAm.getTime())) {
+  const faelligAm = faelligEingabe ? kalendertagAusEingabe(faelligEingabe) : null
+  if (faelligEingabe && !faelligAm) {
     redirect("/aufgaben?fehler=todoPflichtfeld")
   }
 
@@ -40,8 +41,9 @@ export async function aufgabeErstellen(formData: FormData) {
   // (siehe Kommentar am Feld Aufgabe.geplantAm), verwaltbar bis dahin nur
   // über /geplante-aktionen.
   const geplantEingabe = String(formData.get("geplantAm") ?? "")
-  const geplantAm = geplantEingabe ? new Date(`${geplantEingabe}T00:00:00`) : null
-  if (geplantAm && Number.isNaN(geplantAm.getTime())) {
+  // Ab diesem Tag 00:00 Berliner Zeit sichtbar (echter Zeitpunkt, wird mit "jetzt" verglichen).
+  const geplantAm = geplantEingabe ? berlinerZeitpunkt(geplantEingabe) : null
+  if (geplantEingabe && !geplantAm) {
     redirect("/aufgaben?fehler=todoPflichtfeld")
   }
 
@@ -98,8 +100,8 @@ export async function aufgabeAktualisieren(aufgabeId: string, formData: FormData
   const beschreibung = richTextSanitisieren(String(formData.get("beschreibung") ?? "")) || null
 
   const faelligEingabe = String(formData.get("faelligAm") ?? "")
-  const faelligAm = faelligEingabe ? new Date(`${faelligEingabe}T00:00:00`) : null
-  if (faelligAm && Number.isNaN(faelligAm.getTime())) {
+  const faelligAm = faelligEingabe ? kalendertagAusEingabe(faelligEingabe) : null
+  if (faelligEingabe && !faelligAm) {
     redirect("/aufgaben?fehler=todoPflichtfeld")
   }
 
@@ -113,8 +115,8 @@ export async function aufgabeAktualisieren(aufgabeId: string, formData: FormData
   const geplantAmUpdate = nochNichtAktiv
     ? (() => {
         const eingabe = String(formData.get("geplantAm") ?? "")
-        const geplantAmNeu = eingabe ? new Date(`${eingabe}T00:00:00`) : null
-        if (geplantAmNeu && Number.isNaN(geplantAmNeu.getTime())) {
+        const geplantAmNeu = eingabe ? berlinerZeitpunkt(eingabe) : null
+        if (eingabe && !geplantAmNeu) {
           redirect("/aufgaben?fehler=todoPflichtfeld")
         }
         return { geplantAm: geplantAmNeu }

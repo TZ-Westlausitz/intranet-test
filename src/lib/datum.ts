@@ -133,13 +133,32 @@ export function berlinerZeitpunkt(datumIso: string, zeit = "00:00:00"): Date | n
   return new Date(wandUhrAlsUtc - berlinerVersatzMs(ersterVersuch))
 }
 
+/**
+ * Wert eines `<input type="datetime-local">` ("2026-10-17T14:30", optional mit
+ * Sekunden) als Berliner Wanduhrzeit → echter Zeitpunkt. Ein
+ * `new Date("2026-10-17T14:30")` läse ihn in der Serverzeitzone (auf Vercel
+ * UTC: 1–2 Stunden verschoben). `null` bei ungültigem Wert.
+ */
+export function berlinerZeitpunktAusDatumUhrzeit(wert: string): Date | null {
+  const [datum, zeit] = wert.trim().split("T")
+  return datum && zeit ? berlinerZeitpunkt(datum, zeit) : null
+}
+
+/** Wie `berlinerZeitpunktAusDatumUhrzeit`, aber ohne `null`: bei unerwartetem Format der übliche `new Date(wert)` (ggf. "Invalid Date") — für bereits gespeicherte Protokoll-Entwürfe. */
+export function zeitpunktAusEingabe(wert: string): Date {
+  return berlinerZeitpunktAusDatumUhrzeit(wert) ?? new Date(wert)
+}
+
 /** "2026-11-30" → Kalendertag als UTC-Mitternacht (Konvention dieser Datei); leer/ungültig → null. */
 export function kalendertagAusEingabe(wert: FormDataEntryValue | null): Date | null {
   const text = String(wert ?? "").trim()
   const treffer = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text)
   if (!treffer) return null
-  const datum = new Date(Date.UTC(Number(treffer[1]), Number(treffer[2]) - 1, Number(treffer[3])))
-  return Number.isNaN(datum.getTime()) ? null : datum
+  const [jahr, monat, tag] = [Number(treffer[1]), Number(treffer[2]), Number(treffer[3])]
+  const datum = new Date(Date.UTC(jahr, monat - 1, tag))
+  // Überlauf (z. B. 31.04. → 01.05. oder Monat 13) heißt: ungültige Eingabe.
+  if (datum.getUTCFullYear() !== jahr || datum.getUTCMonth() !== monat - 1 || datum.getUTCDate() !== tag) return null
+  return datum
 }
 
 /** Date-Objekt → "14:05" — für <input type="time">-Defaultwerte aus einem vorhandenen Date. */

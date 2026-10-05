@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
+import { kalendertagAusEingabe } from "@/lib/datum"
 import { AufgabePrioritaet, AufgabeStatus, ProjektmitgliedRolle, ProjektStatus } from "@/generated/prisma/enums"
 import { richTextSanitisieren } from "@/lib/rich-text"
 import { projektMitgliedschaftPruefen } from "@/lib/projekte/mitgliedschaft"
@@ -39,8 +40,8 @@ export async function projektAufgabeErstellen(projektId: string, formData: FormD
   }
 
   const faelligEingabe = String(formData.get("faelligAm") ?? "")
-  const faelligAm = faelligEingabe ? new Date(`${faelligEingabe}T00:00:00`) : null
-  if (faelligAm && Number.isNaN(faelligAm.getTime())) return
+  const faelligAm = faelligEingabe ? kalendertagAusEingabe(faelligEingabe) : null
+  if (faelligEingabe && !faelligAm) return
 
   const prioritaetEingabe = String(formData.get("prioritaet") ?? "")
   const prioritaet = Object.values(AufgabePrioritaet).includes(prioritaetEingabe as AufgabePrioritaet)

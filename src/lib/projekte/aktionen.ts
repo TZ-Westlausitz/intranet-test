@@ -9,7 +9,7 @@ import { ProjektStatus, ProjektmitgliedRolle, AufgabeStatus } from "@/generated/
 import { richTextSanitisieren } from "@/lib/rich-text"
 import { projektMitgliedschaftPruefen } from "@/lib/projekte/mitgliedschaft"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
-import { berlinerTagesbeginn } from "@/lib/datum"
+import { berlinerTagesbeginn, kalendertagAusEingabe } from "@/lib/datum"
 
 const TERMINAL_STATUS: ProjektStatus[] = [ProjektStatus.ABGESCHLOSSEN, ProjektStatus.ABGEBROCHEN]
 
@@ -31,9 +31,9 @@ export async function projektErstellen(formData: FormData) {
     redirect("/aufgaben/projekte?fehler=pflichtfeld")
   }
 
-  const start = new Date(`${startEingabe}T00:00:00`)
-  const ende = new Date(`${endeEingabe}T00:00:00`)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(ende.getTime())) {
+  const start = kalendertagAusEingabe(startEingabe)
+  const ende = kalendertagAusEingabe(endeEingabe)
+  if (!start || !ende) {
     redirect("/aufgaben/projekte?fehler=pflichtfeld")
   }
   if (ende < start) {
@@ -90,9 +90,9 @@ export async function projektAktualisieren(projektId: string, formData: FormData
     redirect(`/aufgaben/projekte/${projektId}?fehler=pflichtfeld`)
   }
 
-  const start = new Date(`${startEingabe}T00:00:00`)
-  let ende = new Date(`${endeEingabe}T00:00:00`)
-  if (Number.isNaN(start.getTime()) || Number.isNaN(ende.getTime()) || ende < start) {
+  const start = kalendertagAusEingabe(startEingabe)
+  let ende = kalendertagAusEingabe(endeEingabe)
+  if (!start || !ende || ende < start) {
     redirect(`/aufgaben/projekte/${projektId}?fehler=zeitraum`)
   }
 

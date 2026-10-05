@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { formatiereDatum, berlinerTagesbeginn } from "@/lib/datum"
+import { formatiereDatum, berlinerTagesbeginn, berlinerZeitpunkt } from "@/lib/datum"
 import { dateiAblegen } from "@/lib/ablage"
 import { naechsteVorgangsnummer } from "@/lib/vorgangsnummer"
 import { nutzungsvereinbarungPdfErzeugen } from "@/lib/pdf/nutzungsvereinbarung"
@@ -48,15 +48,17 @@ async function fahrzeugAnfragen(formData: FormData) {
     redirect(`/fahrzeug-mieten/${fahrzeugId}?fehler=pflichtfeld`)
   }
 
-  const geplantVon = new Date(`${geplantVonEingabe}T00:00:00`)
-  const geplantBis = new Date(`${geplantBisEingabe}T23:59:59`)
+  // Von 00:00 bis 23:59:59 BERLINER Zeit (nicht in der Zeitzone des Servers,
+  // auf Vercel UTC: "bis" läge sonst in Berlin schon am Folgetag).
+  const geplantVon = berlinerZeitpunkt(geplantVonEingabe, "00:00:00")
+  const geplantBis = berlinerZeitpunkt(geplantBisEingabe, "23:59:59")
 
-  if (geplantBis < geplantVon) {
+  if (!geplantVon || !geplantBis || geplantBis < geplantVon) {
     redirect(`/fahrzeug-mieten/${fahrzeugId}?fehler=zeitraum`)
   }
 
   const fahrzeug = await prisma.fahrzeug.findUniqueOrThrow({ where: { id: fahrzeugId } })
-  const jahr = geplantVon.getFullYear()
+  const jahr = Number(geplantVonEingabe.slice(0, 4))
 
   const ausleihe = await prisma.$transaction(async (tx) => {
     const vorgangsnummer = await naechsteVorgangsnummer(tx, jahr)

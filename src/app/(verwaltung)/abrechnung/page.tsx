@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { formatiereCentAlsEuro } from "@/lib/geld"
+import { teileInBerlinerZeit } from "@/lib/datum"
 import { AusleiheStatus } from "@/generated/prisma/enums"
 import { Hinweis } from "@/components/hinweis"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -22,7 +23,10 @@ import { ZurueckButton } from "@/components/zurueck-button"
 const FUENF_TAGE_GRENZE = 5
 
 function monatsSchluessel(personId: string, datum: Date): string {
-  return `${personId}-${datum.getFullYear()}-${datum.getMonth()}`
+  // Berliner Kalendermonat, nicht der der Serverzeitzone: eine Ausleihe ab dem
+  // 1. um 00:00 Berliner Zeit liegt auf einem UTC-Server noch im Vormonat.
+  const { jahr, monat } = teileInBerlinerZeit(datum)
+  return `${personId}-${jahr}-${monat}`
 }
 
 async function anLohnbuchhaltungMelden(formData: FormData) {

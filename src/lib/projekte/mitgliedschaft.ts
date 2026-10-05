@@ -4,6 +4,7 @@ import { ProjektmitgliedRolle, ProjektStatus } from "@/generated/prisma/enums"
 
 import { prisma } from "@/lib/db"
 import { NichtBerechtigt } from "@/lib/auth/berechtigung"
+import { berlinerZeitpunkt, datumIsoAusDate } from "@/lib/datum"
 
 /**
  * Ein Projekt ist sichtbar für jede Person mit einer AKTIVEN
@@ -47,9 +48,9 @@ export function istProjektSchreibgeschuetzt(projekt: Pick<Projekt, "status" | "e
   if (projekt.status === ProjektStatus.ABGESCHLOSSEN || projekt.status === ProjektStatus.ABGEBROCHEN) {
     return true
   }
-  const endeDesEndeTages = new Date(projekt.ende)
-  endeDesEndeTages.setHours(23, 59, 59, 999)
-  return new Date() > endeDesEndeTages
+  // Ende des Enddatums in Berliner Zeit — unabhängig von der Zeitzone des Servers.
+  const endeDesEndeTages = berlinerZeitpunkt(datumIsoAusDate(projekt.ende), "23:59:59")
+  return endeDesEndeTages !== null && new Date().getTime() > endeDesEndeTages.getTime() + 999
 }
 
 /**

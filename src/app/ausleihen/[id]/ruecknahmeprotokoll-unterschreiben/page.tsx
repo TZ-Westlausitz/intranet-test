@@ -4,7 +4,7 @@ import { createHash } from "node:crypto"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { dateiAblegen, dateiLesen, dateiLoeschen } from "@/lib/ablage"
-import { formatiereDatumAusDate } from "@/lib/datum"
+import { formatiereDatumAusDate, zeitpunktAusEingabe } from "@/lib/datum"
 import {
   ausgabeDatenZuFeldern,
   ruecknahmeDatenZuFeldern,
@@ -66,7 +66,7 @@ async function ruecknahmeprotokollUnterschreiben(formData: FormData) {
 
   const mieterPng = dataUrlZuBytes(mieterDataUrl)
   const firmaPng = dataUrlZuBytes(firmaDataUrl)
-  const ortUndDatum = `${ruecknahmeDaten.ort}, ${formatiereDatumAusDate(new Date(ruecknahmeDaten.datumUhrzeit))}`
+  const ortUndDatum = `${ruecknahmeDaten.ort}, ${formatiereDatumAusDate(zeitpunktAusEingabe(ruecknahmeDaten.datumUhrzeit))}`
 
   // Die aktuell gültige Version — nicht zwingend dieselbe, die bei der
   // Ausgabe galt (Regel 1).
@@ -81,7 +81,7 @@ async function ruecknahmeprotokollUnterschreiben(formData: FormData) {
 
   const ausgabeMieterPng = await dateiLesen(ausgabeProtokoll.unterschriftEntleiherPfad)
   const ausgabeFirmaPng = await dateiLesen(ausgabeProtokoll.unterschriftFirmaPfad)
-  const ausgabeOrtUndDatum = `${ausgabeDaten.ort}, ${formatiereDatumAusDate(new Date(ausgabeDaten.datumUhrzeit))}`
+  const ausgabeOrtUndDatum = `${ausgabeDaten.ort}, ${formatiereDatumAusDate(zeitpunktAusEingabe(ausgabeDaten.datumUhrzeit))}`
 
   const ausgabeFelder = ausgabeDatenZuFeldern(ausgabeDaten, {
     fahrzeugText: `${ausleihe.fahrzeug.bezeichnung} (${ausleihe.fahrzeug.kennzeichen})`,
@@ -109,7 +109,7 @@ async function ruecknahmeprotokollUnterschreiben(formData: FormData) {
 
   // --- Ergebnis der Ausleihe: einmalig hier berechnet, siehe Kommentar am
   // Schema-Feld `gefahreneKilometer` — nie erneut angefasst.
-  const ruecknahmeZeitpunkt = new Date(ruecknahmeDaten.datumUhrzeit)
+  const ruecknahmeZeitpunkt = zeitpunktAusEingabe(ruecknahmeDaten.datumUhrzeit)
   const ruecknahmeKilometerstand = Number.parseInt(ruecknahmeDaten.kilometerstand, 10)
   const gefahreneKilometer = ruecknahmeKilometerstand - ausgabeProtokoll.kilometerstand
   const kalendertage = kalendertageBerechnen(ausgabeProtokoll.zeitpunkt, ruecknahmeZeitpunkt)
@@ -218,7 +218,7 @@ export default async function RuecknahmeprotokollUnterschreibenSeite({
         <div className="flex justify-between">
           <dt>Ort, Datum</dt>
           <dd className="font-medium text-primaer">
-            {ruecknahmeDaten.ort}, {formatiereDatumAusDate(new Date(ruecknahmeDaten.datumUhrzeit))}
+            {ruecknahmeDaten.ort}, {formatiereDatumAusDate(zeitpunktAusEingabe(ruecknahmeDaten.datumUhrzeit))}
           </dd>
         </div>
       </dl>

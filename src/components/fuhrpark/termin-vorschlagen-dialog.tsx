@@ -2,7 +2,9 @@
 
 import { useRef } from "react"
 
-const HEUTE_ISO = () => new Date().toISOString().slice(0, 10)
+import { heutigesDatumIso } from "@/lib/datum"
+
+const HEUTE_ISO = heutigesDatumIso
 
 /**
  * "Termin hinzufügen"-Knopf mit Pop-up: Art (TÜV/Service/Reifenwechsel) und

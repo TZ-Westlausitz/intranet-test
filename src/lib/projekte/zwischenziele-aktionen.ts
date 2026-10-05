@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
+import { kalendertagAusEingabe } from "@/lib/datum"
 import { projektMitgliedschaftPruefen } from "@/lib/projekte/mitgliedschaft"
 
 /** Legt ein Zwischenziel an — nur die Leitung, nur solange das Projekt schreibbar ist. Reiht sich anhand der Frist automatisch richtig ein (siehe Kommentar am Model). */
@@ -15,8 +16,8 @@ export async function zwischenzielErstellen(projektId: string, formData: FormDat
   const fristEingabe = String(formData.get("frist") ?? "")
   if (!titel || !fristEingabe) return
 
-  const frist = new Date(`${fristEingabe}T00:00:00`)
-  if (Number.isNaN(frist.getTime())) return
+  const frist = kalendertagAusEingabe(fristEingabe)
+  if (!frist) return
 
   await prisma.zwischenziel.create({ data: { projektId, titel, frist } })
 
@@ -36,8 +37,8 @@ export async function zwischenzielAktualisieren(projektId: string, zwischenzielI
   const fristEingabe = String(formData.get("frist") ?? "")
   if (!titel || !fristEingabe) return
 
-  const frist = new Date(`${fristEingabe}T00:00:00`)
-  if (Number.isNaN(frist.getTime())) return
+  const frist = kalendertagAusEingabe(fristEingabe)
+  if (!frist) return
 
   await prisma.zwischenziel.update({ where: { id: zwischenzielId }, data: { titel, frist } })
 

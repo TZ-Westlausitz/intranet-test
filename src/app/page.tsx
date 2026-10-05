@@ -3,6 +3,7 @@ import { CheckSquare, ClipboardList, Clock, Truck } from "lucide-react"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
+import { teileInBerlinerZeit } from "@/lib/datum"
 import { AusleiheStatus } from "@/generated/prisma/enums"
 import { MONATSNAMEN, istGleicherTag } from "@/lib/kalender"
 import { naechsterTermin, faelligeErinnerungenAnzahl } from "@/lib/termine/abfragen"
@@ -83,6 +84,7 @@ import { ordnerVorschauFuerKachel } from "@/lib/wissen/abfragen"
 export default async function Startseite() {
   const kontext = await berechtigung()
   const heute = new Date()
+  const heuteBerlin = teileInBerlinerZeit(heute)
 
   const istWerkstatt =
     kontext.berechtigungen.includes("Werkstattleiter") || kontext.berechtigungen.includes("Adminbereich")
@@ -249,8 +251,8 @@ export default async function Startseite() {
             className="flex items-center gap-4 rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-orange bg-flaeche p-4 shadow-sm transition hover:border-marke-orange focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
           >
             <div className="flex shrink-0 flex-col items-center">
-              <span className="text-3xl leading-none font-bold text-ueberschrift">{heute.getDate()}</span>
-              <span className="mt-1 text-xs font-medium text-sekundaer">{MONATSNAMEN[heute.getMonth()]}</span>
+              <span className="text-3xl leading-none font-bold text-ueberschrift">{Number(heuteBerlin.tag)}</span>
+              <span className="mt-1 text-xs font-medium text-sekundaer">{MONATSNAMEN[Number(heuteBerlin.monat) - 1]}</span>
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">

@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { naechsteVorgangsnummer } from "@/lib/vorgangsnummer"
-import { berlinerTagesbeginn, formatiereDatum } from "@/lib/datum"
+import { berlinerTagesbeginn, berlinerZeitpunkt, formatiereDatum } from "@/lib/datum"
 import { dateiAblegen } from "@/lib/ablage"
 import { nutzungsvereinbarungPdfErzeugen } from "@/lib/pdf/nutzungsvereinbarung"
 import { AusleiheStatus } from "@/generated/prisma/enums"
@@ -43,16 +43,18 @@ async function ausleiheAnlegen(formData: FormData) {
     redirect(`/fahrzeuge/${fahrzeugId}/ausleihe-anlegen?fehler=pflichtfeld`)
   }
 
-  // Von 00:00 bis 23:59:59 des jeweiligen Tages — der Werkstattleiter gibt
-  // Tage an ("Wochenende"), keine Uhrzeiten.
-  const geplantVon = new Date(`${geplantVonEingabe}T00:00:00`)
-  const geplantBis = new Date(`${geplantBisEingabe}T23:59:59`)
+  // Von 00:00 bis 23:59:59 des jeweiligen Tages in BERLINER Zeit — der
+  // Werkstattleiter gibt Tage an ("Wochenende"), keine Uhrzeiten. Nicht in
+  // der Zeitzone des Servers (auf Vercel UTC): "bis" läge sonst in Berlin
+  // schon am Folgetag.
+  const geplantVon = berlinerZeitpunkt(geplantVonEingabe, "00:00:00")
+  const geplantBis = berlinerZeitpunkt(geplantBisEingabe, "23:59:59")
 
-  if (geplantBis < geplantVon) {
+  if (!geplantVon || !geplantBis || geplantBis < geplantVon) {
     redirect(`/fahrzeuge/${fahrzeugId}/ausleihe-anlegen?fehler=zeitraum`)
   }
 
-  const jahr = geplantVon.getFullYear()
+  const jahr = Number(geplantVonEingabe.slice(0, 4))
 
   const [fahrzeug, entleiher] = await Promise.all([
     prisma.fahrzeug.findUniqueOrThrow({ where: { id: fahrzeugId } }),

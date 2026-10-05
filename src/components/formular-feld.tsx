@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 
 import { FormularElementTyp } from "@/generated/prisma/enums"
+import { heutigesDatumIso } from "@/lib/datum"
 
 export type FormularFeldElement = {
   id: string
@@ -30,14 +31,6 @@ export function formularTriggerIds(elemente: { bedingungElementId?: string | nul
 }
 
 const EINGABE_KLASSE = "h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
-
-/** Heutiges Datum als "YYYY-MM-DD" in der LOKALEN Zeitzone (nicht toISOString — die rechnet auf UTC um und würde nahe Mitternacht das falsche Datum liefern). */
-function heutigesDatumIso(): string {
-  const heute = new Date()
-  const monat = String(heute.getMonth() + 1).padStart(2, "0")
-  const tag = String(heute.getDate()).padStart(2, "0")
-  return `${heute.getFullYear()}-${monat}-${tag}`
-}
 
 /**
  * Datumsfeld, mit Heute vorbelegt (Rückmeldung 2026-09-09: manche Browser

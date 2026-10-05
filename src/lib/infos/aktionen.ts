@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
+import { berlinerZeitpunktAusDatumUhrzeit } from "@/lib/datum"
 import { richTextSanitisieren } from "@/lib/rich-text"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
 import { infoAnhaengePruefen, infoAnhaengeSpeichern, infoAnhangLoeschenIntern } from "@/lib/infos/anhaenge"
@@ -157,7 +158,7 @@ export async function infoErstellen(formData: FormData) {
   // Sichtbarkeit UND Sortierung, wird hier einmalig eingefroren.
   const geplantAmRoh = String(formData.get("geplantAm") ?? "").trim()
   const jetzt = new Date()
-  const geplantAmEingabe = geplantAmRoh ? new Date(geplantAmRoh) : null
+  const geplantAmEingabe = geplantAmRoh ? berlinerZeitpunktAusDatumUhrzeit(geplantAmRoh) : null
   const istGeplant = geplantAmEingabe !== null && geplantAmEingabe > jetzt
   const geplantAm = istGeplant ? geplantAmEingabe : null
   const veroeffentlichtAm = istGeplant ? geplantAmEingabe! : jetzt
@@ -553,7 +554,7 @@ export async function infoAktualisieren(infoId: string, formData: FormData) {
   const geplantAmUpdate = nochNichtVeroeffentlicht
     ? (() => {
         const roh = String(formData.get("geplantAm") ?? "").trim()
-        const eingabe = roh ? new Date(roh) : null
+        const eingabe = roh ? berlinerZeitpunktAusDatumUhrzeit(roh) : null
         const weiterhinGeplant = eingabe !== null && eingabe > jetzt
         return { geplantAm: weiterhinGeplant ? eingabe : null, veroeffentlichtAm: weiterhinGeplant ? eingabe! : jetzt }
       })()

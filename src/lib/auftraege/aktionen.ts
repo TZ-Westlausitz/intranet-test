@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
+import { kalendertagAusEingabe, berlinerZeitpunkt } from "@/lib/datum"
 import { AufgabePrioritaet, AuftragStatus } from "@/generated/prisma/enums"
 import { richTextSanitisieren } from "@/lib/rich-text"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
@@ -38,8 +39,8 @@ function auftragFelderLesenOderFehler(formData: FormData, personId: string, entw
   const beschreibung = richTextSanitisieren(String(formData.get("beschreibung") ?? "")) || null
 
   const faelligEingabe = String(formData.get("faelligAm") ?? "")
-  const faelligAm = faelligEingabe ? new Date(`${faelligEingabe}T00:00:00`) : null
-  if (faelligAm && Number.isNaN(faelligAm.getTime())) {
+  const faelligAm = faelligEingabe ? kalendertagAusEingabe(faelligEingabe) : null
+  if (faelligEingabe && !faelligAm) {
     redirect("/aufgaben?fehler=pflichtfeld")
   }
 
@@ -49,8 +50,9 @@ function auftragFelderLesenOderFehler(formData: FormData, personId: string, entw
   // über /geplante-aktionen.
   const geplantEingabe = String(formData.get("geplantAm") ?? "")
   const jetzt = new Date()
-  const geplantAm = geplantEingabe ? new Date(`${geplantEingabe}T00:00:00`) : null
-  if (geplantAm && Number.isNaN(geplantAm.getTime())) {
+  // Ab diesem Tag 00:00 Berliner Zeit sichtbar (echter Zeitpunkt, wird mit "jetzt" verglichen).
+  const geplantAm = geplantEingabe ? berlinerZeitpunkt(geplantEingabe) : null
+  if (geplantEingabe && !geplantAm) {
     redirect("/aufgaben?fehler=pflichtfeld")
   }
   const istGeplant = geplantAm !== null && geplantAm > jetzt

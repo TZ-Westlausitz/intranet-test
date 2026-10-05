@@ -1,5 +1,6 @@
 import Link from "next/link"
 
+import { teileInBerlinerZeit } from "@/lib/datum"
 import { MONATSNAMEN } from "@/lib/kalender"
 import { modulAkzentKlassen } from "@/lib/startseite/raster"
 
@@ -19,6 +20,7 @@ export function KalenderKachel({
   faelligeErinnerungen: number
   terminVorschau: string | null
 }) {
+  const heuteBerlin = teileInBerlinerZeit(heute)
   return (
     <Link
       href="/kalender"
@@ -36,8 +38,8 @@ export function KalenderKachel({
         )}
       </div>
       <div className="flex flex-1 flex-col items-center justify-center">
-        <span className="text-5xl font-bold leading-none text-ueberschrift">{heute.getDate()}</span>
-        <span className="mt-1.5 text-sm font-medium text-sekundaer">{MONATSNAMEN[heute.getMonth()]}</span>
+        <span className="text-5xl font-bold leading-none text-ueberschrift">{Number(heuteBerlin.tag)}</span>
+        <span className="mt-1.5 text-sm font-medium text-sekundaer">{MONATSNAMEN[Number(heuteBerlin.monat) - 1]}</span>
       </div>
       <p className="truncate text-xs font-medium text-sekundaer">{terminVorschau ?? "Keine anstehenden Termine"}</p>
     </Link>
