@@ -1,5 +1,6 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
+import { datumIsoAusDate } from "@/lib/datum"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { PersonErstellenFormular } from "@/components/admin/person-erstellen-formular"
 import { BenutzerListe } from "@/components/admin/benutzer-liste"
@@ -8,6 +9,7 @@ import {
   personAktivSetzen,
   personPasswortZuruecksetzen,
   personBenutzernameAktualisieren,
+  personEintrittsdatumAktualisieren,
   zugehoerigkeitHinzufuegen,
   zugehoerigkeitBeenden,
   personGruppenAktualisieren,
@@ -58,6 +60,7 @@ export default async function BenutzerSeite() {
     vorname: person.vorname,
     nachname: person.nachname,
     aktiv: person.aktiv,
+    eintrittAm: person.eintrittAm ? datumIsoAusDate(person.eintrittAm) : "",
     zugehoerigkeiten: person.zugehoerigkeiten.map((z) => ({
       id: z.id,
       standort: z.standort,
@@ -83,6 +86,7 @@ export default async function BenutzerSeite() {
         standorte={standorte}
         berechtigungenListe={berechtigungenListe}
         benutzernameAktualisierenAktion={personBenutzernameAktualisieren}
+        eintrittsdatumAktualisierenAktion={personEintrittsdatumAktualisieren}
         zugehoerigkeitHinzufuegenAktion={zugehoerigkeitHinzufuegen}
         zugehoerigkeitBeendenAktion={zugehoerigkeitBeenden}
         personGruppenAktualisierenAktion={personGruppenAktualisieren}

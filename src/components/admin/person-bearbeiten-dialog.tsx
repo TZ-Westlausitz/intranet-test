@@ -29,6 +29,7 @@ export function PersonBearbeitenDialog({
   personId,
   name,
   benutzername,
+  eintrittAm,
   zugehoerigkeiten,
   standorte,
   abteilungen,
@@ -37,6 +38,7 @@ export function PersonBearbeitenDialog({
   berechtigungenListe,
   ausgewaehlteBerechtigungIds,
   benutzernameAktualisierenAktion,
+  eintrittsdatumAktualisierenAktion,
   zugehoerigkeitHinzufuegenAktion,
   zugehoerigkeitBeendenAktion,
   personGruppenAktualisierenAktion,
@@ -46,6 +48,8 @@ export function PersonBearbeitenDialog({
   personId: string
   name: string
   benutzername: string
+  /** "2019-03-01" oder leer — für das Datumsfeld. */
+  eintrittAm: string
   zugehoerigkeiten: ZugehoerigkeitAnzeige[]
   standorte: Option[]
   abteilungen: Option[]
@@ -54,6 +58,7 @@ export function PersonBearbeitenDialog({
   berechtigungenListe: Option[]
   ausgewaehlteBerechtigungIds: string[]
   benutzernameAktualisierenAktion: (personId: string, formData: FormData) => void
+  eintrittsdatumAktualisierenAktion: (personId: string, formData: FormData) => void
   zugehoerigkeitHinzufuegenAktion: (personId: string, formData: FormData) => void
   zugehoerigkeitBeendenAktion: (zugehoerigkeitId: string) => void
   personGruppenAktualisierenAktion: (personId: string, formData: FormData) => void
@@ -102,6 +107,29 @@ export function PersonBearbeitenDialog({
                 type="text"
                 defaultValue={benutzername}
                 required
+                className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
+              />
+              <button
+                type="submit"
+                className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
+              >
+                Speichern
+              </button>
+              <FormularAenderungenSchutz />
+            </form>
+          </section>
+
+          <section>
+            <h3 className="text-xs font-semibold text-primaer">Eintrittsdatum</h3>
+            <form
+              action={eintrittsdatumAktualisierenAktion.bind(null, personId)}
+              className="mt-2 flex items-center gap-2"
+            >
+              <input
+                name="eintrittAm"
+                type="date"
+                defaultValue={eintrittAm}
+                aria-label="Eintrittsdatum"
                 className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
               />
               <button

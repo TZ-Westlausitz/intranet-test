@@ -7,19 +7,11 @@ import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { Prisma } from "@/generated/prisma/client"
 import { Reifenart, Fahrzeugtyp, FahrzeugterminArt } from "@/generated/prisma/enums"
-import { berlinerTagesbeginn, formatiereDatumAusDate } from "@/lib/datum"
+import { berlinerTagesbeginn, formatiereDatumAusDate, kalendertagAusEingabe } from "@/lib/datum"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
 import { FAHRZEUGTERMIN_ART_TEXT } from "./fristen"
 import { fuhrparkRechte } from "./zugriff"
-
-/** "2026-11-30" → Kalendertag als UTC-Mitternacht (Konvention, siehe src/lib/datum.ts); leer/ungültig → null. */
-function kalendertagAusEingabe(wert: FormDataEntryValue | null): Date | null {
-  const text = String(wert ?? "").trim()
-  const treffer = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text)
-  if (!treffer) return null
-  const datum = new Date(Date.UTC(Number(treffer[1]), Number(treffer[2]) - 1, Number(treffer[3])))
-  return Number.isNaN(datum.getTime()) ? null : datum
-}
+import { schadenFotoLoeschen, schadenFotosSpeichern, schadenFotosVorbereiten } from "./schadenfotos"
 
 /** "45.000,00" / "45000" → Cent; leer/ungültig → null. */
 function centAusEuroEingabe(wert: FormDataEntryValue | null): number | null {
@@ -360,7 +352,12 @@ export async function fahrzeugschadenErfassen(fahrzeugId: string, formData: Form
   // Feld, das dafür extra eingeführt werden müsste.
   const zusatzbeschreibung = textOderNull(formData.get("zusatzbeschreibung"))
 
-  await prisma.fahrzeugschaden.createMany({
+  // Fotos zuerst prüfen: ein ungültiges Foto bricht ab, bevor der Schaden angelegt ist.
+  const fotoPruefung = await schadenFotosVorbereiten(formData.getAll("fotos").filter((w): w is File => w instanceof File))
+  if (fotoPruefung.fehler) redirect(`/fuhrpark/${fahrzeugId}?fehler=${fotoPruefung.fehler}`)
+
+  const angelegt = await prisma.fahrzeugschaden.createManyAndReturn({
+    select: { id: true },
     data: schadenspunkte.map((punkt) => ({
       fahrzeugId,
       position: punkt.zone,
@@ -372,8 +369,51 @@ export async function fahrzeugschadenErfassen(fahrzeugId: string, formData: Form
     })),
   })
 
+  await schadenFotosSpeichern(
+    angelegt.map((s) => s.id),
+    fotoPruefung.fotos,
+    kontext.personId,
+  )
+
   fuhrparkNachAenderung()
   redirect(`/fuhrpark/${fahrzeugId}`)
+}
+
+/** Fotos nachträglich zu einer einzelnen Schadensstelle — wie das Erfassen: Werkstatt oder Halter. */
+export async function fahrzeugschadenFotosHinzufuegen(schadenId: string, formData: FormData) {
+  const kontext = await berechtigung()
+
+  const schaden = await prisma.fahrzeugschaden.findUnique({
+    where: { id: schadenId },
+    select: { fahrzeugId: true, fahrzeug: { select: { halterId: true } } },
+  })
+  const darf = fuhrparkRechte(kontext).darfBearbeiten || schaden?.fahrzeug.halterId === kontext.personId
+  if (!schaden || !darf) redirect("/fuhrpark")
+
+  const fotoPruefung = await schadenFotosVorbereiten(formData.getAll("fotos").filter((w): w is File => w instanceof File))
+  if (fotoPruefung.fehler) redirect(`/fuhrpark/${schaden.fahrzeugId}?fehler=${fotoPruefung.fehler}`)
+
+  await schadenFotosSpeichern([schadenId], fotoPruefung.fotos, kontext.personId)
+
+  fuhrparkNachAenderung()
+  redirect(`/fuhrpark/${schaden.fahrzeugId}`)
+}
+
+/** Foto entfernen — wer Schäden erfassen darf, darf auch ein versehentlich gemachtes Foto wieder löschen. */
+export async function fahrzeugschadenFotoLoeschen(fotoId: string) {
+  const kontext = await berechtigung()
+
+  const foto = await prisma.fahrzeugschadenFoto.findUnique({
+    where: { id: fotoId },
+    select: { schaden: { select: { fahrzeugId: true, fahrzeug: { select: { halterId: true } } } } },
+  })
+  const darf = fuhrparkRechte(kontext).darfBearbeiten || foto?.schaden.fahrzeug.halterId === kontext.personId
+  if (!foto || !darf) redirect("/fuhrpark")
+
+  await schadenFotoLoeschen(fotoId)
+
+  fuhrparkNachAenderung()
+  redirect(`/fuhrpark/${foto.schaden.fahrzeugId}`)
 }
 
 /** Schaden als behoben markieren bzw. wieder öffnen — nur Werkstattleiter. */

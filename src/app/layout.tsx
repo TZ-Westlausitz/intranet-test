@@ -14,6 +14,7 @@ import { fahrzeugeNavigation } from "@/lib/fahrzeuge-navigation";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
 import { MobileSchnellmenu } from "@/components/mobile-schnellmenu";
 import { neuesteBenachrichtigungen, ungeleseneAnzahl } from "@/lib/benachrichtigungen/abfragen";
+import { jubilaeumsHinweiseErzeugen } from "@/lib/jubilaeen/hinweise";
 import { meineKonversationen } from "@/lib/chat/abfragen";
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum";
 import "./globals.css";
@@ -57,6 +58,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   // /anmelden, wo es noch keine angemeldete Person gibt — die Kopfzeile
   // fällt dann einfach weg, statt die Seite mit einem Fehler abzubrechen.
   const kontext = await kontextOderNull();
+
+  // Vor dem Laden der Glocke, damit eine neue Jubiläums-Mitteilung sofort
+  // erscheint. Tut nichts für Personen ohne "Adminbereich" (siehe dort).
+  if (kontext) await jubilaeumsHinweiseErzeugen(kontext);
 
   const [benachrichtigungenRoh, anzahlUngelesen, chatKonversationenRoh, fahrzeuge] = kontext
     ? await Promise.all([

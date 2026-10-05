@@ -24,6 +24,7 @@ import { feiertagFuer } from "@/lib/feiertage-sachsen"
 import { schulferienFuer } from "@/lib/schulferien-sachsen"
 import { datumIsoAusDate, zeitAusDate, formatiereDatumAusDate, berlinerTagesbeginn } from "@/lib/datum"
 import { richTextZuText } from "@/lib/rich-text"
+import { sichtbareGeburtstage } from "@/lib/geburtstage/abfragen"
 import type { Prisma } from "@/generated/prisma/client"
 
 type TerminMitBeziehungen = Prisma.TerminGetPayload<{
@@ -197,7 +198,7 @@ export default async function KalenderSeite({
   const monatEnde = new Date(Date.UTC(heute.getUTCFullYear(), heute.getUTCMonth() + 1, 1) - 1)
   const uebersichtBis = wocheEnde > monatEnde ? wocheEnde : monatEnde
 
-  const [termine, personen, kommendeTermineRoh, sucheErgebnisRoh] = await Promise.all([
+  const [termine, personen, kommendeTermineRoh, sucheErgebnisRoh, geburtstage] = await Promise.all([
     termineFuerZeitraum(kontext.personId, ersterTag, letzterTag),
     prisma.person.findMany({
       where: { aktiv: true, benutzername: { not: kontext.personId } },
@@ -206,6 +207,7 @@ export default async function KalenderSeite({
     }),
     termineFuerZeitraum(kontext.personId, heute, uebersichtBis),
     suchtext ? termineSuchen(kontext.personId, suchtext) : Promise.resolve([]),
+    sichtbareGeburtstage(kontext.personId),
   ])
 
   // Kompakteres Datum als im Info-Pop-Up — die Zeile hat nur begrenzt Platz.
@@ -249,6 +251,10 @@ export default async function KalenderSeite({
         istHeute: istGleicherTag(kalendertag.datum, heute),
         feiertag: feiertagFuer(kalendertag.datum),
         ferien: schulferienFuer(kalendertag.datum),
+        // Das Raster ist mit lokalen Datumsfeldern gebaut (siehe monatsraster), deshalb auch hier die lokalen Getter.
+        geburtstage: geburtstage
+          .filter((g) => g.tag === kalendertag.datum.getDate() && g.monat === kalendertag.datum.getMonth() + 1)
+          .map((g) => g.name),
         termine: terminePerTag.get(kalendertag.datum.toDateString()) ?? [],
       })),
     ),

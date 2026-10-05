@@ -65,7 +65,10 @@ export async function fahrzeugProfil(kontext: FuhrparkKontext, fahrzeugId: strin
       ort: { select: { id: true, name: true } },
       halter: { select: { benutzername: true, vorname: true, nachname: true, aktiv: true } },
       schaeden: {
-        include: { gemeldetVon: { select: { vorname: true, nachname: true } } },
+        include: {
+          gemeldetVon: { select: { vorname: true, nachname: true } },
+          fotos: { select: { id: true }, orderBy: { hochgeladenAm: "asc" } },
+        },
         orderBy: [{ festgestelltAm: "desc" }],
       },
     },

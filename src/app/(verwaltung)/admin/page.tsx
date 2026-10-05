@@ -4,6 +4,7 @@ import Link from "next/link"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
+import { anstehendeJubilaeen } from "@/lib/jubilaeen/abfragen"
 
 type UpdateEintrag = { id: string; name: string; zeitpunkt: Date; art: "neu" | "abgang" }
 
@@ -28,7 +29,7 @@ type UpdateEintrag = { id: string; name: string; zeitpunkt: Date; art: "neu" | "
 export default async function AdminSeite() {
   await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
-  const [neuePersonen, deaktiviertePersonen, aktiveMitarbeiterAnzahl] = await Promise.all([
+  const [neuePersonen, deaktiviertePersonen, aktiveMitarbeiterAnzahl, jubilaeen] = await Promise.all([
     prisma.person.findMany({
       orderBy: { erstelltAm: "desc" },
       take: 8,
@@ -41,6 +42,7 @@ export default async function AdminSeite() {
       select: { benutzername: true, vorname: true, nachname: true, deaktiviertAm: true },
     }),
     prisma.person.count({ where: { aktiv: true } }),
+    anstehendeJubilaeen(),
   ])
 
   // Beide Ereignisarten in einen gemeinsamen, zeitlich sortierten Feed
@@ -130,36 +132,60 @@ export default async function AdminSeite() {
               </div>
             </Link>
 
-            {/* Rechts, über beide Zeilen — Mitarbeiterupdates: gemeinsamer
+            {/* Rechts, über beide Zeilen — oben die Mitarbeiterupdates: gemeinsamer
                 Newsfeed aus Neuzugängen (grüner Name) und Abgängen (roter
-                Name), jeweils mit Zeitstempel darunter. */}
-            <Link
-              href="/admin/benutzer"
-              className="col-start-3 row-start-1 row-span-2 flex flex-col overflow-hidden rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
-            >
-              <h2 className="shrink-0 text-center text-lg font-semibold text-ueberschrift">Mitarbeiterupdates</h2>
-              {updates.length === 0 ? (
-                <p className="mt-2 text-xs text-sekundaer">Noch keine Änderungen.</p>
-              ) : (
-                <ul className="mt-2 flex flex-1 flex-col gap-2.5 overflow-y-auto">
-                  {updates.map((eintrag) => (
-                    <li key={eintrag.id} className="text-xs">
-                      <span
-                        className={
-                          "block truncate font-medium " +
-                          (eintrag.art === "neu" ? "text-marke-gruen-dunkel" : "text-red-600")
-                        }
-                      >
-                        {eintrag.name}
-                      </span>
-                      <span className="text-tertiaer">
-                        {formatiereDatumAusDate(eintrag.zeitpunkt)} · {zeitAusDate(eintrag.zeitpunkt)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Link>
+                Name), jeweils mit Zeitstempel darunter; unten die nächsten
+                Firmenjubiläen (Link auf die volle Liste). */}
+            <div className="col-start-3 row-start-1 row-span-2 flex flex-col overflow-hidden rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen bg-flaeche shadow-sm">
+              <Link
+                href="/admin/benutzer"
+                className="flex min-h-0 flex-1 flex-col p-4 transition hover:bg-flaeche-schwach focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+              >
+                <h2 className="shrink-0 text-center text-lg font-semibold text-ueberschrift">Mitarbeiterupdates</h2>
+                {updates.length === 0 ? (
+                  <p className="mt-2 text-xs text-sekundaer">Noch keine Änderungen.</p>
+                ) : (
+                  <ul className="mt-2 flex flex-1 flex-col gap-2.5 overflow-y-auto">
+                    {updates.map((eintrag) => (
+                      <li key={eintrag.id} className="text-xs">
+                        <span
+                          className={
+                            "block truncate font-medium " +
+                            (eintrag.art === "neu" ? "text-marke-gruen-dunkel" : "text-red-600")
+                          }
+                        >
+                          {eintrag.name}
+                        </span>
+                        <span className="text-tertiaer">
+                          {formatiereDatumAusDate(eintrag.zeitpunkt)} · {zeitAusDate(eintrag.zeitpunkt)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Link>
+
+              <Link
+                href="/admin/jubilaeen"
+                className="flex min-h-0 flex-1 flex-col border-t border-rand p-4 transition hover:bg-flaeche-schwach focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+              >
+                <h2 className="shrink-0 text-center text-lg font-semibold text-ueberschrift">Jubiläen</h2>
+                {jubilaeen.zeilen.length === 0 ? (
+                  <p className="mt-2 text-xs text-sekundaer">Keine anstehenden Jubiläen.</p>
+                ) : (
+                  <ul className="mt-2 flex flex-1 flex-col gap-2 overflow-y-auto">
+                    {jubilaeen.zeilen.slice(0, 4).map((zeile) => (
+                      <li key={`${zeile.benutzername}-${zeile.jahre}`} className="text-xs">
+                        <span className="block truncate font-medium text-ueberschrift">
+                          {zeile.name} · {zeile.jahre} Jahre
+                        </span>
+                        <span className="text-tertiaer">{formatiereDatumAusDate(zeile.datum)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Link>
+            </div>
           </div>
         </div>
       </main>

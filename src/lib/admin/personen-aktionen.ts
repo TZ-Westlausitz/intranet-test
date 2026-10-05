@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
+import { kalendertagAusEingabe } from "@/lib/datum"
 
 /**
  * Gemeinsames Startpasswort für alle im Adminbereich neu angelegten bzw.
@@ -109,6 +110,7 @@ export async function personErstellen(
       benutzername,
       passwortHash: await bcrypt.hash(passwort, 10),
       passwortWechselErforderlich: true,
+      eintrittAm: kalendertagAusEingabe(formData.get("eintrittAm")),
       zugehoerigkeiten: { create: { abteilungId } },
     },
   })
@@ -182,6 +184,22 @@ export async function personBenutzernameAktualisieren(personId: string, formData
   // Postgres automatisch jede referenzierende Zeile (Zugehoerigkeit,
   // Ausleihe, Termin, ...) auf den neuen Wert um.
   await prisma.person.update({ where: { benutzername: personId }, data: { benutzername } })
+
+  revalidatePath("/admin/benutzer")
+}
+
+/**
+ * Trägt das Eintrittsdatum nach bzw. korrigiert es (leer = Angabe entfernen).
+ * HR-Angabe: nur im Adminbereich sichtbar und änderbar, Grundlage für die
+ * spätere Jubiläums-Übersicht.
+ */
+export async function personEintrittsdatumAktualisieren(personId: string, formData: FormData) {
+  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
+
+  await prisma.person.update({
+    where: { benutzername: personId },
+    data: { eintrittAm: kalendertagAusEingabe(formData.get("eintrittAm")) },
+  })
 
   revalidatePath("/admin/benutzer")
 }

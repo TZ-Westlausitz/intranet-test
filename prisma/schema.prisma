@@ -179,15 +179,24 @@ model Person {
   /// Go-Live mit MAV/Datenschutz abstimmen.
   letzteAktivitaet DateTime?
 
-  aktiv         Boolean   @default(true)
-  eintrittAm    DateTime?
-  austrittAm    DateTime?
+  aktiv      Boolean   @default(true)
+  eintrittAm DateTime?
+
+  /// Freiwillig, von der Person selbst im Profil eingetragen (Rückmeldung
+  /// 2026-10-05) — bewusst nur Tag und Monat, kein Geburtsjahr (Daten-
+  /// minimierung: das Alter wird nirgends gebraucht). Im Kalender sichtbar
+  /// nur für Personen, die mit ihr mindestens eine (nicht-automatische)
+  /// Gruppe teilen, siehe src/lib/geburtstage/abfragen.ts. Beide Felder
+  /// gesetzt oder beide leer.
+  geburtstagTag   Int?
+  geburtstagMonat Int?
+  austrittAm      DateTime?
   /// Zeitpunkt der letzten Deaktivierung über den Adminbereich (siehe
   /// personAktivSetzen) — für die "kürzlich deaktiviert"-Kachel dort.
   /// Bewusst getrennt von `austrittAm` (Eintritts-/Austrittsdatum als
   /// HR-Angabe, noch nirgends gepflegt): Zugang sperren und Firma
   /// verlassen sind zwei unterschiedliche Ereignisse.
-  deaktiviertAm DateTime?
+  deaktiviertAm   DateTime?
 
   /// Modulares Startseiten-Raster (Tablet/Desktop, siehe
   /// src/lib/startseite/raster.ts): welches Modul in welchem der 8
@@ -220,6 +229,7 @@ model Person {
   ausleihenEntschieden         Ausleihe[]                       @relation("Entscheider")
   fahrzeugeAlsHalter           Fahrzeug[]                       @relation("FahrzeugHalter")
   fahrzeugschaedenGemeldet     Fahrzeugschaden[]                @relation("FahrzeugschadenMelder")
+  fahrzeugschadenFotos         FahrzeugschadenFoto[]            @relation("FahrzeugschadenFotoHochlader")
   fahrzeugTermineVorgeschlagen Fahrzeugterminvorschlag[]        @relation("FahrzeugterminVorschlagend")
   fahrzeugTermineEmpfangen     Fahrzeugterminvorschlag[]        @relation("FahrzeugterminEmpfaenger")
   vereinbarungen               Vereinbarung[]                   @relation("VereinbarungFirma")
@@ -610,10 +620,31 @@ model Fahrzeugschaden {
   /// Gesetzt, sobald der Schaden repariert ist.
   behobenAm      DateTime?
 
-  fahrzeug    Fahrzeug @relation(fields: [fahrzeugId], references: [id])
-  gemeldetVon Person   @relation("FahrzeugschadenMelder", fields: [gemeldetVonId], references: [benutzername])
+  fahrzeug    Fahrzeug              @relation(fields: [fahrzeugId], references: [id])
+  gemeldetVon Person                @relation("FahrzeugschadenMelder", fields: [gemeldetVonId], references: [benutzername])
+  fotos       FahrzeugschadenFoto[]
 
   @@index([fahrzeugId, behobenAm])
+}
+
+/// Foto zu einem Fahrzeugschaden (Rückmeldung 2026-10-05). Datei liegt wie
+/// überall in der Ablage (Regel 7), hier nur Pfad + Metadaten. Immer JPEG
+/// ohne Kamera-Metadaten — Regel 10 (keine GPS-/Ortungsdaten), siehe
+/// src/lib/fuhrpark/schadenfotos.ts. Hängt an der einzelnen Schadensstelle
+/// (eine Erfassung kann mehrere erzeugen, siehe Kommentar oben).
+model FahrzeugschadenFoto {
+  id               String   @id @default(cuid())
+  schadenId        String
+  pfad             String
+  mimetyp          String
+  groesseBytes     Int
+  hochgeladenAm    DateTime @default(now())
+  hochgeladenVonId String
+
+  schaden        Fahrzeugschaden @relation(fields: [schadenId], references: [id], onDelete: Cascade)
+  hochgeladenVon Person          @relation("FahrzeugschadenFotoHochlader", fields: [hochgeladenVonId], references: [benutzername])
+
+  @@index([schadenId])
 }
 
 enum FahrzeugterminArt {

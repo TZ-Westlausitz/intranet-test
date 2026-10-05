@@ -15,6 +15,8 @@ export type KalendertagAnzeige = {
   istHeute: boolean
   feiertag: string | null
   ferien: string | null
+  /** Namen der Personen mit Geburtstag an diesem Tag — nur die, die die anzeigende Person sehen darf. */
+  geburtstage: string[]
   termine: TerminAnzeige[]
 }
 
@@ -62,6 +64,7 @@ export function KalenderMonate({
 }) {
   const [zeigeFeiertage, setZeigeFeiertage] = useState(true)
   const [zeigeSchulferien, setZeigeSchulferien] = useState(true)
+  const [zeigeGeburtstage, setZeigeGeburtstage] = useState(true)
 
   return (
     <>
@@ -96,6 +99,7 @@ export function KalenderMonate({
                   kalendertag={kalendertag}
                   feiertagAktiv={zeigeFeiertage && !!kalendertag.feiertag}
                   ferienAktiv={zeigeSchulferien && !!kalendertag.ferien}
+                  geburtstageAktiv={zeigeGeburtstage}
                   personen={personen}
                   aktualisierenAktion={aktualisierenAktion}
                   loeschenAktion={loeschenAktion}
@@ -131,6 +135,16 @@ export function KalenderMonate({
             className="h-4 w-4 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
           />
           Schulferien in Sachsen markieren
+        </label>
+
+        <label className="flex items-center gap-2 text-sm text-primaer">
+          <input
+            type="checkbox"
+            checked={zeigeGeburtstage}
+            onChange={(ereignis) => setZeigeGeburtstage(ereignis.target.checked)}
+            className="h-4 w-4 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
+          />
+          Geburtstage aus meinen Gruppen anzeigen
         </label>
       </div>
     </>

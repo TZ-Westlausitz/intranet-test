@@ -84,6 +84,15 @@ export function datumIsoAusDate(datum: Date): string {
   return `${jahr}-${monat}-${tag}`
 }
 
+/** "2026-11-30" → Kalendertag als UTC-Mitternacht (Konvention dieser Datei); leer/ungültig → null. */
+export function kalendertagAusEingabe(wert: FormDataEntryValue | null): Date | null {
+  const text = String(wert ?? "").trim()
+  const treffer = /^(\d{4})-(\d{2})-(\d{2})$/.exec(text)
+  if (!treffer) return null
+  const datum = new Date(Date.UTC(Number(treffer[1]), Number(treffer[2]) - 1, Number(treffer[3])))
+  return Number.isNaN(datum.getTime()) ? null : datum
+}
+
 /** Date-Objekt → "14:05" — für <input type="time">-Defaultwerte aus einem vorhandenen Date. */
 export function zeitAusDate(datum: Date): string {
   const { stunde, minute } = teileInBerlinerZeit(datum)

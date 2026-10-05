@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db"
 import { Prisma } from "@/generated/prisma/client"
 import { dateiAblegen, dateiLoeschen } from "@/lib/ablage"
 import { profilbildPruefen } from "@/lib/profil/profilbild"
+import { geburtstagAusEingabe } from "@/lib/geburtstage/abfragen"
 
 /**
  * Speichert die freiwilligen Kontaktangaben im eigenen Profil (E-Mail,
@@ -27,10 +28,19 @@ export async function profilAktualisieren(formData: FormData) {
   const telefon = String(formData.get("telefon") ?? "").trim() || null
   const weitereInformationen = String(formData.get("weitereInformationen") ?? "").trim() || null
 
+  const geburtstag = geburtstagAusEingabe(formData.get("geburtstagTag"), formData.get("geburtstagMonat"))
+  if (geburtstag === "ungueltig") redirect("/profil?fehler=geburtstagUngueltig")
+
   try {
     await prisma.person.update({
       where: { benutzername: kontext.personId },
-      data: { email, telefon, weitereInformationen },
+      data: {
+        email,
+        telefon,
+        weitereInformationen,
+        geburtstagTag: geburtstag?.tag ?? null,
+        geburtstagMonat: geburtstag?.monat ?? null,
+      },
     })
   } catch (fehler) {
     if (fehler instanceof Prisma.PrismaClientKnownRequestError && fehler.code === "P2002") {
@@ -42,6 +52,7 @@ export async function profilAktualisieren(formData: FormData) {
   revalidatePath("/profil")
   revalidatePath("/kontakte")
   revalidatePath("/kontakte/[personId]", "page")
+  revalidatePath("/kalender")
   redirect("/profil")
 }
 

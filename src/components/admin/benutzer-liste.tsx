@@ -4,6 +4,7 @@ import { useMemo, useState } from "react"
 import { Search } from "lucide-react"
 
 import { PersonBearbeitenDialog, type ZugehoerigkeitAnzeige } from "@/components/admin/person-bearbeiten-dialog"
+import { formatiereDatum } from "@/lib/datum"
 
 type Option = { id: string; name: string }
 
@@ -12,6 +13,8 @@ export type PersonZeile = {
   vorname: string
   nachname: string
   aktiv: boolean
+  /** "2019-03-01" oder leer. */
+  eintrittAm: string
   zugehoerigkeiten: ZugehoerigkeitAnzeige[]
   abteilungIds: string[]
   gruppenIds: string[]
@@ -40,6 +43,7 @@ export function BenutzerListe({
   standorte,
   berechtigungenListe,
   benutzernameAktualisierenAktion,
+  eintrittsdatumAktualisierenAktion,
   zugehoerigkeitHinzufuegenAktion,
   zugehoerigkeitBeendenAktion,
   personGruppenAktualisierenAktion,
@@ -53,6 +57,7 @@ export function BenutzerListe({
   standorte: Option[]
   berechtigungenListe: Option[]
   benutzernameAktualisierenAktion: (personId: string, formData: FormData) => void
+  eintrittsdatumAktualisierenAktion: (personId: string, formData: FormData) => void
   zugehoerigkeitHinzufuegenAktion: (personId: string, formData: FormData) => void
   zugehoerigkeitBeendenAktion: (zugehoerigkeitId: string) => void
   personGruppenAktualisierenAktion: (personId: string, formData: FormData) => void
@@ -92,6 +97,7 @@ export function BenutzerListe({
     gruppen,
     berechtigungenListe,
     benutzernameAktualisierenAktion,
+    eintrittsdatumAktualisierenAktion,
     zugehoerigkeitHinzufuegenAktion,
     zugehoerigkeitBeendenAktion,
     personGruppenAktualisierenAktion,
@@ -182,6 +188,7 @@ function BenutzerZeile({
   gruppen,
   berechtigungenListe,
   benutzernameAktualisierenAktion,
+  eintrittsdatumAktualisierenAktion,
   zugehoerigkeitHinzufuegenAktion,
   zugehoerigkeitBeendenAktion,
   personGruppenAktualisierenAktion,
@@ -195,6 +202,7 @@ function BenutzerZeile({
   gruppen: Option[]
   berechtigungenListe: Option[]
   benutzernameAktualisierenAktion: (personId: string, formData: FormData) => void
+  eintrittsdatumAktualisierenAktion: (personId: string, formData: FormData) => void
   zugehoerigkeitHinzufuegenAktion: (personId: string, formData: FormData) => void
   zugehoerigkeitBeendenAktion: (zugehoerigkeitId: string) => void
   personGruppenAktualisierenAktion: (personId: string, formData: FormData) => void
@@ -217,6 +225,7 @@ function BenutzerZeile({
             personId={person.benutzername}
             name={`${person.vorname} ${person.nachname}`}
             benutzername={person.benutzername}
+            eintrittAm={person.eintrittAm}
             zugehoerigkeiten={person.zugehoerigkeiten}
             standorte={standorte}
             abteilungen={abteilungen}
@@ -225,6 +234,7 @@ function BenutzerZeile({
             berechtigungenListe={berechtigungenListe}
             ausgewaehlteBerechtigungIds={person.berechtigungIds}
             benutzernameAktualisierenAktion={benutzernameAktualisierenAktion}
+            eintrittsdatumAktualisierenAktion={eintrittsdatumAktualisierenAktion}
             zugehoerigkeitHinzufuegenAktion={zugehoerigkeitHinzufuegenAktion}
             zugehoerigkeitBeendenAktion={zugehoerigkeitBeendenAktion}
             personGruppenAktualisierenAktion={personGruppenAktualisierenAktion}
@@ -257,6 +267,9 @@ function BenutzerZeile({
               {z.abteilung.name}
             </span>
           ))
+        )}
+        {person.eintrittAm && (
+          <span className="rounded-full bg-flaeche-100 px-2 py-0.5">Eintritt {formatiereDatum(person.eintrittAm)}</span>
         )}
         {person.gruppenIds.length > 0 && (
           <span className="rounded-full bg-flaeche-100 px-2 py-0.5">

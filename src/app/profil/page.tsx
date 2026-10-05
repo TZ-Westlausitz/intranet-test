@@ -4,12 +4,14 @@ import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-sch
 import { InfoAvatar } from "@/components/info-avatar"
 import { ProfilbildBearbeiten } from "@/components/profilbild-bearbeiten"
 import { personKontaktDetail } from "@/lib/kontakte/abfragen"
+import { MONATSNAMEN } from "@/lib/kalender"
 import { profilAktualisieren, profilbildAktualisieren, profilbildLoeschen } from "@/lib/profil/aktionen"
 
 const FEHLER_TEXTE: Record<string, string> = {
   emailVergeben: "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet.",
   zuGross: "Das Bild ist zu groß (maximal 5 MB).",
   typUngueltig: "Nicht unterstützter Dateityp. Erlaubt sind JPG, PNG, WEBP und HEIC.",
+  geburtstagUngueltig: "Bitte Tag und Monat des Geburtstags vollständig und gültig angeben (oder beide leer lassen).",
 }
 
 /**
@@ -129,6 +131,42 @@ export default async function ProfilSeite({
             placeholder="z. B. Erreichbarkeit, Zuständigkeit …"
             className="mt-1 w-full rounded-lg border border-flaeche-300 px-2 py-1.5 text-sm"
           />
+        </div>
+
+        <div>
+          <span className="block text-xs font-medium text-primaer">Geburtstag (optional)</span>
+          <div className="mt-1 flex gap-2">
+            <select
+              name="geburtstagTag"
+              defaultValue={person.geburtstagTag ?? ""}
+              aria-label="Tag"
+              className="h-9 w-20 rounded-lg border border-flaeche-300 px-2 text-sm"
+            >
+              <option value="">Tag</option>
+              {Array.from({ length: 31 }, (_, i) => i + 1).map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}.
+                </option>
+              ))}
+            </select>
+            <select
+              name="geburtstagMonat"
+              defaultValue={person.geburtstagMonat ?? ""}
+              aria-label="Monat"
+              className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
+            >
+              <option value="">Monat</option>
+              {MONATSNAMEN.map((name, index) => (
+                <option key={name} value={index + 1}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="mt-1 text-xs text-tertiaer">
+            Freiwillig. Im Kalender sehen ihn nur Kolleginnen und Kollegen, mit denen du mindestens eine Gruppe
+            gemeinsam hast. Das Geburtsjahr wird nicht gespeichert.
+          </p>
         </div>
 
         <button

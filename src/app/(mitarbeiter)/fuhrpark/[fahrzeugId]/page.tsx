@@ -10,6 +10,8 @@ import {
   fahrzeugAktualisieren,
   fahrzeugschadenBehobenSetzen,
   fahrzeugschadenErfassen,
+  fahrzeugschadenFotosHinzufuegen,
+  fahrzeugschadenFotoLoeschen,
   fahrzeugTerminVorschlagen,
   fahrzeugTerminAnnehmen,
   fahrzeugTerminNeuenSuchen,
@@ -18,6 +20,7 @@ import { reifenHinweis, REIFENART_TEXT, FAHRZEUGTERMIN_ART_TEXT } from "@/lib/fu
 import { fuhrparkRechte } from "@/lib/fuhrpark/zugriff"
 import { FristAnzeige } from "@/components/fuhrpark/frist-anzeige"
 import { Schadensskizze } from "@/components/schadensskizze"
+import { SchadenFotoAuswahl } from "@/components/schaden-foto-auswahl"
 import { FahrzeugFormularFelder } from "@/components/fuhrpark/fahrzeug-formular"
 import { TerminVorschlagenDialog } from "@/components/fuhrpark/termin-vorschlagen-dialog"
 import { TerminvorschlagKarte } from "@/components/fuhrpark/terminvorschlag-karte"
@@ -32,6 +35,43 @@ const FEHLER_TEXTE: Record<string, string> = {
   schadenPflichtfeld: "Bitte mindestens eine Schadensstelle in der Skizze markieren und beschreiben.",
   keinHalter: "Dieses Fahrzeug hat keinen Halter — bitte das Datum direkt unten in „Fahrzeug bearbeiten“ eintragen.",
   terminPflichtfeld: "Bitte Art und Datum des Termins angeben.",
+  fotoZuGross: "Ein Foto ist zu groß (höchstens 8 MB). Bitte ein kleineres wählen.",
+  fotoTyp: "Fotos müssen JPG-Bilder sein. Bitte erneut auswählen.",
+  fotoAnzahl: "Es sind höchstens 8 Fotos auf einmal möglich.",
+}
+
+/** Vorschaubilder einer Schadensstelle (Klick öffnet das Foto groß) plus Löschen für alle, die Schäden erfassen dürfen. */
+function SchadenFotos({ fotos, darfAendern }: { fotos: { id: string }[]; darfAendern: boolean }) {
+  if (fotos.length === 0) return null
+  return (
+    <ul className="mt-2 flex flex-wrap gap-2">
+      {fotos.map((foto) => (
+        <li key={foto.id} className="relative">
+          <a href={`/api/fuhrpark/schadenfotos/${foto.id}`} target="_blank" rel="noopener">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/api/fuhrpark/schadenfotos/${foto.id}`}
+              alt="Schadensfoto"
+              loading="lazy"
+              className="h-20 w-20 rounded-lg border border-rand object-cover"
+            />
+          </a>
+          {darfAendern && (
+            <form action={fahrzeugschadenFotoLoeschen.bind(null, foto.id)} className="absolute -top-1.5 -right-1.5">
+              <button
+                type="submit"
+                aria-label="Foto löschen"
+                title="Foto löschen"
+                className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-800 text-xs leading-none text-white"
+              >
+                ×
+              </button>
+            </form>
+          )}
+        </li>
+      ))}
+    </ul>
+  )
 }
 
 const RICHTUNG_TEXT: Record<string, string> = { AUSGABE: "Übergabe", RUECKNAHME: "Rücknahme" }
@@ -226,6 +266,12 @@ export default async function FahrzeugProfilSeite({
                 <p className="mt-0.5 text-xs text-tertiaer">
                   Festgestellt am {formatiereDatumAusDate(s.festgestelltAm)} · gemeldet von {s.gemeldetVon.vorname} {s.gemeldetVon.nachname}
                 </p>
+                <SchadenFotos fotos={s.fotos} darfAendern={darfSchadenErfassen} />
+                {darfSchadenErfassen && (
+                  <form action={fahrzeugschadenFotosHinzufuegen.bind(null, s.id)} className="mt-2">
+                    <SchadenFotoAuswahl absendenText="Fotos speichern" />
+                  </form>
+                )}
                 {darfBearbeiten && (
                   <form action={fahrzeugschadenBehobenSetzen.bind(null, s.id, true)} className="mt-1">
                     <button type="submit" className="text-xs font-medium text-marke-gruen-dunkel hover:underline">
@@ -249,6 +295,7 @@ export default async function FahrzeugProfilSeite({
                   <p className="mt-0.5 text-xs text-tertiaer">
                     Festgestellt am {formatiereDatumAusDate(s.festgestelltAm)} · behoben am {formatiereDatumAusDate(s.behobenAm!)}
                   </p>
+                  <SchadenFotos fotos={s.fotos} darfAendern={darfSchadenErfassen} />
                   {darfBearbeiten && (
                     <form action={fahrzeugschadenBehobenSetzen.bind(null, s.id, false)} className="mt-1">
                       <button type="submit" className="text-xs font-medium text-sekundaer hover:underline">
@@ -310,6 +357,13 @@ export default async function FahrzeugProfilSeite({
                   Ergänzt die Angaben zu den einzelnen Schadensstellen oben, optional.
                 </span>
               </label>
+              <div className="flex flex-col gap-1 text-sm font-medium text-primaer">
+                Fotos
+                <SchadenFotoAuswahl />
+                <span className="text-xs font-normal text-tertiaer">
+                  Optional. Die Fotos erscheinen bei jeder markierten Schadensstelle; Kamera-Standortdaten werden entfernt.
+                </span>
+              </div>
               <label className="flex flex-col gap-1 text-sm font-medium text-primaer">
                 Festgestellt am
                 <input type="date" name="festgestelltAm" defaultValue={datumIsoAusDate(heute)} className="h-10 rounded-lg border border-flaeche-300 bg-flaeche px-3 text-sm" />

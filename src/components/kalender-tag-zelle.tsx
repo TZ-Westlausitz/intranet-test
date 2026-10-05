@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef } from "react"
+import { Cake } from "lucide-react"
 
 import { TerminDot, type TerminDotHandle } from "@/components/termin-dot"
 import type { Person } from "@/components/termin-form-felder"
@@ -24,6 +25,7 @@ export function KalenderTagZelle({
   kalendertag,
   feiertagAktiv,
   ferienAktiv,
+  geburtstageAktiv,
   personen,
   aktualisierenAktion,
   loeschenAktion,
@@ -37,6 +39,7 @@ export function KalenderTagZelle({
   kalendertag: KalendertagAnzeige
   feiertagAktiv: boolean
   ferienAktiv: boolean
+  geburtstageAktiv: boolean
   personen: Person[]
   aktualisierenAktion: (terminId: string, formData: FormData) => void
   loeschenAktion: (terminId: string, formData: FormData) => void
@@ -49,13 +52,16 @@ export function KalenderTagZelle({
 }) {
   const ersterTerminRef = useRef<TerminDotHandle>(null)
   const feiertagDialogRef = useRef<HTMLDialogElement>(null)
+  const geburtstagDialogRef = useRef<HTMLDialogElement>(null)
 
   const hatTermine = kalendertag.termine.length > 0
-  const klickbar = hatTermine || feiertagAktiv
+  const hatGeburtstage = geburtstageAktiv && kalendertag.geburtstage.length > 0
+  const klickbar = hatTermine || feiertagAktiv || hatGeburtstage
 
   const titel = [
     feiertagAktiv && kalendertag.feiertag,
     ferienAktiv && kalendertag.ferien,
+    hatGeburtstage && `Geburtstag: ${kalendertag.geburtstage.join(", ")}`,
     ...kalendertag.termine.map((t) => `${t.titel}, ${t.zeitraumAnzeige}`),
   ]
     .filter(Boolean)
@@ -66,6 +72,8 @@ export function KalenderTagZelle({
       ersterTerminRef.current?.oeffnen()
     } else if (feiertagAktiv) {
       feiertagDialogRef.current?.showModal()
+    } else if (hatGeburtstage) {
+      geburtstagDialogRef.current?.showModal()
     }
   }
 
@@ -106,6 +114,17 @@ export function KalenderTagZelle({
         {kalendertag.tag}
       </div>
 
+      {hatGeburtstage && (
+        <button
+          type="button"
+          onClick={() => geburtstagDialogRef.current?.showModal()}
+          aria-label={`Geburtstag: ${kalendertag.geburtstage.join(", ")}`}
+          className="flex h-3 items-center text-marke-orange"
+        >
+          <Cake className="h-3 w-3" aria-hidden />
+        </button>
+      )}
+
       {hatTermine && (
         <div className="flex h-1.5 items-center gap-0.5">
           {kalendertag.termine.slice(0, 3).map((termin, index) => (
@@ -130,6 +149,33 @@ export function KalenderTagZelle({
             </span>
           )}
         </div>
+      )}
+
+      {hatGeburtstage && (
+        <dialog
+          ref={geburtstagDialogRef}
+          className="fixed top-1/2 left-1/2 w-full max-w-xs -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
+        >
+          <div className="px-5 py-4">
+            <p className="text-sm font-semibold text-ueberschrift">
+              Geburtstag{kalendertag.geburtstage.length > 1 ? "e" : ""}
+            </p>
+            <ul className="mt-1 text-sm text-primaer">
+              {kalendertag.geburtstage.map((name) => (
+                <li key={name}>{name}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex justify-end border-t border-rand px-5 py-3">
+            <button
+              type="button"
+              onClick={() => geburtstagDialogRef.current?.close()}
+              className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
+            >
+              Schließen
+            </button>
+          </div>
+        </dialog>
       )}
 
       {feiertagAktiv && (

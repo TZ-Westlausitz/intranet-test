@@ -159,6 +159,18 @@ export function PersonErstellenFormular({
           </select>
         </div>
 
+        <div>
+          <label htmlFor="pe-eintritt" className="block text-xs font-medium text-primaer">
+            Eintrittsdatum <span className="font-normal text-tertiaer">(optional)</span>
+          </label>
+          <input
+            id="pe-eintritt"
+            name="eintrittAm"
+            type="date"
+            className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm sm:w-48"
+          />
+        </div>
+
         <div className="flex items-center justify-between gap-3">
           {benutzernameVorschau ? (
             <p className="min-w-0 truncate text-xs text-tertiaer">
