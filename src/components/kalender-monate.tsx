@@ -144,7 +144,7 @@ export function KalenderMonate({
             onChange={(ereignis) => setZeigeGeburtstage(ereignis.target.checked)}
             className="h-4 w-4 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
           />
-          Geburtstage aus meinen Gruppen anzeigen
+          Geburtstage aus meinem Team anzeigen
         </label>
       </div>
     </>

@@ -1,6 +1,7 @@
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { terminFuerExport } from "@/lib/termine/abfragen"
 import { kalenderFeedBauen } from "@/lib/kalender-abo/ics"
+import { basisUrlAusAnfrage } from "@/lib/kalender-abo/basis-url"
 import { contentDispositionHeader } from "@/lib/http"
 import { richTextZuTextMitUmbruechen } from "@/lib/rich-text"
 
@@ -31,7 +32,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ term
         erinnerungenMinuten: termin.erinnerungen.map((e) => e.minutenVorher),
       },
     ],
-    new URL(request.url).origin,
+    basisUrlAusAnfrage(request.headers, new URL(request.url).origin),
     { einzeln: true },
   )
 

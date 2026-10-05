@@ -12,6 +12,7 @@ import { ordnerUebersicht } from "@/lib/wissen/abfragen"
 import { verfuegbareFormulare } from "@/lib/formulare/abfragen"
 import { KalenderAboDialog } from "@/components/kalender-abo-dialog"
 import { kalenderAboErzeugen, kalenderAboBeenden } from "@/lib/kalender-abo/aktionen"
+import { basisUrlAusAnfrage } from "@/lib/kalender-abo/basis-url"
 
 /**
  * Alle persönlichen Einstellungen auf einer Seite (Rückmeldung 2026-09-11:
@@ -33,12 +34,10 @@ export default async function EinstellungenSeite() {
   ])
   const raster = parseRaster(person.startseiteRaster)
 
-  // Adresse des Abo-Feeds aus der Anfrage ableiten (Vercel setzt x-forwarded-*), damit sie überall stimmt — lokal, Testserver, später On-Premise.
-  const kopf = await headers()
-  const host = kopf.get("x-forwarded-host") ?? kopf.get("host") ?? "localhost:3000"
-  const protokoll = kopf.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https")
+  // Adresse des Abo-Feeds: fest über APP_URL, sonst aus der Anfrage (siehe basisUrlAusAnfrage).
+  const basisUrl = basisUrlAusAnfrage(await headers())
   const aboUrl = person.kalenderAboToken
-    ? `${protokoll}://${host}/api/kalender-abo/${person.kalenderAboToken}/intranet.ics`
+    ? `${basisUrl}/api/kalender-abo/${person.kalenderAboToken}/intranet.ics`
     : null
   // Für PersonenAuswahl (Kontakte-Kachel), den Ordner-Picker
   // (Wissensbereich-Kachel) und den Vorlagen-Picker (Formulare-Kachel) —

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db"
 import { berlinerTagesbeginn } from "@/lib/datum"
 import { termineFuerKalenderFeed } from "@/lib/termine/abfragen"
 import { kalenderFeedBauen } from "@/lib/kalender-abo/ics"
+import { basisUrlAusAnfrage } from "@/lib/kalender-abo/basis-url"
 
 const TAG_MS = 24 * 60 * 60 * 1000
 
@@ -32,7 +33,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ toke
     new Date(heute.getTime() + 400 * TAG_MS),
   )
 
-  const basisUrl = new URL(request.url).origin
+  const basisUrl = basisUrlAusAnfrage(request.headers, new URL(request.url).origin)
   return new Response(kalenderFeedBauen(termine, basisUrl), {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
