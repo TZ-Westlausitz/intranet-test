@@ -1,5 +1,3 @@
-import { headers } from "next/headers"
-
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { ZurueckButton } from "@/components/zurueck-button"
@@ -10,9 +8,6 @@ import { rasterAufStandardZuruecksetzen } from "@/lib/startseite/aktionen"
 import { personenAuswahlListe } from "@/lib/kontakte/abfragen"
 import { ordnerUebersicht } from "@/lib/wissen/abfragen"
 import { verfuegbareFormulare } from "@/lib/formulare/abfragen"
-import { KalenderAboDialog } from "@/components/kalender-abo-dialog"
-import { kalenderAboErzeugen, kalenderAboBeenden } from "@/lib/kalender-abo/aktionen"
-import { basisUrlAusAnfrage } from "@/lib/kalender-abo/basis-url"
 
 /**
  * Alle persönlichen Einstellungen auf einer Seite (Rückmeldung 2026-09-11:
@@ -26,7 +21,7 @@ export default async function EinstellungenSeite() {
   const [person, personenListe, ordnerListe, vorlagenListe] = await Promise.all([
     prisma.person.findUniqueOrThrow({
       where: { benutzername: kontext.personId },
-      select: { startseiteRaster: true, kalenderAboToken: true },
+      select: { startseiteRaster: true },
     }),
     personenAuswahlListe(),
     ordnerUebersicht(),
@@ -34,11 +29,6 @@ export default async function EinstellungenSeite() {
   ])
   const raster = parseRaster(person.startseiteRaster)
 
-  // Adresse des Abo-Feeds: fest über APP_URL, sonst aus der Anfrage (siehe basisUrlAusAnfrage).
-  const basisUrl = basisUrlAusAnfrage(await headers())
-  const aboUrl = person.kalenderAboToken
-    ? `${basisUrl}/api/kalender-abo/${person.kalenderAboToken}/intranet.ics`
-    : null
   // Für PersonenAuswahl (Kontakte-Kachel), den Ordner-Picker
   // (Wissensbereich-Kachel) und den Vorlagen-Picker (Formulare-Kachel) —
   // alle drei Auswahlen brauchen nur Name/Titel (+ Artikelzahl bei Ordnern),
@@ -88,17 +78,6 @@ export default async function EinstellungenSeite() {
             Auf Standard zurücksetzen
           </button>
         </form>
-      </section>
-
-      <section className="mt-4 rounded-xl border border-rand bg-flaeche p-4">
-        <h2 className="text-base font-semibold text-ueberschrift">Kalender</h2>
-        <p className="mt-1 text-sm text-sekundaer">
-          Deine Intranet-Termine automatisch in Outlook, im Handy-Kalender oder in Google Kalender anzeigen. Einzelne
-          Termine übernimmst du direkt im Termin mit „Zum Kalender hinzufügen“.
-        </p>
-        <div className="mt-3">
-          <KalenderAboDialog aboUrl={aboUrl} erzeugenAktion={kalenderAboErzeugen} beendenAktion={kalenderAboBeenden} />
-        </div>
       </section>
 
       <ZurueckButton />

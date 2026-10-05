@@ -195,8 +195,10 @@ model Person {
   /// 2026-10-07): wer den Link kennt, sieht Titel/Zeit/Ort der Termine
   /// dieser Person — Outlook & Co. können sich nicht anmelden, der Token IST
   /// die Zugangsberechtigung. `null` = kein Abo. Neu erzeugen macht den alten
-  /// Link ungültig. Siehe src/lib/kalender-abo/ und die Route
-  /// /api/kalender-abo/[token].
+  /// Link ungültig. DERZEIT NICHT GENUTZT: Die Abo-Funktion wurde am
+  /// 2026-10-05 wieder aus dem System genommen (Klärung mit den
+  /// Firmenkonten offen); Spalte und Migration bleiben bestehen, damit eine
+  /// Wiedereinführung keine Migration braucht.
   kalenderAboToken String?   @unique
   austrittAm       DateTime?
   /// Zeitpunkt der letzten Deaktivierung über den Adminbereich (siehe

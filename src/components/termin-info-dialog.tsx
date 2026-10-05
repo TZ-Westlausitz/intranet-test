@@ -1,10 +1,11 @@
 "use client"
 
 import { forwardRef, useImperativeHandle, useRef, useState } from "react"
-import { CalendarPlus, Check, FileText, X } from "lucide-react"
+import { Check, FileText, X } from "lucide-react"
 
 import type { Person, TerminStandardwerte } from "@/components/termin-form-felder"
 import { TerminBearbeitenDialog } from "@/components/termin-bearbeiten-dialog"
+import { TerminTeilenKnopf } from "@/components/termin-teilen-knopf"
 import { TERMIN_FARBE_KLASSEN, erinnerungLabel } from "@/lib/termin-optionen"
 import type { TerminAnhangAnzeige, TerminAnzeige } from "@/lib/termine/typen"
 import { TerminTeilnahmeStatus } from "@/generated/prisma/enums"
@@ -142,9 +143,14 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
 ) {
   const infoRef = useRef<HTMLDialogElement>(null)
   const [kommentarAnhaenge, setKommentarAnhaenge] = useState<string[]>([])
+  // Nur solange das Pop-Up offen ist (siehe TerminTeilenKnopf: Kalenderdatei wird erst dann geladen).
+  const [geoeffnet, setGeoeffnet] = useState(false)
 
   useImperativeHandle(weitergereichteRef, () => ({
-    oeffnen: () => infoRef.current?.showModal(),
+    oeffnen: () => {
+      infoRef.current?.showModal()
+      setGeoeffnet(true)
+    },
   }))
 
   const standardwerte: TerminStandardwerte = {
@@ -166,6 +172,7 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
   return (
     <dialog
       ref={infoRef}
+      onClose={() => setGeoeffnet(false)}
       className="fixed top-1/2 left-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
     >
       <div className="flex items-start justify-between gap-3 border-b border-rand px-5 py-4">
@@ -369,18 +376,11 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
       </div>
 
       <div className="flex items-center justify-between gap-3 border-t border-rand px-5 py-4">
-        <a
-          href={`/api/termine/${termin.id}/ics`}
-          download
-          className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
-        >
-          <CalendarPlus className="h-4 w-4" aria-hidden />
-          Zum Kalender hinzufügen
-        </a>
+        <TerminTeilenKnopf terminId={termin.id} titel={termin.titel} aktiv={geoeffnet} />
         <button
           type="button"
           onClick={() => infoRef.current?.close()}
-          className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
+          className="ml-auto h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
         >
           Schließen
         </button>
