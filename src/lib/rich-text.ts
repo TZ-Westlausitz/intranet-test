@@ -131,3 +131,27 @@ export function richTextZuText(html: string): string {
     .replace(/\s+/g, " ")
     .trim()
 }
+
+/**
+ * Wie `richTextZuText`, aber Absätze, Zeilenumbrüche und Listenpunkte bleiben
+ * als Zeilenumbrüche erhalten — für den Termin-Export in die Kalender-App,
+ * wo die Beschreibung sonst als ein einziger Textblock ankäme.
+ */
+export function richTextZuTextMitUmbruechen(html: string): string {
+  const mitUmbruechen = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "- ")
+    .replace(/<\/(p|li|h[1-6]|div|tr|ul|ol)>/gi, "\n")
+
+  return sanitizeHtml(mitUmbruechen, { allowedTags: [], allowedAttributes: {} })
+    .replaceAll("&nbsp;", " ")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll("&amp;", "&")
+    .replace(/[ \t]+/g, " ")
+    .replace(/ ?\n ?/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+}

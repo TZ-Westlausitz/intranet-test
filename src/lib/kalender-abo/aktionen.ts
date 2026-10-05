@@ -19,12 +19,12 @@ export async function kalenderAboErzeugen() {
     where: { benutzername: kontext.personId },
     data: { kalenderAboToken: randomBytes(32).toString("base64url") },
   })
-  revalidatePath("/kalender")
+  revalidatePath("/einstellungen")
 }
 
 /** Beendet das Abo: der Link liefert danach nichts mehr (404). */
 export async function kalenderAboBeenden() {
   const kontext = await berechtigung()
   await prisma.person.update({ where: { benutzername: kontext.personId }, data: { kalenderAboToken: null } })
-  revalidatePath("/kalender")
+  revalidatePath("/einstellungen")
 }

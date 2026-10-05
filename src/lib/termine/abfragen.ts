@@ -62,6 +62,23 @@ export async function termineFuerKalenderFeed(personId: string, von: Date, bis: 
   })
 }
 
+/** Ein einzelner Termin für den Export in die eigene Kalender-App — nur wenn diese Person ihn sehen darf. */
+export async function terminFuerExport(personId: string, terminId: string) {
+  return prisma.termin.findFirst({
+    where: { id: terminId, ...sichtbarFuer(personId) },
+    select: {
+      id: true,
+      titel: true,
+      beschreibung: true,
+      ort: true,
+      beginn: true,
+      ende: true,
+      ganztaegig: true,
+      erinnerungen: { select: { minutenVorher: true } },
+    },
+  })
+}
+
 /**
  * Volltextsuche über Titel, Notizen und die Namen aller Beteiligten
  * (erstellende Person + Teilnehmende) — eine einzelne Suchleiste statt

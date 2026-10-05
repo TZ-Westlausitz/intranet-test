@@ -1,7 +1,7 @@
 "use client"
 
 import { forwardRef, useImperativeHandle, useRef, useState } from "react"
-import { Check, FileText, X } from "lucide-react"
+import { CalendarPlus, Check, FileText, X } from "lucide-react"
 
 import type { Person, TerminStandardwerte } from "@/components/termin-form-felder"
 import { TerminBearbeitenDialog } from "@/components/termin-bearbeiten-dialog"
@@ -368,7 +368,15 @@ export const TerminInfoDialog = forwardRef<TerminInfoDialogHandle, {
         )}
       </div>
 
-      <div className="flex justify-end border-t border-rand px-5 py-4">
+      <div className="flex items-center justify-between gap-3 border-t border-rand px-5 py-4">
+        <a
+          href={`/api/termine/${termin.id}/ics`}
+          download
+          className="inline-flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
+        >
+          <CalendarPlus className="h-4 w-4" aria-hidden />
+          Zum Kalender hinzufügen
+        </a>
         <button
           type="button"
           onClick={() => infoRef.current?.close()}
