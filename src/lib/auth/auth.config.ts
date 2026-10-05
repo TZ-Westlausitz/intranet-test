@@ -48,8 +48,10 @@ export const authConfig = {
       const angemeldet = Boolean(auth?.user)
       const pfad = request.nextUrl.pathname
 
+      // /api/kalender-abo: Kalender-Apps (Outlook, Google, Apple) können sich
+      // nicht anmelden — dort ersetzt der geheime Token im Pfad die Anmeldung.
       const oeffentlich =
-        pfad.startsWith("/anmelden") || pfad.startsWith("/api/auth")
+        pfad.startsWith("/anmelden") || pfad.startsWith("/api/auth") || pfad.startsWith("/api/kalender-abo/")
 
       if (oeffentlich) return true
       return angemeldet

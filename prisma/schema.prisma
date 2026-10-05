@@ -190,13 +190,21 @@ model Person {
   /// gesetzt oder beide leer.
   geburtstagTag   Int?
   geburtstagMonat Int?
-  austrittAm      DateTime?
+
+  /// Geheimer Token im persönlichen Kalender-Abo-Link (Rückmeldung
+  /// 2026-10-07): wer den Link kennt, sieht Titel/Zeit/Ort der Termine
+  /// dieser Person — Outlook & Co. können sich nicht anmelden, der Token IST
+  /// die Zugangsberechtigung. `null` = kein Abo. Neu erzeugen macht den alten
+  /// Link ungültig. Siehe src/lib/kalender-abo/ und die Route
+  /// /api/kalender-abo/[token].
+  kalenderAboToken String?   @unique
+  austrittAm       DateTime?
   /// Zeitpunkt der letzten Deaktivierung über den Adminbereich (siehe
   /// personAktivSetzen) — für die "kürzlich deaktiviert"-Kachel dort.
   /// Bewusst getrennt von `austrittAm` (Eintritts-/Austrittsdatum als
   /// HR-Angabe, noch nirgends gepflegt): Zugang sperren und Firma
   /// verlassen sind zwei unterschiedliche Ereignisse.
-  deaktiviertAm   DateTime?
+  deaktiviertAm    DateTime?
 
   /// Modulares Startseiten-Raster (Tablet/Desktop, siehe
   /// src/lib/startseite/raster.ts): welches Modul in welchem der 8

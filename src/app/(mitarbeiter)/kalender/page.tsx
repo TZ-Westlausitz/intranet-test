@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { headers } from "next/headers"
 
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
@@ -25,6 +26,8 @@ import { schulferienFuer } from "@/lib/schulferien-sachsen"
 import { datumIsoAusDate, zeitAusDate, formatiereDatumAusDate, berlinerTagesbeginn } from "@/lib/datum"
 import { richTextZuText } from "@/lib/rich-text"
 import { sichtbareGeburtstage } from "@/lib/geburtstage/abfragen"
+import { KalenderAboDialog } from "@/components/kalender-abo-dialog"
+import { kalenderAboErzeugen, kalenderAboBeenden } from "@/lib/kalender-abo/aktionen"
 import type { Prisma } from "@/generated/prisma/client"
 
 type TerminMitBeziehungen = Prisma.TerminGetPayload<{
@@ -198,7 +201,7 @@ export default async function KalenderSeite({
   const monatEnde = new Date(Date.UTC(heute.getUTCFullYear(), heute.getUTCMonth() + 1, 1) - 1)
   const uebersichtBis = wocheEnde > monatEnde ? wocheEnde : monatEnde
 
-  const [termine, personen, kommendeTermineRoh, sucheErgebnisRoh, geburtstage] = await Promise.all([
+  const [termine, personen, kommendeTermineRoh, sucheErgebnisRoh, geburtstage, aboPerson] = await Promise.all([
     termineFuerZeitraum(kontext.personId, ersterTag, letzterTag),
     prisma.person.findMany({
       where: { aktiv: true, benutzername: { not: kontext.personId } },
@@ -208,7 +211,16 @@ export default async function KalenderSeite({
     termineFuerZeitraum(kontext.personId, heute, uebersichtBis),
     suchtext ? termineSuchen(kontext.personId, suchtext) : Promise.resolve([]),
     sichtbareGeburtstage(kontext.personId),
+    prisma.person.findUnique({ where: { benutzername: kontext.personId }, select: { kalenderAboToken: true } }),
   ])
+
+  // Adresse des Abo-Feeds aus der Anfrage ableiten (Vercel setzt x-forwarded-*), damit sie überall stimmt — lokal, Testserver, später On-Premise.
+  const kopf = await headers()
+  const host = kopf.get("x-forwarded-host") ?? kopf.get("host") ?? "localhost:3000"
+  const protokoll = kopf.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https")
+  const aboUrl = aboPerson?.kalenderAboToken
+    ? `${protokoll}://${host}/api/kalender-abo/${aboPerson.kalenderAboToken}/intranet.ics`
+    : null
 
   // Kompakteres Datum als im Info-Pop-Up — die Zeile hat nur begrenzt Platz.
   const kurzesDatum = (datum: Date) =>
@@ -380,6 +392,10 @@ export default async function KalenderSeite({
         rueckkehrJahr={jahr}
         rueckkehrMonat={monatIndex0 + 1}
       />
+
+      <div className="mt-4 flex justify-end">
+        <KalenderAboDialog aboUrl={aboUrl} erzeugenAktion={kalenderAboErzeugen} beendenAktion={kalenderAboBeenden} />
+      </div>
 
       <TerminUebersicht
         eintraege={kommendeTermine}

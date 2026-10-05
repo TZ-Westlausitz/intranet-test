@@ -49,6 +49,20 @@ export async function termineFuerZeitraum(personId: string, von: Date, bis: Date
 }
 
 /**
+ * Schlanke Variante für den Kalender-Abo-Feed: nur die Felder, die dort
+ * ausgeliefert werden — keine Beschreibung, Teilnehmenden oder Kommentare
+ * (siehe kalenderFeedBauen). Gleiche Sichtbarkeit wie überall.
+ */
+export async function termineFuerKalenderFeed(personId: string, von: Date, bis: Date) {
+  return prisma.termin.findMany({
+    where: { ...sichtbarFuer(personId), beginn: { lte: bis }, ende: { gte: von } },
+    select: { id: true, titel: true, ort: true, beginn: true, ende: true, ganztaegig: true },
+    orderBy: { beginn: "asc" },
+    take: 2000,
+  })
+}
+
+/**
  * Volltextsuche über Titel, Notizen und die Namen aller Beteiligten
  * (erstellende Person + Teilnehmende) — eine einzelne Suchleiste statt
  * mehrerer Filterfelder wie im alten "Überblick" (Ort/Kategorie/Sichtbar
