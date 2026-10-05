@@ -84,6 +84,55 @@ export function datumIsoAusDate(datum: Date): string {
   return `${jahr}-${monat}-${tag}`
 }
 
+/**
+ * Abstand Berlin → UTC an diesem Zeitpunkt in Millisekunden (Winter +1 h,
+ * Sommer +2 h), per `Intl` — unabhängig von der Zeitzone des Servers.
+ */
+function berlinerVersatzMs(zeitpunktMs: number): number {
+  const teile = Object.fromEntries(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "Europe/Berlin",
+      hourCycle: "h23",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+    })
+      .formatToParts(new Date(zeitpunktMs))
+      .map((teil) => [teil.type, Number(teil.value)]),
+  )
+  const wandUhrAlsUtc = Date.UTC(teile.year, teile.month - 1, teile.day, teile.hour, teile.minute, teile.second)
+  return wandUhrAlsUtc - Math.floor(zeitpunktMs / 1000) * 1000
+}
+
+/**
+ * Berliner Wanduhrzeit → echter Zeitpunkt ("2026-10-17" + "09:00" ist 09:00
+ * in Berlin, egal wo der Server läuft). Für Eingaben aus Formularen: ein
+ * `new Date("2026-10-17T09:00:00")` ohne Zeitzone liest den Text in der
+ * Zeitzone der AUSFÜHRENDEN Umgebung — auf Vercel (UTC) wäre das 09:00 UTC
+ * und damit in Berlin 11:00. `null` bei ungültigem Datum oder ungültiger Zeit.
+ */
+export function berlinerZeitpunkt(datumIso: string, zeit = "00:00:00"): Date | null {
+  const datum = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datumIso.trim())
+  const uhr = /^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(zeit.trim())
+  if (!datum || !uhr) return null
+
+  const [jahr, monat, tag] = [Number(datum[1]), Number(datum[2]), Number(datum[3])]
+  const [stunde, minute, sekunde] = [Number(uhr[1]), Number(uhr[2]), Number(uhr[3] ?? 0)]
+  const wandUhrAlsUtc = Date.UTC(jahr, monat - 1, tag, stunde, minute, sekunde)
+
+  // Wurde z. B. der 31.04. zum 01.05. umgerechnet oder die Uhrzeit überlaufen, war die Eingabe ungültig.
+  const probe = new Date(wandUhrAlsUtc)
+  if (probe.getUTCFullYear() !== jahr || probe.getUTCMonth() !== monat - 1 || probe.getUTCDate() !== tag) return null
+  if (stunde > 23 || minute > 59 || sekunde > 59) return null
+
+  // Zweimal nähern: der Versatz hängt selbst vom Zeitpunkt ab (Sommer-/Winterzeit-Wechsel).
+  const ersterVersuch = wandUhrAlsUtc - berlinerVersatzMs(wandUhrAlsUtc)
+  return new Date(wandUhrAlsUtc - berlinerVersatzMs(ersterVersuch))
+}
+
 /** "2026-11-30" → Kalendertag als UTC-Mitternacht (Konvention dieser Datei); leer/ungültig → null. */
 export function kalendertagAusEingabe(wert: FormDataEntryValue | null): Date | null {
   const text = String(wert ?? "").trim()

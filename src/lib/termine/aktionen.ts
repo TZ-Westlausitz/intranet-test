@@ -9,7 +9,7 @@ import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
 import { TerminFarbe, TerminTeilnahmeStatus } from "@/generated/prisma/enums"
 import { benachrichtigungErstellen } from "@/lib/benachrichtigungen/erstellen"
-import { formatiereDatumAusDate, zeitAusDate, berlinerTagesbeginn, teileInBerlinerZeit } from "@/lib/datum"
+import { formatiereDatumAusDate, zeitAusDate, berlinerZeitpunkt, heutigesDatumIso, teileInBerlinerZeit } from "@/lib/datum"
 import { richTextSanitisieren } from "@/lib/rich-text"
 import { terminAnhaengePruefen, terminAnhaengeSpeichern, terminAnhaengeLoeschen } from "@/lib/termine/anhaenge"
 import { naechsteWiederholung, type WiederholenTyp, type WiederholenEinheit } from "@/lib/termine/wiederholung"
@@ -19,6 +19,19 @@ const MAX_WIEDERHOLUNGEN = 200
 
 function anhaengeAusFormData(formData: FormData): File[] {
   return formData.getAll("anhaenge").filter((wert): wert is File => wert instanceof File)
+}
+
+/** "2026-10-17" → dieser Kalendertag als lokale Mitternacht (nur zum Tage-Weiterzählen, siehe terminErstellen); ungültig → null. */
+function lokalerTag(iso: string): Date | null {
+  const treffer = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (!treffer) return null
+  const tag = new Date(Number(treffer[1]), Number(treffer[2]) - 1, Number(treffer[3]))
+  return Number.isNaN(tag.getTime()) ? null : tag
+}
+
+function lokalerTagAlsIso(tag: Date): string {
+  const zweistellig = (zahl: number) => String(zahl).padStart(2, "0")
+  return `${tag.getFullYear()}-${zweistellig(tag.getMonth() + 1)}-${zweistellig(tag.getDate())}`
 }
 
 /** Rundet auf die nächste volle Viertelstunde auf (14:07 → 14:15, 14:15 bleibt 14:15). */
@@ -66,42 +79,47 @@ function terminEingabenLesen(
     redirect(`${rueckkehrPfad}&fehler=${anhaengeFehler}`)
   }
 
-  let beginn: Date
-  let ende: Date
+  // Alle Eingaben sind Berliner Wanduhrzeit — NICHT `new Date("<iso>T<zeit>")`,
+  // das läse sie in der Zeitzone des Servers (auf Vercel UTC: Uhrzeiten wären
+  // 1–2 Stunden verschoben, "bis"-Tage ganztägiger Termine einen Tag zu spät).
+  // Ganztägig: Tagesanfang und Tagesende in Berlin, die Uhrzeit hat keine Bedeutung.
+  let vonDatum: string
+  let bisDatum: string
+  let vonZeit: string
+  let bisZeit: string
 
   if (ganztaegig) {
-    const vonDatum = String(formData.get("vonDatum") ?? "")
-    const bisDatum = String(formData.get("bisDatum") ?? "")
+    vonDatum = String(formData.get("vonDatum") ?? "")
+    bisDatum = String(formData.get("bisDatum") ?? "")
+    vonZeit = "00:00:00"
+    bisZeit = "23:59:59"
     if (!titel || !vonDatum || !bisDatum) {
       redirect(`${rueckkehrPfad}&fehler=pflichtfeld`)
     }
-    beginn = new Date(`${vonDatum}T00:00:00`)
-    ende = new Date(`${bisDatum}T23:59:59`)
-
-    if (!Number.isNaN(beginn.getTime()) && !Number.isNaN(ende.getTime())) {
-      const spanneTage = (ende.getTime() - beginn.getTime()) / 86_400_000
-      if (spanneTage > 366) {
-        redirect(`${rueckkehrPfad}&fehler=zuLang`)
-      }
-    }
   } else {
-    const datum = String(formData.get("datum") ?? "")
-    const von = String(formData.get("von") ?? "")
-    const bis = String(formData.get("bis") ?? "")
-    if (!titel || !datum || !von || !bis) {
+    vonDatum = String(formData.get("datum") ?? "")
+    bisDatum = vonDatum
+    vonZeit = String(formData.get("von") ?? "")
+    bisZeit = String(formData.get("bis") ?? "")
+    if (!titel || !vonDatum || !vonZeit || !bisZeit) {
       redirect(`${rueckkehrPfad}&fehler=pflichtfeld`)
     }
-    beginn = new Date(`${datum}T${von}:00`)
-    ende = new Date(`${datum}T${bis}:00`)
   }
 
-  if (Number.isNaN(beginn.getTime()) || Number.isNaN(ende.getTime()) || ende < beginn) {
+  const beginn = berlinerZeitpunkt(vonDatum, vonZeit)
+  const ende = berlinerZeitpunkt(bisDatum, bisZeit)
+  if (!beginn || !ende || ende < beginn) {
     redirect(`${rueckkehrPfad}&fehler=zeitraum`)
   }
 
+  if (ganztaegig && (ende.getTime() - beginn.getTime()) / 86_400_000 > 366) {
+    redirect(`${rueckkehrPfad}&fehler=zuLang`)
+  }
+
   if (pruefeVergangenheit) {
-    const jetzt = new Date()
-    const zuFrueh = ganztaegig ? beginn < berlinerTagesbeginn(jetzt) : beginn < naechsteViertelstundeAb(jetzt)
+    // Ganztägig zählt nur der Kalendertag (Textvergleich "2026-10-17" ≥ heute),
+    // sonst wäre "heute" als ganztägiger Termin nie wählbar.
+    const zuFrueh = ganztaegig ? vonDatum < heutigesDatumIso() : beginn < naechsteViertelstundeAb(new Date())
     if (zuFrueh) {
       redirect(`${rueckkehrPfad}&fehler=vergangenheit`)
     }
@@ -130,6 +148,8 @@ function terminEingabenLesen(
     farbe,
     teilnehmerIds,
     erinnerungenMinuten,
+    // Für die Serien-Erzeugung (siehe terminErstellen): Datum/Uhrzeit als Text, nicht als Zeitpunkt.
+    eingabe: { vonDatum, bisDatum, vonZeit, bisZeit },
   }
 }
 
@@ -181,7 +201,7 @@ const WIEDERHOLEN_TYPEN: WiederholenTyp[] = [
 export async function terminErstellen(formData: FormData) {
   const kontext = await berechtigung()
   const rueckkehrPfad = rueckkehrPfadAus(formData)
-  const { teilnehmerIds, erinnerungenMinuten, beginn, ende, ...felder } = terminEingabenLesen(
+  const { teilnehmerIds, erinnerungenMinuten, beginn, ende, eingabe, ...felder } = terminEingabenLesen(
     formData,
     kontext,
     rueckkehrPfad,
@@ -194,7 +214,7 @@ export async function terminErstellen(formData: FormData) {
     : null
   const unbefristet = formData.get("wiederholenUnbefristet") === "on"
   const wiederholenBisEingabe = String(formData.get("wiederholenBis") ?? "")
-  const wiederholenBis = !unbefristet && wiederholenBisEingabe ? new Date(`${wiederholenBisEingabe}T23:59:59`) : null
+  const wiederholenBis = !unbefristet && wiederholenBisEingabe ? lokalerTag(wiederholenBisEingabe) : null
 
   const intervallEingabe = Number.parseInt(String(formData.get("wiederholenIntervall") ?? "1"), 10)
   const benutzerdefiniert = {
@@ -214,13 +234,23 @@ export async function terminErstellen(formData: FormData) {
   // Kommentar am Model Termin). 200 Termine reichen für praktisch jeden
   // wiederkehrenden Fall (z. B. 200 Wochen ≈ fast 4 Jahre) — wer mehr
   // braucht, legt die Serie später einfach erneut an.
-  if (wiederholen && (unbefristet || wiederholenBis)) {
-    const dauerMs = ende.getTime() - beginn.getTime()
-    let naechsterBeginn = naechsteWiederholung(beginn, beginn, wiederholen, benutzerdefiniert)
+  //
+  // Gerechnet wird in Kalendertagen (Berliner Datum), nicht in Millisekunden:
+  // "jeden Dienstag 09:00" bleibt so auch über die Zeitumstellung 09:00 in
+  // Berlin, statt um eine Stunde zu wandern.
+  if (wiederholen && (unbefristet || wiederholenBis) && lokalerTag(eingabe.vonDatum)) {
+    const ersterTag = lokalerTag(eingabe.vonDatum)!
+    const spanneTage = Math.round((lokalerTag(eingabe.bisDatum)!.getTime() - ersterTag.getTime()) / 86_400_000)
+    let tag = naechsteWiederholung(ersterTag, ersterTag, wiederholen, benutzerdefiniert)
 
-    while ((unbefristet || naechsterBeginn <= wiederholenBis!) && zeitraeume.length < MAX_WIEDERHOLUNGEN) {
-      zeitraeume.push({ beginn: naechsterBeginn, ende: new Date(naechsterBeginn.getTime() + dauerMs) })
-      naechsterBeginn = naechsteWiederholung(naechsterBeginn, beginn, wiederholen, benutzerdefiniert)
+    while ((unbefristet || tag <= wiederholenBis!) && zeitraeume.length < MAX_WIEDERHOLUNGEN) {
+      const bisTag = new Date(tag)
+      bisTag.setDate(bisTag.getDate() + spanneTage)
+      const serienBeginn = berlinerZeitpunkt(lokalerTagAlsIso(tag), eingabe.vonZeit)
+      const serienEnde = berlinerZeitpunkt(lokalerTagAlsIso(bisTag), eingabe.bisZeit)
+      if (!serienBeginn || !serienEnde) break
+      zeitraeume.push({ beginn: serienBeginn, ende: serienEnde })
+      tag = naechsteWiederholung(tag, ersterTag, wiederholen, benutzerdefiniert)
     }
   }
 
@@ -273,13 +303,14 @@ export async function terminAktualisieren(terminId: string, formData: FormData) 
   // Keine Vergangenheits-Prüfung beim Bearbeiten: ein bereits vergangener
   // Termin muss weiter bearbeitbar bleiben (z. B. nachträglich ein Foto
   // ergänzen) — siehe Kommentar an terminEingabenLesen.
-  const { teilnehmerIds, erinnerungenMinuten, ...felder } = terminEingabenLesen(
+  const { teilnehmerIds, erinnerungenMinuten, eingabe, ...felder } = terminEingabenLesen(
     formData,
     kontext,
     rueckkehrPfad,
     false,
   )
 
+  void eingabe // Datum/Uhrzeit als Text braucht nur die Serien-Erzeugung beim Anlegen
   // Teilnehmer per Upsert statt Löschen+Neuanlegen: Wer schon zu-/abgesagt
   // hatte, soll das beim Bearbeiten (z. B. nur die Uhrzeit ändern) nicht
   // verlieren. Nur wer aus der Liste rausfällt, wird wirklich entfernt.
