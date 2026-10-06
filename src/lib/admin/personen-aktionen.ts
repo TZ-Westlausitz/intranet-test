@@ -161,92 +161,54 @@ export async function personAktivSetzen(personId: string, aktiv: boolean) {
   revalidatePath("/admin")
 }
 
+export type PersonSpeichernErgebnis = { ok: boolean; fehler?: string }
+
 /**
- * Benutzername nachträglich ändern — die automatische Zusammensetzung
- * greift nur beim Anlegen (personErstellen). Vor allem gedacht, um
- * Alt-Logins (noch mit Personalnummer aus der Zeit vor der Umstellung,
- * siehe Kommentar am Model Person) auf das neue Format zu bringen.
+ * Speichert ALLES, was im Bearbeiten-Pop-Up einer Person steht, in einem
+ * Rutsch (Rückmeldung 2026-10-06: ein Speichern-Knopf unten statt einer je
+ * Abschnitt): Benutzername, Eintrittsdatum, Gruppen, Berechtigungen, beendete
+ * und neue Zugehörigkeiten. Alles läuft in EINER Transaktion — entweder wird
+ * alles gespeichert oder nichts.
+ *
+ * Der Benutzername ist der Primärschlüssel (siehe Model Person); die
+ * Fremdschlüssel laufen mit onUpdate: Cascade, Postgres schreibt also jede
+ * referenzierende Zeile (Zugehoerigkeit, Ausleihe, Termin, ...) automatisch
+ * um. Deshalb kommt die Umbenennung als LETZTER Schritt: Alle anderen
+ * Änderungen laufen noch unter dem alten Namen. Ein bereits vergebener Name
+ * wird vorab geprüft und als Fehlertext zurückgegeben (statt die Seite mit
+ * einer Fehlerseite abzubrechen) — dann ist noch nichts gespeichert.
+ *
+ * `Gruppen` lässt die automatische Gruppe "Alle" unangetastet (sie steht gar
+ * nicht erst als Checkbox im Formular, ein `notIn`-Löschen ohne den Zusatz
+ * würde sie sonst bei jedem Speichern entfernen). Zugehörigkeiten werden nie
+ * gelöscht, sondern zum heutigen Tag beendet (die Historie bleibt).
  */
-export async function personBenutzernameAktualisieren(personId: string, formData: FormData) {
+export async function personSpeichern(
+  personId: string,
+  _vorher: PersonSpeichernErgebnis | null,
+  formData: FormData,
+): Promise<PersonSpeichernErgebnis> {
   await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
 
-  const benutzername = String(formData.get("benutzername") ?? "").trim()
-  if (!benutzername) return
-
-  const vorhanden = await prisma.person.findUnique({ where: { benutzername } })
-  if (vorhanden && vorhanden.benutzername !== personId) {
-    throw new Error(`Der Benutzername "${benutzername}" ist schon vergeben.`)
+  const neuerName = String(formData.get("benutzername") ?? "").trim()
+  if (!neuerName) return { ok: false, fehler: "Der Benutzername darf nicht leer sein." }
+  if (neuerName !== personId) {
+    const vorhanden = await prisma.person.findUnique({ where: { benutzername: neuerName }, select: { benutzername: true } })
+    if (vorhanden) return { ok: false, fehler: `Der Benutzername "${neuerName}" ist schon vergeben.` }
   }
 
-  // benutzername ist der Primärschlüssel (siehe Model Person) — dieses
-  // Update ändert also den Primärschlüssel selbst. Die Fremdschlüssel-
-  // Relationen auf Person laufen mit onUpdate: Cascade, deshalb schreibt
-  // Postgres automatisch jede referenzierende Zeile (Zugehoerigkeit,
-  // Ausleihe, Termin, ...) auf den neuen Wert um.
-  await prisma.person.update({ where: { benutzername: personId }, data: { benutzername } })
-
-  revalidatePath("/admin/benutzer")
-}
-
-/**
- * Trägt das Eintrittsdatum nach bzw. korrigiert es (leer = Angabe entfernen).
- * HR-Angabe: nur im Adminbereich sichtbar und änderbar, Grundlage für die
- * spätere Jubiläums-Übersicht.
- */
-export async function personEintrittsdatumAktualisieren(personId: string, formData: FormData) {
-  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
-
-  await prisma.person.update({
-    where: { benutzername: personId },
-    data: { eintrittAm: kalendertagAusEingabe(formData.get("eintrittAm")) },
-  })
-
-  revalidatePath("/admin/benutzer")
-}
-
-/**
- * Ergänzt eine weitere Zugehörigkeit (Standort × Abteilung) — eine
- * Person kann mehrere gleichzeitig haben, siehe Kommentar am Model
- * Zugehoerigkeit ("Mehrfachstandorte kommen vor"). Anders als beim Anlegen
- * (personErstellen) wird der Standort hier weiterhin abgefragt: wer über
- * "Bearbeiten" gezielt einen festen Standort ergänzen will, kann das.
- */
-export async function zugehoerigkeitHinzufuegen(personId: string, formData: FormData) {
-  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
-
+  const gruppenIds = formData.getAll("gruppen").map(String)
+  const berechtigungIds = formData.getAll("berechtigungen").map(String)
+  const zuBeenden = formData.getAll("zugehoerigkeitBeenden").map(String)
   const standortId = String(formData.get("standortId") ?? "")
   const abteilungId = String(formData.get("abteilungId") ?? "")
-  if (!standortId || !abteilungId) return
-
-  await prisma.zugehoerigkeit.upsert({
-    where: { personId_standortId_abteilungId: { personId, standortId, abteilungId } },
-    update: { bisDatum: null },
-    create: { personId, standortId, abteilungId },
-  })
-
-  revalidatePath("/admin/benutzer")
-}
-
-/** Beendet eine Zugehörigkeit zum heutigen Tag statt sie zu löschen — die Historie bleibt nachvollziehbar. */
-export async function zugehoerigkeitBeenden(zugehoerigkeitId: string) {
-  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
-
-  await prisma.zugehoerigkeit.update({ where: { id: zugehoerigkeitId }, data: { bisDatum: new Date() } })
-
-  revalidatePath("/admin/benutzer")
-}
-
-/** Ersetzt die komplette Gruppen-Zuordnung einer Person durch die im Formular angehakten Gruppen. */
-export async function personGruppenAktualisieren(personId: string, formData: FormData) {
-  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
-
-  const gruppenIds = formData.getAll("gruppen").map(String)
 
   await prisma.$transaction([
-    // gruppe: { automatisch: false } lässt die Mitgliedschaft in der
-    // Sonder-Gruppe "Alle" unangetastet — die steht (bewusst) gar nicht
-    // erst als Checkbox im Formular, ein `notIn`-Löschen ohne diesen
-    // Zusatz würde sie sonst bei jedem Speichern hier entfernen.
+    prisma.person.update({
+      where: { benutzername: personId },
+      data: { eintrittAm: kalendertagAusEingabe(formData.get("eintrittAm")) },
+    }),
+
     prisma.personGruppe.deleteMany({
       where: { personId, gruppeId: { notIn: gruppenIds }, gruppe: { automatisch: false } },
     }),
@@ -257,18 +219,7 @@ export async function personGruppenAktualisieren(personId: string, formData: For
         create: { personId, gruppeId },
       }),
     ),
-  ])
 
-  revalidatePath("/admin/benutzer")
-}
-
-/** Ersetzt die komplette Berechtigungs-Zuordnung einer Person durch die im Formular angehakten Berechtigungen. */
-export async function personBerechtigungenAktualisieren(personId: string, formData: FormData) {
-  await berechtigung({ benoetigteBerechtigung: "Adminbereich" })
-
-  const berechtigungIds = formData.getAll("berechtigungen").map(String)
-
-  await prisma.$transaction([
     prisma.personBerechtigung.deleteMany({ where: { personId, berechtigungId: { notIn: berechtigungIds } } }),
     ...berechtigungIds.map((berechtigungId) =>
       prisma.personBerechtigung.upsert({
@@ -277,7 +228,27 @@ export async function personBerechtigungenAktualisieren(personId: string, formDa
         create: { personId, berechtigungId },
       }),
     ),
+
+    // Nur Zugehörigkeiten DIESER Person (die IDs kommen aus dem Browser).
+    prisma.zugehoerigkeit.updateMany({
+      where: { id: { in: zuBeenden }, personId },
+      data: { bisDatum: new Date() },
+    }),
+    ...(standortId && abteilungId
+      ? [
+          prisma.zugehoerigkeit.upsert({
+            where: { personId_standortId_abteilungId: { personId, standortId, abteilungId } },
+            update: { bisDatum: null },
+            create: { personId, standortId, abteilungId },
+          }),
+        ]
+      : []),
+
+    ...(neuerName !== personId
+      ? [prisma.person.update({ where: { benutzername: personId }, data: { benutzername: neuerName } })]
+      : []),
   ])
 
   revalidatePath("/admin/benutzer")
+  return { ok: true }
 }

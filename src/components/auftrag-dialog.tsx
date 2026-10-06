@@ -9,6 +9,7 @@ import type { AuftragStandardwerte } from "@/lib/auftraege/standardwerte"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAET_NAMEN } from "@/lib/aufgaben-optionen"
 import { AUFGABE_STATUS_KLASSEN, AUFGABE_STATUS_NAMEN } from "@/lib/projekte-optionen"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 export type AuftragDialogDaten = {
   id: string
@@ -203,12 +204,12 @@ export function AuftragDialog({
                     >
                       Abbrechen
                     </button>
-                    <button
+                    <SpeichernKnopf
                       type="submit"
                       className="h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
                     >
                       Speichern
-                    </button>
+                    </SpeichernKnopf>
                   </div>
                   <FormularAenderungenSchutz />
                 </form>

@@ -1,5 +1,6 @@
 "use client"
 
+import type { PersonSpeichernErgebnis } from "@/lib/admin/personen-aktionen"
 import { useMemo, useState } from "react"
 import { Search } from "lucide-react"
 
@@ -42,12 +43,7 @@ export function BenutzerListe({
   gruppen,
   standorte,
   berechtigungenListe,
-  benutzernameAktualisierenAktion,
-  eintrittsdatumAktualisierenAktion,
-  zugehoerigkeitHinzufuegenAktion,
-  zugehoerigkeitBeendenAktion,
-  personGruppenAktualisierenAktion,
-  personBerechtigungenAktualisierenAktion,
+  personSpeichernAktion,
   personPasswortZuruecksetzenAktion,
   personAktivSetzenAktion,
 }: {
@@ -56,12 +52,11 @@ export function BenutzerListe({
   gruppen: Option[]
   standorte: Option[]
   berechtigungenListe: Option[]
-  benutzernameAktualisierenAktion: (personId: string, formData: FormData) => void
-  eintrittsdatumAktualisierenAktion: (personId: string, formData: FormData) => void
-  zugehoerigkeitHinzufuegenAktion: (personId: string, formData: FormData) => void
-  zugehoerigkeitBeendenAktion: (zugehoerigkeitId: string) => void
-  personGruppenAktualisierenAktion: (personId: string, formData: FormData) => void
-  personBerechtigungenAktualisierenAktion: (personId: string, formData: FormData) => void
+  personSpeichernAktion: (
+    personId: string,
+    vorher: PersonSpeichernErgebnis | null,
+    formData: FormData,
+  ) => Promise<PersonSpeichernErgebnis>
   personPasswortZuruecksetzenAktion: (personId: string) => Promise<string>
   personAktivSetzenAktion: (personId: string, aktiv: boolean) => void
 }) {
@@ -96,12 +91,7 @@ export function BenutzerListe({
     abteilungen,
     gruppen,
     berechtigungenListe,
-    benutzernameAktualisierenAktion,
-    eintrittsdatumAktualisierenAktion,
-    zugehoerigkeitHinzufuegenAktion,
-    zugehoerigkeitBeendenAktion,
-    personGruppenAktualisierenAktion,
-    personBerechtigungenAktualisierenAktion,
+                personSpeichernAktion,
     personPasswortZuruecksetzenAktion,
     personAktivSetzenAktion,
   }
@@ -187,12 +177,7 @@ function BenutzerZeile({
   abteilungen,
   gruppen,
   berechtigungenListe,
-  benutzernameAktualisierenAktion,
-  eintrittsdatumAktualisierenAktion,
-  zugehoerigkeitHinzufuegenAktion,
-  zugehoerigkeitBeendenAktion,
-  personGruppenAktualisierenAktion,
-  personBerechtigungenAktualisierenAktion,
+  personSpeichernAktion,
   personPasswortZuruecksetzenAktion,
   personAktivSetzenAktion,
 }: {
@@ -201,12 +186,11 @@ function BenutzerZeile({
   abteilungen: Option[]
   gruppen: Option[]
   berechtigungenListe: Option[]
-  benutzernameAktualisierenAktion: (personId: string, formData: FormData) => void
-  eintrittsdatumAktualisierenAktion: (personId: string, formData: FormData) => void
-  zugehoerigkeitHinzufuegenAktion: (personId: string, formData: FormData) => void
-  zugehoerigkeitBeendenAktion: (zugehoerigkeitId: string) => void
-  personGruppenAktualisierenAktion: (personId: string, formData: FormData) => void
-  personBerechtigungenAktualisierenAktion: (personId: string, formData: FormData) => void
+  personSpeichernAktion: (
+    personId: string,
+    vorher: PersonSpeichernErgebnis | null,
+    formData: FormData,
+  ) => Promise<PersonSpeichernErgebnis>
   personPasswortZuruecksetzenAktion: (personId: string) => Promise<string>
   personAktivSetzenAktion: (personId: string, aktiv: boolean) => void
 }) {
@@ -233,12 +217,7 @@ function BenutzerZeile({
             ausgewaehlteGruppenIds={person.gruppenIds}
             berechtigungenListe={berechtigungenListe}
             ausgewaehlteBerechtigungIds={person.berechtigungIds}
-            benutzernameAktualisierenAktion={benutzernameAktualisierenAktion}
-            eintrittsdatumAktualisierenAktion={eintrittsdatumAktualisierenAktion}
-            zugehoerigkeitHinzufuegenAktion={zugehoerigkeitHinzufuegenAktion}
-            zugehoerigkeitBeendenAktion={zugehoerigkeitBeendenAktion}
-            personGruppenAktualisierenAktion={personGruppenAktualisierenAktion}
-            personBerechtigungenAktualisierenAktion={personBerechtigungenAktualisierenAktion}
+            personSpeichernAktion={personSpeichernAktion}
             personPasswortZuruecksetzenAktion={personPasswortZuruecksetzenAktion}
           />
           <form action={personAktivSetzenAktion.bind(null, person.benutzername, !person.aktiv)}>

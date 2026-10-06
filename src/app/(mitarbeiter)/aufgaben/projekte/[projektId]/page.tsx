@@ -43,6 +43,7 @@ import { projektNachrichtErstellen } from "@/lib/projekte/nachrichten-aktionen"
 import { PROJEKT_STATUS_KLASSEN, PROJEKT_STATUS_NAMEN } from "@/lib/projekte-optionen"
 import { datumIsoAusDate, berlinerTagesbeginn } from "@/lib/datum"
 import { richTextZuText } from "@/lib/rich-text"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 const FEHLER_TEXTE: Record<string, string> = {
   pflichtfeld: "Bitte alle Pflichtfelder ausfüllen.",
@@ -307,12 +308,12 @@ export default async function ProjektDetailSeite({
                 }}
                 zeigeStatus
               />
-              <button
+              <SpeichernKnopf
                 type="submit"
                 className="ml-auto h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
               >
                 Speichern
-              </button>
+              </SpeichernKnopf>
               <FormularAenderungenSchutz />
             </form>
           </details>

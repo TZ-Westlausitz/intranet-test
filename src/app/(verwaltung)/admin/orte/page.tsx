@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { ortErstellen, ortUmbenennen, ortAktivSetzen } from "@/lib/admin/orte-aktionen"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 /**
  * Orte sind feinere Standorte innerhalb eines Standorts, z. B. "Kamenz -
@@ -60,12 +61,12 @@ export default async function OrteSeite() {
                   (ort.aktiv ? "" : "text-tertiaer")
                 }
               />
-              <button
+              <SpeichernKnopf
                 type="submit"
                 className="h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-sekundaer transition hover:bg-flaeche-100"
               >
                 Speichern
-              </button>
+              </SpeichernKnopf>
               <FormularAenderungenSchutz />
             </form>
             <form action={ortAktivSetzen.bind(null, ort.id, !ort.aktiv)}>

@@ -7,6 +7,7 @@ import {
   berechtigungUmbenennen,
   berechtigungAktivSetzen,
 } from "@/lib/admin/berechtigungen-aktionen"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 /**
  * Berechtigungen sind feature-bezogene Freischaltungen unabhängig von
@@ -64,12 +65,12 @@ export default async function BerechtigungenSeite() {
                   (berechtigung.aktiv ? "" : "text-tertiaer")
                 }
               />
-              <button
+              <SpeichernKnopf
                 type="submit"
                 className="h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-sekundaer transition hover:bg-flaeche-100"
               >
                 Speichern
-              </button>
+              </SpeichernKnopf>
               <FormularAenderungenSchutz />
             </form>
             <span

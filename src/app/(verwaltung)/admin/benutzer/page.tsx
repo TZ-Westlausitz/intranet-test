@@ -6,14 +6,9 @@ import { PersonErstellenFormular } from "@/components/admin/person-erstellen-for
 import { BenutzerListe } from "@/components/admin/benutzer-liste"
 import {
   personErstellen,
+  personSpeichern,
   personAktivSetzen,
   personPasswortZuruecksetzen,
-  personBenutzernameAktualisieren,
-  personEintrittsdatumAktualisieren,
-  zugehoerigkeitHinzufuegen,
-  zugehoerigkeitBeenden,
-  personGruppenAktualisieren,
-  personBerechtigungenAktualisieren,
 } from "@/lib/admin/personen-aktionen"
 
 /**
@@ -85,12 +80,7 @@ export default async function BenutzerSeite() {
         gruppen={gruppen}
         standorte={standorte}
         berechtigungenListe={berechtigungenListe}
-        benutzernameAktualisierenAktion={personBenutzernameAktualisieren}
-        eintrittsdatumAktualisierenAktion={personEintrittsdatumAktualisieren}
-        zugehoerigkeitHinzufuegenAktion={zugehoerigkeitHinzufuegen}
-        zugehoerigkeitBeendenAktion={zugehoerigkeitBeenden}
-        personGruppenAktualisierenAktion={personGruppenAktualisieren}
-        personBerechtigungenAktualisierenAktion={personBerechtigungenAktualisieren}
+        personSpeichernAktion={personSpeichern}
         personPasswortZuruecksetzenAktion={personPasswortZuruecksetzen}
         personAktivSetzenAktion={personAktivSetzen}
       />

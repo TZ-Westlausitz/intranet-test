@@ -11,7 +11,7 @@ import {
 } from "@/lib/infos/sichtbarkeit"
 
 /** Anzeigename, wenn Info.alsUnternehmen gesetzt ist (siehe Kommentar am Model Info). */
-export const UNTERNEHMENSNAME = "Therapie- und Pflegezentrum"
+export const UNTERNEHMENSNAME = "Therapie- & Pflegezentrum Westlausitz"
 
 type InfoKontext = { personId: string; berechtigungen: string[]; adminModusAktiv: boolean }
 

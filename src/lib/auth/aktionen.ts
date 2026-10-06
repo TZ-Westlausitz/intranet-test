@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs"
 import { signOut } from "./auth"
 import { berechtigung } from "./berechtigung"
 import { prisma } from "@/lib/db"
+import { passwortRegelnPruefen } from "@/lib/auth/passwort-regeln"
 
 /**
  * Eigene Datei statt einer Inline-Funktion in BenutzerMenu: BenutzerMenu
@@ -32,8 +33,16 @@ export async function eigenesPasswortFestlegen(formData: FormData) {
   const neuesPasswort = String(formData.get("neuesPasswort") ?? "")
   const wiederholung = String(formData.get("passwortWiederholung") ?? "")
 
-  if (neuesPasswort.length < 10) {
-    redirect("/passwort-aendern?fehler=kurz")
+  // Regeln siehe passwort-regeln.ts; jeweils der erste Verstoß wird gemeldet.
+  const regeln = passwortRegelnPruefen(neuesPasswort)
+  if (!regeln.laenge) redirect("/passwort-aendern?fehler=kurz")
+  if (!regeln.gross) redirect("/passwort-aendern?fehler=gross")
+  if (!regeln.klein) redirect("/passwort-aendern?fehler=klein")
+  if (!regeln.zahl) redirect("/passwort-aendern?fehler=zahl")
+  // Das gemeinsame Startpasswort ist als eigenes Passwort tabu — sonst hätten
+  // mehrere Konten dasselbe. Nur der Server kennt es (Umgebungsvariable).
+  if (process.env.STANDARD_STARTPASSWORT && neuesPasswort === process.env.STANDARD_STARTPASSWORT) {
+    redirect("/passwort-aendern?fehler=startpasswort")
   }
   if (neuesPasswort !== wiederholung) {
     redirect("/passwort-aendern?fehler=ungleich")

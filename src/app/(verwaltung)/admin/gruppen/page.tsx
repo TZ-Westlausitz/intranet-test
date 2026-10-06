@@ -4,6 +4,7 @@ import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { gruppeErstellen, gruppeUmbenennen, gruppeAktivSetzen } from "@/lib/admin/gruppen-aktionen"
 import { abteilungErstellen, abteilungUmbenennen, abteilungAktivSetzen } from "@/lib/admin/abteilungen-aktionen"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 /**
  * Gruppen UND Abteilungen in einem Fenster — entspricht der "Gruppen &
@@ -82,12 +83,12 @@ export default async function GruppenUndAbteilungenSeite() {
                       (gruppe.aktiv ? "" : "text-tertiaer")
                     }
                   />
-                  <button
+                  <SpeichernKnopf
                     type="submit"
                     className="h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-sekundaer transition hover:bg-flaeche-100"
                   >
                     Speichern
-                  </button>
+                  </SpeichernKnopf>
                   <FormularAenderungenSchutz />
                 </form>
                 <form action={gruppeAktivSetzen.bind(null, gruppe.id, !gruppe.aktiv)}>
@@ -167,12 +168,12 @@ export default async function GruppenUndAbteilungenSeite() {
                       (abteilung.aktiv ? "" : "text-tertiaer")
                     }
                   />
-                  <button
+                  <SpeichernKnopf
                     type="submit"
                     className="h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-sekundaer transition hover:bg-flaeche-100"
                   >
                     Speichern
-                  </button>
+                  </SpeichernKnopf>
                   <FormularAenderungenSchutz />
                 </form>
                 <form action={abteilungAktivSetzen.bind(null, abteilung.id, !abteilung.aktiv)}>

@@ -17,6 +17,7 @@ import { neuesteBenachrichtigungen, ungeleseneAnzahl } from "@/lib/benachrichtig
 import { jubilaeumsHinweiseErzeugen } from "@/lib/jubilaeen/hinweise";
 import { meineKonversationen } from "@/lib/chat/abfragen";
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum";
+import { ToastAnzeige } from "@/components/toast-anzeige";
 import "./globals.css";
 
 const lato = Lato({
@@ -217,6 +218,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             />
           </>
         )}
+
+        <ToastAnzeige />
       </body>
     </html>
   );

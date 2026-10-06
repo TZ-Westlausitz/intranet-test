@@ -6,6 +6,7 @@ import { ProfilbildBearbeiten } from "@/components/profilbild-bearbeiten"
 import { personKontaktDetail } from "@/lib/kontakte/abfragen"
 import { MONATSNAMEN } from "@/lib/kalender"
 import { profilAktualisieren, profilbildAktualisieren, profilbildLoeschen } from "@/lib/profil/aktionen"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 const FEHLER_TEXTE: Record<string, string> = {
   emailVergeben: "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet.",
@@ -169,12 +170,12 @@ export default async function ProfilSeite({
           </p>
         </div>
 
-        <button
+        <SpeichernKnopf
           type="submit"
           className="ml-auto h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
         >
           Speichern
-        </button>
+        </SpeichernKnopf>
         <FormularAenderungenSchutz />
       </form>
 

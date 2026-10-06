@@ -6,6 +6,7 @@ import { createPortal } from "react-dom"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
 import { TerminFormFelder, type AnhangAnzeige, type Person, type TerminStandardwerte } from "@/components/termin-form-felder"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 /**
  * Zahnrad-Button + Bearbeiten-Pop-Up, wiederverwendet an zwei Stellen:
@@ -187,12 +188,12 @@ export function TerminBearbeitenDialog({
               >
                 Abbrechen
               </button>
-              <button
+              <SpeichernKnopf
                 type="submit"
                 className="h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
               >
                 Änderungen speichern
-              </button>
+              </SpeichernKnopf>
             </div>
           </div>
           <FormularAenderungenSchutz />

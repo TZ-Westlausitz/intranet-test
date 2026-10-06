@@ -1,8 +1,11 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
+import { useActionState, useEffect, useRef, useState, useTransition } from "react"
 
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
+import { zeigeToast } from "@/components/toast-anzeige"
+import type { PersonSpeichernErgebnis } from "@/lib/admin/personen-aktionen"
 
 type Option = { id: string; name: string }
 
@@ -13,17 +16,26 @@ export type ZugehoerigkeitAnzeige = {
 }
 
 /**
- * Bearbeiten-Pop-Up für einen Benutzer — bündelt die vier Dinge, die im
- * Adminbereich pro Person einstellbar sind: Zugehörigkeiten (Standort ×
- * Abteilung, siehe Model Zugehoerigkeit — mehrere gleichzeitig
- * möglich), Gruppen, Berechtigungen und das Passwort. Jeder Abschnitt ist
- * ein eigenes `<form>`, unabhängig absendbar — wie bei TerminInfoDialog,
- * das ebenfalls mehrere Formulare in einem Pop-Up kombiniert.
+ * Bearbeiten-Pop-Up für einen Benutzer — bündelt, was im Adminbereich pro
+ * Person einstellbar ist: Benutzername, Eintrittsdatum, Zugehörigkeiten
+ * (Standort × Abteilung, siehe Model Zugehoerigkeit — mehrere gleichzeitig
+ * möglich), Gruppen, Berechtigungen und das Passwort.
  *
- * "Passwort zurücksetzen" ruft die Server Action direkt auf (nicht über
- * `<form action>`), weil sie das neue Klartextpasswort einmalig zurückgibt
- * — bei einer normalen Formular-Aktion mit Redirect ginge das verloren
- * (siehe personPasswortZuruecksetzen und PersonErstellenFormular).
+ * EIN Formular, EIN "Speichern" unten neben "Schließen" (Rückmeldung
+ * 2026-10-06; vorher hatte jeder Abschnitt einen eigenen Knopf, und man sah
+ * nicht, ob etwas gespeichert wurde). Das Speichern meldet sich mit
+ * "Wird gespeichert …" am Knopf und der Einblendung "Gespeichert"; Fehler
+ * (z. B. ein schon vergebener Benutzername) stehen als roter Text direkt über
+ * den Knöpfen — dann ist nichts gespeichert.
+ *
+ * Zugehörigkeiten beenden wird erst mit "Speichern" wirksam: "Beenden"
+ * markiert sie nur (durchgestrichen, mit "Rückgängig"). Eine neue
+ * Zugehörigkeit kommt dazu, wenn Standort UND Abteilung gewählt sind.
+ *
+ * "Passwort zurücksetzen" ist bewusst KEIN Teil des Speicherns: Es wirkt
+ * sofort und gibt das neue Klartextpasswort einmalig zurück — bei einer
+ * normalen Formular-Aktion mit Redirect ginge das verloren (siehe
+ * personPasswortZuruecksetzen und PersonErstellenFormular).
  */
 export function PersonBearbeitenDialog({
   personId,
@@ -37,12 +49,7 @@ export function PersonBearbeitenDialog({
   ausgewaehlteGruppenIds,
   berechtigungenListe,
   ausgewaehlteBerechtigungIds,
-  benutzernameAktualisierenAktion,
-  eintrittsdatumAktualisierenAktion,
-  zugehoerigkeitHinzufuegenAktion,
-  zugehoerigkeitBeendenAktion,
-  personGruppenAktualisierenAktion,
-  personBerechtigungenAktualisierenAktion,
+  personSpeichernAktion,
   personPasswortZuruecksetzenAktion,
 }: {
   personId: string
@@ -57,23 +64,50 @@ export function PersonBearbeitenDialog({
   ausgewaehlteGruppenIds: string[]
   berechtigungenListe: Option[]
   ausgewaehlteBerechtigungIds: string[]
-  benutzernameAktualisierenAktion: (personId: string, formData: FormData) => void
-  eintrittsdatumAktualisierenAktion: (personId: string, formData: FormData) => void
-  zugehoerigkeitHinzufuegenAktion: (personId: string, formData: FormData) => void
-  zugehoerigkeitBeendenAktion: (zugehoerigkeitId: string) => void
-  personGruppenAktualisierenAktion: (personId: string, formData: FormData) => void
-  personBerechtigungenAktualisierenAktion: (personId: string, formData: FormData) => void
+  personSpeichernAktion: (
+    personId: string,
+    vorher: PersonSpeichernErgebnis | null,
+    formData: FormData,
+  ) => Promise<PersonSpeichernErgebnis>
   personPasswortZuruecksetzenAktion: (personId: string) => Promise<string>
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const [istPending, startTransition] = useTransition()
   const [neuesPasswort, setNeuesPasswort] = useState<string | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const [ergebnis, speichernFormAktion, speichertGerade] = useActionState(personSpeichernAktion.bind(null, personId), null)
+  const [, speichernStarten] = useTransition()
+  // Vorgemerkte "Beenden"-Markierungen gehören zu EINEM Speicher-Ergebnis: Nach
+  // jedem Speichern ist `ergebnis` ein neues Objekt, die Markierungen gelten
+  // dann nicht mehr — ohne dass dafür ein Effekt nachträglich Zustand setzen muss.
+  const [markierung, setMarkierung] = useState<{ fuer: PersonSpeichernErgebnis | null; ids: string[] }>({
+    fuer: null,
+    ids: [],
+  })
+  const beendenIds = markierung.fuer === ergebnis ? markierung.ids : []
+
+  // Rückmeldung nach dem Speichern als Einblendung (der Fehlertext steht zusätzlich im Pop-Up).
+  // Nach Erfolg zurück auf den gespeicherten Stand (leert z. B. die Auswahl "Weitere
+  // Zugehörigkeit"); nach einem Fehler bleiben die Eingaben stehen, damit nichts neu
+  // getippt werden muss.
+  useEffect(() => {
+    if (!ergebnis) return
+    zeigeToast(ergebnis.ok ? "Gespeichert" : "Nicht gespeichert", ergebnis.ok ? "ok" : "fehler")
+    if (ergebnis.ok) formRef.current?.reset()
+  }, [ergebnis])
 
   function passwortZuruecksetzen() {
     setNeuesPasswort(null)
     startTransition(async () => {
       const passwort = await personPasswortZuruecksetzenAktion(personId)
       setNeuesPasswort(passwort)
+    })
+  }
+
+  function beendenUmschalten(id: string) {
+    setMarkierung({
+      fuer: ergebnis,
+      ids: beendenIds.includes(id) ? beendenIds.filter((x) => x !== id) : [...beendenIds, id],
     })
   }
 
@@ -91,124 +125,113 @@ export function PersonBearbeitenDialog({
         ref={dialogRef}
         className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
       >
-        <div className="border-b border-rand px-5 py-4">
-          <h2 className="text-lg font-semibold text-ueberschrift">{name}</h2>
-        </div>
+        {/* onSubmit statt action=: React setzt ein Formular mit action= nach JEDEM
+            Absenden zurück, auch nach einem Fehler — dann wären die Eingaben weg. */}
+        <form
+          ref={formRef}
+          onSubmit={(ereignis) => {
+            ereignis.preventDefault()
+            const daten = new FormData(ereignis.currentTarget)
+            speichernStarten(() => speichernFormAktion(daten))
+          }}
+        >
+          <div className="border-b border-rand px-5 py-4">
+            <h2 className="text-lg font-semibold text-ueberschrift">{name}</h2>
+          </div>
 
-        <div className="flex max-h-[75vh] flex-col gap-5 overflow-y-auto px-5 py-4 text-sm">
-          <section>
-            <h3 className="text-xs font-semibold text-primaer">Benutzername</h3>
-            <form
-              action={benutzernameAktualisierenAktion.bind(null, personId)}
-              className="mt-2 flex items-center gap-2"
-            >
+          <div className="flex max-h-[65vh] flex-col gap-5 overflow-y-auto px-5 py-4 text-sm">
+            <section>
+              <label htmlFor={`benutzername-${personId}`} className="text-xs font-semibold text-primaer">
+                Benutzername
+              </label>
               <input
+                id={`benutzername-${personId}`}
                 name="benutzername"
                 type="text"
                 defaultValue={benutzername}
                 required
-                className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
+                className="mt-2 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
               />
-              <button
-                type="submit"
-                className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
-              >
-                Speichern
-              </button>
-              <FormularAenderungenSchutz />
-            </form>
-          </section>
+            </section>
 
-          <section>
-            <h3 className="text-xs font-semibold text-primaer">Eintrittsdatum</h3>
-            <form
-              action={eintrittsdatumAktualisierenAktion.bind(null, personId)}
-              className="mt-2 flex items-center gap-2"
-            >
+            <section>
+              <label htmlFor={`eintritt-${personId}`} className="text-xs font-semibold text-primaer">
+                Eintrittsdatum
+              </label>
               <input
+                id={`eintritt-${personId}`}
                 name="eintrittAm"
                 type="date"
                 defaultValue={eintrittAm}
-                aria-label="Eintrittsdatum"
-                className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
+                className="mt-2 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
               />
-              <button
-                type="submit"
-                className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
-              >
-                Speichern
-              </button>
-              <FormularAenderungenSchutz />
-            </form>
-          </section>
+            </section>
 
-          <section>
-            <h3 className="text-xs font-semibold text-primaer">Zugehörigkeiten</h3>
+            <section>
+              <h3 className="text-xs font-semibold text-primaer">Zugehörigkeiten</h3>
 
-            {zugehoerigkeiten.length > 0 && (
-              <ul className="mt-2 flex flex-col gap-1.5">
-                {zugehoerigkeiten.map((z) => (
-                  <li
-                    key={z.id}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-flaeche-schwach px-2.5 py-1.5"
-                  >
-                    <span className="text-primaer">
-                      {z.standort ? `${z.standort.name} · ` : ""}
-                      {z.abteilung.name}
-                    </span>
-                    <form action={zugehoerigkeitBeendenAktion.bind(null, z.id)}>
-                      <button
-                        type="submit"
-                        className="shrink-0 text-xs font-medium text-sekundaer hover:text-red-600"
+              {zugehoerigkeiten.length > 0 && (
+                <ul className="mt-2 flex flex-col gap-1.5">
+                  {zugehoerigkeiten.map((z) => {
+                    const wirdBeendet = beendenIds.includes(z.id)
+                    return (
+                      <li
+                        key={z.id}
+                        className="flex items-center justify-between gap-2 rounded-lg bg-flaeche-schwach px-2.5 py-1.5"
                       >
-                        Beenden
-                      </button>
-                    </form>
-                  </li>
-                ))}
-              </ul>
-            )}
+                        {wirdBeendet && <input type="hidden" name="zugehoerigkeitBeenden" value={z.id} />}
+                        <span className={wirdBeendet ? "text-tertiaer line-through" : "text-primaer"}>
+                          {z.standort ? `${z.standort.name} · ` : ""}
+                          {z.abteilung.name}
+                          {wirdBeendet && <span className="ml-1.5 text-xs no-underline">(wird beendet)</span>}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => beendenUmschalten(z.id)}
+                          className="shrink-0 text-xs font-medium text-sekundaer hover:text-red-600"
+                        >
+                          {wirdBeendet ? "Rückgängig" : "Beenden"}
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
 
-            <form
-              action={zugehoerigkeitHinzufuegenAktion.bind(null, personId)}
-              className="mt-2 flex flex-wrap items-end gap-2"
-            >
-              <select
-                name="standortId"
-                required
-                className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
-              >
-                {standorte.map((standort) => (
-                  <option key={standort.id} value={standort.id}>
-                    {standort.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                name="abteilungId"
-                required
-                className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
-              >
-                {abteilungen.map((abteilung) => (
-                  <option key={abteilung.id} value={abteilung.id}>
-                    {abteilung.name}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="submit"
-                className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
-              >
-                Hinzufügen
-              </button>
-              <FormularAenderungenSchutz />
-            </form>
-          </section>
+              <p className="mt-2 text-xs text-sekundaer">Weitere Zugehörigkeit hinzufügen (optional):</p>
+              <div className="mt-1 flex flex-wrap items-end gap-2">
+                <select
+                  name="standortId"
+                  defaultValue=""
+                  aria-label="Standort"
+                  className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+                >
+                  <option value="">Standort wählen …</option>
+                  {standorte.map((standort) => (
+                    <option key={standort.id} value={standort.id}>
+                      {standort.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  name="abteilungId"
+                  defaultValue=""
+                  aria-label="Abteilung"
+                  className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+                >
+                  <option value="">Abteilung wählen …</option>
+                  {abteilungen.map((abteilung) => (
+                    <option key={abteilung.id} value={abteilung.id}>
+                      {abteilung.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </section>
 
-          <section>
-            <h3 className="text-xs font-semibold text-primaer">Gruppen</h3>
-            <form action={personGruppenAktualisierenAktion.bind(null, personId)} className="mt-2">
-              <div className="grid max-h-40 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-rand p-2.5">
+            <section>
+              <h3 className="text-xs font-semibold text-primaer">Gruppen</h3>
+              <div className="mt-2 grid max-h-40 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-rand p-2.5">
                 {gruppen.map((gruppe) => (
                   <label key={gruppe.id} className="flex items-center gap-1.5 text-xs text-primaer">
                     <input
@@ -222,20 +245,11 @@ export function PersonBearbeitenDialog({
                   </label>
                 ))}
               </div>
-              <button
-                type="submit"
-                className="mt-2 h-8 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
-              >
-                Gruppen speichern
-              </button>
-              <FormularAenderungenSchutz />
-            </form>
-          </section>
+            </section>
 
-          <section>
-            <h3 className="text-xs font-semibold text-primaer">Berechtigungen</h3>
-            <form action={personBerechtigungenAktualisierenAktion.bind(null, personId)} className="mt-2">
-              <div className="grid max-h-40 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-rand p-2.5">
+            <section>
+              <h3 className="text-xs font-semibold text-primaer">Berechtigungen</h3>
+              <div className="mt-2 grid max-h-40 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-rand p-2.5">
                 {berechtigungenListe.map((berechtigung) => (
                   <label key={berechtigung.id} className="flex items-center gap-1.5 text-xs text-primaer">
                     <input
@@ -249,45 +263,53 @@ export function PersonBearbeitenDialog({
                   </label>
                 ))}
               </div>
-              <button
-                type="submit"
-                className="mt-2 h-8 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
-              >
-                Berechtigungen speichern
-              </button>
-              <FormularAenderungenSchutz />
-            </form>
-          </section>
+            </section>
 
-          <section>
-            <h3 className="text-xs font-semibold text-primaer">Passwort</h3>
+            <section>
+              <h3 className="text-xs font-semibold text-primaer">Passwort</h3>
+              <button
+                type="button"
+                onClick={passwortZuruecksetzen}
+                disabled={istPending}
+                className="mt-2 h-8 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200 disabled:opacity-60"
+              >
+                {istPending ? "Wird zurückgesetzt …" : "Passwort zurücksetzen"}
+              </button>
+              <p className="mt-1 text-xs text-sekundaer">Wirkt sofort, ohne Speichern.</p>
+              {neuesPasswort && (
+                <p className="mt-2 rounded-lg border border-marke-gruen/40 bg-marke-gruen/10 px-2.5 py-1.5 text-xs text-ueberschrift">
+                  Neues Passwort: <span className="font-mono font-semibold">{neuesPasswort}</span>
+                  <br />
+                  Wird nur dieses eine Mal angezeigt — bitte jetzt notieren oder weitergeben.
+                </p>
+              )}
+            </section>
+          </div>
+
+          {ergebnis && !ergebnis.ok && ergebnis.fehler && (
+            <p role="alert" className="border-t border-rand bg-red-50 px-5 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-400">
+              {ergebnis.fehler}
+            </p>
+          )}
+
+          <div className="flex justify-end gap-2 border-t border-rand px-5 py-4">
             <button
               type="button"
-              onClick={passwortZuruecksetzen}
-              disabled={istPending}
-              className="mt-2 h-8 rounded-lg bg-flaeche-100 px-3 text-xs font-medium text-primaer transition hover:bg-flaeche-200 disabled:opacity-60"
+              onClick={() => dialogRef.current?.close()}
+              className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
             >
-              {istPending ? "Wird zurückgesetzt …" : "Passwort zurücksetzen"}
+              Schließen
             </button>
-            {neuesPasswort && (
-              <p className="mt-2 rounded-lg border border-marke-gruen/40 bg-marke-gruen/10 px-2.5 py-1.5 text-xs text-ueberschrift">
-                Neues Passwort: <span className="font-mono font-semibold">{neuesPasswort}</span>
-                <br />
-                Wird nur dieses eine Mal angezeigt — bitte jetzt notieren oder weitergeben.
-              </p>
-            )}
-          </section>
-        </div>
-
-        <div className="flex justify-end border-t border-rand px-5 py-4">
-          <button
-            type="button"
-            onClick={() => dialogRef.current?.close()}
-            className="h-9 rounded-lg px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-100"
-          >
-            Schließen
-          </button>
-        </div>
+            <SpeichernKnopf
+              toast={false}
+              laeuft={speichertGerade}
+              className="h-9 rounded-lg bg-marke-gruen px-4 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel disabled:opacity-60"
+            >
+              Speichern
+            </SpeichernKnopf>
+          </div>
+          <FormularAenderungenSchutz />
+        </form>
       </dialog>
     </>
   )

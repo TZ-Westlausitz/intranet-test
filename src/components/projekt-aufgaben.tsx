@@ -7,6 +7,7 @@ import { PersonenAuswahl } from "@/components/personen-auswahl"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAETEN } from "@/lib/aufgaben-optionen"
 import { AUFGABE_STATUS_KLASSEN, AUFGABE_STATUS_NAMEN } from "@/lib/projekte-optionen"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 export type ProjektAufgabeAnzeige = {
   id: string
@@ -90,12 +91,12 @@ function AufgabeZeile({
       <div className="flex shrink-0 items-center gap-1">
         {!schreibgeschuetzt && aufgabe.status === "OFFEN" && aufgabe.zugewiesenAnId === null && (
           <form action={annehmenAktion.bind(null, projektId, aufgabe.id)}>
-            <button
+            <SpeichernKnopf
               type="submit"
               className="h-7 rounded-lg bg-flaeche-100 px-2.5 text-xs font-medium text-primaer transition hover:bg-flaeche-200"
             >
               Übernehmen
-            </button>
+            </SpeichernKnopf>
           </form>
         )}
 

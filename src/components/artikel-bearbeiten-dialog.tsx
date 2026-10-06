@@ -10,6 +10,7 @@ import {
   type ArtikelStandardwerte,
   type ArtikelFormularOptionen,
 } from "@/components/artikel-form-felder"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 export type ArtikelBearbeitenDialogHandle = { oeffnen: () => void }
 
@@ -75,12 +76,12 @@ export const ArtikelBearbeitenDialog = forwardRef<
           >
             Abbrechen
           </button>
-          <button
+          <SpeichernKnopf
             type="submit"
             className="h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
           >
             Speichern
-          </button>
+          </SpeichernKnopf>
         </div>
         <FormularAenderungenSchutz />
       </form>

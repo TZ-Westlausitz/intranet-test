@@ -28,6 +28,7 @@ import {
   type StartseiteModulId,
   type StartseitePlatzierung,
 } from "@/lib/startseite/raster"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 /** Kurzer Zusatz zum Modulnamen im Auswahl-Pop-up, wenn ein Modul mehrere Formen erlaubt (siehe STARTSEITE_MODUL_KATALOG) — bei nur einer möglichen Form (die meisten Module) bleibt der Name pur. */
 const FORM_HINWEIS: Record<StartseiteForm, string> = {
@@ -346,12 +347,12 @@ export function StartseiteRasterEinstellung({
               >
                 Abbrechen
               </button>
-              <button
+              <SpeichernKnopf
                 type="submit"
                 className="h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
               >
                 Speichern
-              </button>
+              </SpeichernKnopf>
             </div>
           </form>
         )}
@@ -414,13 +415,13 @@ export function StartseiteRasterEinstellung({
               >
                 Abbrechen
               </button>
-              <button
+              <SpeichernKnopf
                 type="submit"
                 disabled={ordnerAuswahl.length === 0}
                 className="h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Speichern
-              </button>
+              </SpeichernKnopf>
             </div>
           </form>
         )}
@@ -480,13 +481,13 @@ export function StartseiteRasterEinstellung({
               >
                 Abbrechen
               </button>
-              <button
+              <SpeichernKnopf
                 type="submit"
                 disabled={formularAuswahl.length === 0}
                 className="h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Speichern
-              </button>
+              </SpeichernKnopf>
             </div>
           </form>
         )}

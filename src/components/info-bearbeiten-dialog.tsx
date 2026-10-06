@@ -10,6 +10,7 @@ import {
   type InfoStandardwerte,
   type InfoFormularOptionen,
 } from "@/components/info-form-felder"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 export type InfoBearbeitenDialogHandle = { oeffnen: () => void }
 
@@ -80,12 +81,12 @@ export const InfoBearbeitenDialog = forwardRef<
           >
             Abbrechen
           </button>
-          <button
+          <SpeichernKnopf
             type="submit"
             className="h-9 rounded-lg bg-marke-gruen px-3 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
           >
             Speichern
-          </button>
+          </SpeichernKnopf>
         </div>
         <FormularAenderungenSchutz />
       </form>

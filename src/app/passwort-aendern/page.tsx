@@ -5,6 +5,10 @@ import { PasswortAendernFormular } from "@/components/passwort-aendern-formular"
 
 const FEHLER_TEXTE: Record<string, string> = {
   kurz: "Das Passwort muss mindestens 10 Zeichen lang sein.",
+  gross: "Das Passwort braucht mindestens einen Großbuchstaben.",
+  klein: "Das Passwort braucht mindestens einen Kleinbuchstaben.",
+  zahl: "Das Passwort braucht mindestens eine Zahl.",
+  startpasswort: "Bitte wähle ein eigenes Passwort. Das Startpasswort darf nicht verwendet werden.",
   ungleich: "Die beiden Passwörter stimmen nicht überein.",
 }
 

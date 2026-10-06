@@ -6,6 +6,7 @@ import { Pencil } from "lucide-react"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { datumIsoAusDate, relativesDatum } from "@/lib/datum"
 import { zwischenzielStatus, ZWISCHENZIEL_STATUS_KLASSEN } from "@/lib/projekte-optionen"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 export type ZwischenzielListenAnzeige = {
   id: string
@@ -95,12 +96,12 @@ export function ProjektZwischenziele({
                         className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
                       />
                     </div>
-                    <button
+                    <SpeichernKnopf
                       type="submit"
                       className="h-9 shrink-0 rounded-lg bg-marke-gruen px-3 text-sm font-medium text-neutral-900 transition hover:bg-marke-gruen-dunkel"
                     >
                       Speichern
-                    </button>
+                    </SpeichernKnopf>
                     <button
                       type="button"
                       onClick={() => setBearbeiteId(null)}

@@ -9,6 +9,7 @@ import {
   infoKategorieUmbenennen,
   infoKategorieAktivSetzen,
 } from "@/lib/admin/info-kategorien-aktionen"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 /**
  * Kategorien für den Newsfeed-Baustein (Model InfoKategorie) — feste,
@@ -71,12 +72,12 @@ export default async function InfoKategorienSeite() {
                   (kategorie.aktiv ? "" : "text-tertiaer")
                 }
               />
-              <button
+              <SpeichernKnopf
                 type="submit"
                 className="h-9 shrink-0 rounded-lg px-2 text-xs font-medium text-sekundaer transition hover:bg-flaeche-100"
               >
                 Speichern
-              </button>
+              </SpeichernKnopf>
               <FormularAenderungenSchutz />
             </form>
             <span

@@ -5,6 +5,8 @@ import { useState } from "react"
 import { Passwortfeld } from "@/components/passwortfeld"
 import { Hinweis } from "@/components/hinweis"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+import { PASSWORT_MIN_LAENGE, passwortRegelnPruefen } from "@/lib/auth/passwort-regeln"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 const GRUENER_RAND = "border-marke-gruen focus:border-marke-gruen"
 
@@ -25,7 +27,14 @@ export function PasswortAendernFormular({
   const [wiederholung, setWiederholung] = useState("")
 
   const stimmenUeberein = neuesPasswort.length > 0 && neuesPasswort === wiederholung
-  const langGenug = neuesPasswort.length >= 10
+  const regeln = passwortRegelnPruefen(neuesPasswort)
+  const alleRegelnErfuellt = regeln.laenge && regeln.gross && regeln.klein && regeln.zahl
+  const regelListe = [
+    { erfuellt: regeln.laenge, text: `Mindestens ${PASSWORT_MIN_LAENGE} Zeichen` },
+    { erfuellt: regeln.gross, text: "Mindestens ein Großbuchstabe" },
+    { erfuellt: regeln.klein, text: "Mindestens ein Kleinbuchstabe" },
+    { erfuellt: regeln.zahl, text: "Mindestens eine Zahl" },
+  ]
 
   return (
     <form action={aktion} className="mt-8 flex flex-col gap-4">
@@ -34,22 +43,29 @@ export function PasswortAendernFormular({
           name="neuesPasswort"
           label="Neues Passwort"
           required
-          minLength={10}
+          minLength={PASSWORT_MIN_LAENGE}
           autoComplete="new-password"
           value={neuesPasswort}
           onChange={setNeuesPasswort}
           randKlasse={stimmenUeberein ? GRUENER_RAND : undefined}
         />
-        <p className={"mt-1 text-xs " + (langGenug ? "text-marke-gruen-dunkel" : "text-tertiaer")}>
-          Mindestens 10 Zeichen
-        </p>
+        {/* Live-Anzeige der Regeln; verbindlich prüft der Server (und kennt als
+            Einziger das Startpasswort, das nicht verwendet werden darf). */}
+        <ul className="mt-1.5 flex flex-col gap-0.5 text-xs" aria-label="Passwortregeln">
+          {regelListe.map((regel) => (
+            <li key={regel.text} className={regel.erfuellt ? "text-marke-gruen-dunkel" : "text-tertiaer"}>
+              {regel.erfuellt ? "✓" : "○"} {regel.text}
+            </li>
+          ))}
+          <li className="text-tertiaer">○ Nicht das Startpasswort</li>
+        </ul>
       </div>
 
       <Passwortfeld
         name="passwortWiederholung"
         label="Passwort wiederholen"
         required
-        minLength={10}
+        minLength={PASSWORT_MIN_LAENGE}
         autoComplete="new-password"
         value={wiederholung}
         onChange={setWiederholung}
@@ -58,12 +74,13 @@ export function PasswortAendernFormular({
 
       {fehlerText && <Hinweis>{fehlerText}</Hinweis>}
 
-      <button
+      <SpeichernKnopf
         type="submit"
-        className="mt-2 rounded-lg bg-marke-gruen px-4 py-2.5 font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2"
+        disabled={!alleRegelnErfuellt || !stimmenUeberein}
+        className="mt-2 rounded-lg bg-marke-gruen px-4 py-2.5 disabled:opacity-50 font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen focus-visible:outline-offset-2"
       >
         Passwort speichern
-      </button>
+      </SpeichernKnopf>
       <FormularAenderungenSchutz />
     </form>
   )

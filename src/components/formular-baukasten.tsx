@@ -24,6 +24,7 @@ import {
   formularTriggerIds,
 } from "@/components/formular-feld"
 import { EntwurfBestaetigenDialog } from "@/components/entwurf-bestaetigen-dialog"
+import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 const TYP_LABEL: Record<FormularElementTyp, string> = {
   TEXT_EINZEILIG: "Text (einzeilig)",
@@ -575,12 +576,12 @@ export function FormularBaukasten({
         </div>
 
         <div className="mt-2 flex items-center gap-3">
-          <button
+          <SpeichernKnopf
             type="submit"
             className="h-10 self-start rounded-lg bg-marke-gruen px-5 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel"
           >
             Speichern
-          </button>
+          </SpeichernKnopf>
           {dialogRef && (
             <button
               type="button"
