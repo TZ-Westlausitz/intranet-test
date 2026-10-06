@@ -1,13 +1,15 @@
 import Link from "next/link"
-import { AlertTriangle, Check, Paperclip } from "lucide-react"
+import { AlertTriangle, Check, ListChecks, MessageCircle, Paperclip } from "lucide-react"
 import { berechtigung } from "@/lib/auth/berechtigung"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { prisma } from "@/lib/db"
 import { ZurueckButton } from "@/components/zurueck-button"
-import { AuftragKommentare, type AuftragKommentarAnzeige } from "@/components/auftrag-kommentare"
+import type { AuftragKommentarAnzeige } from "@/components/auftrag-kommentare"
+import { AuftragDialog } from "@/components/auftrag-dialog"
+import { empfaengerNamen, type EmpfaengerZeile } from "@/lib/auftraege/empfaenger"
 import { AuftragErstellenDialog } from "@/components/auftrag-erstellen-dialog"
 import { ZielHervorheben } from "@/components/ziel-hervorheben"
-import { auftragZuStandardwerte } from "@/components/auftrag-form-felder"
+import { auftragZuStandardwerte } from "@/lib/auftraege/standardwerte"
 import { AufgabeFormFelder, LEERE_AUFGABE_STANDARDWERTE, aufgabeZuStandardwerte } from "@/components/aufgabe-form-felder"
 import { AufgabeBearbeitenDialog } from "@/components/aufgabe-bearbeiten-dialog"
 import { auftraegeFuerPerson, alleOffenenAuftraege, eigeneAuftragEntwuerfe } from "@/lib/auftraege/abfragen"
@@ -27,7 +29,9 @@ import {
   auftragErledigtSetzen,
   auftragLoeschen,
   auftragAnhangLoeschen,
+  auftragAktualisieren,
   auftragKommentarErstellen,
+  auftragCheckpunktSetzen,
 } from "@/lib/auftraege/aktionen"
 import {
   aufgabeErstellen,
@@ -39,7 +43,7 @@ import {
 import { AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAET_NAMEN } from "@/lib/aufgaben-optionen"
 import { AUFGABE_STATUS_KLASSEN, AUFGABE_STATUS_NAMEN } from "@/lib/projekte-optionen"
 import { richTextZuText } from "@/lib/rich-text"
-import { datumIsoAusDate, berlinerTagesbeginn } from "@/lib/datum"
+import { datumIsoAusDate, formatiereDatumAusDate, berlinerTagesbeginn } from "@/lib/datum"
 import { verwendbareAufgabenVorlagen } from "@/lib/aufgaben-vorlagen/abfragen"
 import { darfAufgabenVorlagenVerwalten } from "@/lib/aufgaben-vorlagen/sichtbarkeit"
 import { AufgabenVorlageAuswahlFeld } from "@/components/aufgaben-vorlage-auswahl-feld"
@@ -86,6 +90,8 @@ type AuftragMitBeziehung = {
   erledigtAm: Date | null
   anhaenge: AnhangAnzeige[]
   kommentare: AuftragKommentarAnzeige[]
+  checkpunkte: { id: string; text: string; erledigtAm: Date | null }[]
+  empfaenger: EmpfaengerZeile[]
 }
 
 function faelligAnzeige(auftrag: { faelligAm: Date | null; erledigtAm: Date | null }, heute: Date) {
@@ -95,48 +101,6 @@ function faelligAnzeige(auftrag: { faelligAm: Date | null; erledigtAm: Date | nu
     text: auftrag.faelligAm.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit" }),
     ueberfaellig,
   }
-}
-
-function AnhaengeAnzeige({
-  auftragId,
-  anhaenge,
-  loeschbar,
-}: {
-  auftragId: string
-  anhaenge: AnhangAnzeige[]
-  loeschbar: boolean
-}) {
-  if (anhaenge.length === 0) return null
-  return (
-    <div className="mt-1 flex flex-wrap gap-1.5">
-      {anhaenge.map((anhang) => (
-        <span
-          key={anhang.id}
-          className="flex items-center gap-1 rounded-full bg-flaeche-100 py-0.5 pr-1 pl-2 text-xs text-primaer"
-        >
-          <a
-            href={`/api/auftraege/${auftragId}/anhaenge/${anhang.id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex max-w-[10rem] items-center gap-1 truncate hover:underline"
-          >
-            <Paperclip className="h-3.5 w-3.5 shrink-0" aria-hidden /> {anhang.dateiname}
-          </a>
-          {loeschbar && (
-            <form action={auftragAnhangLoeschen.bind(null, anhang.id)}>
-              <button
-                type="submit"
-                aria-label={`${anhang.dateiname} entfernen`}
-                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-tertiaer hover:bg-flaeche hover:text-red-600"
-              >
-                ×
-              </button>
-            </form>
-          )}
-        </span>
-      ))}
-    </div>
-  )
 }
 
 /** Titel/Priorität/Notiz/Anhänge-Anzeige — geteilt zwischen "Dir zugewiesen" und "Von dir vergeben". */
@@ -163,6 +127,26 @@ function AuftragInhalt({ auftrag, heute, name }: { auftrag: AuftragMitBeziehung;
         </div>
         {auftrag.beschreibung && (
           <p className="mt-0.5 truncate text-xs text-tertiaer">{richTextZuText(auftrag.beschreibung)}</p>
+        )}
+        {(auftrag.anhaenge.length > 0 || auftrag.kommentare.length > 0 || auftrag.checkpunkte.length > 0) && (
+          <div className="mt-1 flex items-center gap-3 text-[11px] text-tertiaer">
+            {auftrag.checkpunkte.length > 0 && (
+              <span className="flex items-center gap-0.5" title="Checkliste">
+                <ListChecks className="h-3 w-3" aria-hidden /> {auftrag.checkpunkte.filter((punkt) => punkt.erledigtAm).length}/
+                {auftrag.checkpunkte.length}
+              </span>
+            )}
+            {auftrag.anhaenge.length > 0 && (
+              <span className="flex items-center gap-0.5" title="Anhänge">
+                <Paperclip className="h-3 w-3" aria-hidden /> {auftrag.anhaenge.length}
+              </span>
+            )}
+            {auftrag.kommentare.length > 0 && (
+              <span className="flex items-center gap-0.5" title="Kommentare">
+                <MessageCircle className="h-3 w-3" aria-hidden /> {auftrag.kommentare.length}
+              </span>
+            )}
+          </div>
         )}
       </div>
 
@@ -346,6 +330,53 @@ export default async function AufgabenSeite({
   // statt inline im Grid — so werden sie je nach darfAuftraegeZuweisen nur
   // unterschiedlich auf die Spalten verteilt (siehe Doku-Kommentar oben),
   // ohne dass die Karten selbst dupliziert werden müssten.
+  // Eine Aufgaben-Zeile als Pop-Up-Auslöser (siehe AuftragDialog): Klick auf
+  // die Zeile öffnet alle Details, Kommentare und — für die erstellende
+  // Person — das Bearbeiten. `?auftrag=<id>` (Benachrichtigung, Startseiten-
+  // Kachel) öffnet das Pop-Up gleich beim Laden der Seite.
+  const auftragZeile = (
+    auftrag: AuftragMitBeziehung,
+    art: "zugewiesen" | "vergeben",
+    vonName: string,
+    anName: string,
+    anzeigeName: string,
+  ) => {
+    const faellig = faelligAnzeige(auftrag, heute)
+    return (
+      <AuftragDialog
+        daten={{
+          id: auftrag.id,
+          titel: auftrag.titel,
+          beschreibung: auftrag.beschreibung,
+          prioritaet: auftrag.prioritaet,
+          status: auftrag.status,
+          faelligAm: auftrag.faelligAm ? datumIsoAusDate(auftrag.faelligAm) : null,
+          faelligText: faellig?.text ?? null,
+          ueberfaellig: faellig?.ueberfaellig ?? false,
+          erledigtText: auftrag.erledigtAm ? formatiereDatumAusDate(auftrag.erledigtAm) : null,
+          vonName,
+          anName,
+          gemeinsam: auftrag.empfaenger.length > 1,
+          anhaenge: auftrag.anhaenge,
+          checkpunkte: auftrag.checkpunkte.map((punkt) => ({ id: punkt.id, text: punkt.text, erledigt: punkt.erledigtAm !== null })),
+          kommentare: auftrag.kommentare,
+        }}
+        alsErsteller={art === "vergeben"}
+        alsZugewiesener={art === "zugewiesen"}
+        autoOeffnen={zielAuftragId === auftrag.id}
+        annehmenAktion={auftragAnnehmen}
+        erledigtAktion={auftragErledigtSetzen}
+        loeschenAktion={auftragLoeschen}
+        aktualisierenAktion={auftragAktualisieren}
+        anhangLoeschenAktion={auftragAnhangLoeschen}
+        kommentarAktion={auftragKommentarErstellen}
+        checkpunktAktion={auftragCheckpunktSetzen}
+      >
+        <AuftragInhalt auftrag={auftrag} heute={heute} name={anzeigeName} />
+      </AuftragDialog>
+    )
+  }
+
   const blockDirZugewiesen = (
     <>
       <div className="rounded-xl border border-rand bg-flaeche p-4">
@@ -385,19 +416,7 @@ export default async function AufgabenSeite({
                     />
                   </form>
                 )}
-                <div className="min-w-0 flex-1">
-                  <AuftragInhalt
-                    auftrag={auftrag}
-                    heute={heute}
-                    name={`von ${auftrag.erstelltVon.vorname} ${auftrag.erstelltVon.nachname}`}
-                  />
-                  <AnhaengeAnzeige auftragId={auftrag.id} anhaenge={auftrag.anhaenge} loeschbar={false} />
-                  <AuftragKommentare
-                    auftragId={auftrag.id}
-                    kommentare={auftrag.kommentare}
-                    kommentarAktion={auftragKommentarErstellen}
-                  />
-                </div>
+                {auftragZeile(auftrag, "zugewiesen", `${auftrag.erstelltVon.vorname} ${auftrag.erstelltVon.nachname}`, empfaengerNamen(auftrag.empfaenger, kontext.personId), `von ${auftrag.erstelltVon.vorname} ${auftrag.erstelltVon.nachname}`)}
               </li>
             ))}
           </ul>
@@ -421,19 +440,7 @@ export default async function AufgabenSeite({
                     <Check className="h-3.5 w-3.5" />
                   </button>
                 </form>
-                <div className="min-w-0 flex-1">
-                  <AuftragInhalt
-                    auftrag={auftrag}
-                    heute={heute}
-                    name={`von ${auftrag.erstelltVon.vorname} ${auftrag.erstelltVon.nachname}`}
-                  />
-                  <AnhaengeAnzeige auftragId={auftrag.id} anhaenge={auftrag.anhaenge} loeschbar={false} />
-                  <AuftragKommentare
-                    auftragId={auftrag.id}
-                    kommentare={auftrag.kommentare}
-                    kommentarAktion={auftragKommentarErstellen}
-                  />
-                </div>
+                {auftragZeile(auftrag, "zugewiesen", `${auftrag.erstelltVon.vorname} ${auftrag.erstelltVon.nachname}`, empfaengerNamen(auftrag.empfaenger, kontext.personId), `von ${auftrag.erstelltVon.vorname} ${auftrag.erstelltVon.nachname}`)}
                 <span className="mt-0.5 shrink-0 text-xs text-tertiaer">
                   {auftrag.erledigtAm && datumIsoAusDate(auftrag.erledigtAm)}
                 </span>
@@ -573,41 +580,45 @@ export default async function AufgabenSeite({
                     />
                   </form>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        aria-label={`Priorität: ${AUFGABE_PRIORITAET_NAMEN[aufgabe.prioritaet]}`}
-                        title={AUFGABE_PRIORITAET_NAMEN[aufgabe.prioritaet]}
-                        className={"h-2 w-2 shrink-0 rounded-full " + AUFGABE_PRIORITAET_KLASSEN[aufgabe.prioritaet]}
-                      />
-                      <span className="text-sm text-primaer">{aufgabe.titel}</span>
-                    </div>
-                    {aufgabe.beschreibung && (
-                      <p className="mt-0.5 truncate text-xs text-tertiaer">{richTextZuText(aufgabe.beschreibung)}</p>
-                    )}
-                    <AufgabeAnhaengeAnzeige aufgabeId={aufgabe.id} anhaenge={aufgabe.anhaenge} />
-                  </div>
-
-                  {faellig && (
-                    <span
-                      className={
-                        "mt-0.5 flex shrink-0 items-center gap-1 text-xs font-medium " +
-                        (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
-                      }
-                    >
-                      {faellig.ueberfaellig && <AlertTriangle className="h-3.5 w-3.5" aria-hidden />}
-                      {faellig.text}
-                      {faellig.ueberfaellig && <span className="sr-only"> (überfällig)</span>}
-                    </span>
-                  )}
-
                   <AufgabeBearbeitenDialog
                     aufgabeId={aufgabe.id}
                     standardwerte={standardwerte}
                     bestehendeAnhaenge={aufgabe.anhaenge}
                     aktualisierenAktion={aufgabeAktualisieren}
                     anhangLoeschenAktion={aufgabeAnhangLoeschen}
-                  />
+                  >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            aria-label={`Priorität: ${AUFGABE_PRIORITAET_NAMEN[aufgabe.prioritaet]}`}
+                            title={AUFGABE_PRIORITAET_NAMEN[aufgabe.prioritaet]}
+                            className={"h-2 w-2 shrink-0 rounded-full " + AUFGABE_PRIORITAET_KLASSEN[aufgabe.prioritaet]}
+                          />
+                          <span className="text-sm text-primaer">{aufgabe.titel}</span>
+                        </div>
+                        {aufgabe.beschreibung && (
+                          <p className="mt-0.5 truncate text-xs text-tertiaer">{richTextZuText(aufgabe.beschreibung)}</p>
+                        )}
+                        {aufgabe.anhaenge.length > 0 && (
+                          <span className="mt-1 flex items-center gap-0.5 text-[11px] text-tertiaer" title="Anhänge">
+                            <Paperclip className="h-3 w-3" aria-hidden /> {aufgabe.anhaenge.length}
+                          </span>
+                        )}
+                      </div>
+
+                      {faellig && (
+                        <span
+                          className={
+                            "mt-0.5 flex shrink-0 items-center gap-1 text-xs font-medium " +
+                            (faellig.ueberfaellig ? "text-red-600" : "text-tertiaer")
+                          }
+                        >
+                          {faellig.ueberfaellig && <AlertTriangle className="h-3.5 w-3.5" aria-hidden />}
+                          {faellig.text}
+                          {faellig.ueberfaellig && <span className="sr-only"> (überfällig)</span>}
+                        </span>
+                      )}
+                  </AufgabeBearbeitenDialog>
 
                   <form action={aufgabeLoeschen.bind(null, aufgabe.id)}>
                     <button
@@ -738,20 +749,7 @@ export default async function AufgabenSeite({
             <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
               {vergebenOffen.map((auftrag) => (
                 <li key={auftrag.id} data-ziel={auftrag.id} className="flex items-start gap-3 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    {/* auftraegeFuerPerson schließt Entwürfe aus (istEntwurf: false) — zugewiesenAn ist hier immer gesetzt. */}
-                    <AuftragInhalt
-                      auftrag={auftrag}
-                      heute={heute}
-                      name={`an ${auftrag.zugewiesenAn!.vorname} ${auftrag.zugewiesenAn!.nachname}`}
-                    />
-                    <AnhaengeAnzeige auftragId={auftrag.id} anhaenge={auftrag.anhaenge} loeschbar />
-                    <AuftragKommentare
-                      auftragId={auftrag.id}
-                      kommentare={auftrag.kommentare}
-                      kommentarAktion={auftragKommentarErstellen}
-                    />
-                  </div>
+                  {auftragZeile(auftrag, "vergeben", "dir", empfaengerNamen(auftrag.empfaenger), `an ${empfaengerNamen(auftrag.empfaenger)}`)}
                   <form action={auftragLoeschen.bind(null, auftrag.id)}>
                     <button
                       type="submit"
@@ -776,19 +774,7 @@ export default async function AufgabenSeite({
           <ul className="mt-3 flex flex-col divide-y divide-flaeche-100">
             {vergebenErledigt.map((auftrag) => (
               <li key={auftrag.id} data-ziel={auftrag.id} className="flex items-start gap-3 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <AuftragInhalt
-                    auftrag={auftrag}
-                    heute={heute}
-                    name={`an ${auftrag.zugewiesenAn!.vorname} ${auftrag.zugewiesenAn!.nachname}`}
-                  />
-                  <AnhaengeAnzeige auftragId={auftrag.id} anhaenge={auftrag.anhaenge} loeschbar />
-                  <AuftragKommentare
-                    auftragId={auftrag.id}
-                    kommentare={auftrag.kommentare}
-                    kommentarAktion={auftragKommentarErstellen}
-                  />
-                </div>
+                {auftragZeile(auftrag, "vergeben", "dir", empfaengerNamen(auftrag.empfaenger), `an ${empfaengerNamen(auftrag.empfaenger)}`)}
                 <span className="mt-0.5 shrink-0 text-xs text-tertiaer">
                   {auftrag.erledigtAm && datumIsoAusDate(auftrag.erledigtAm)}
                 </span>
@@ -935,7 +921,7 @@ export default async function AufgabenSeite({
                       <AuftragInhalt
                         auftrag={auftrag}
                         heute={heute}
-                        name={`${auftrag.erstelltVon.vorname} ${auftrag.erstelltVon.nachname} → ${auftrag.zugewiesenAn!.vorname} ${auftrag.zugewiesenAn!.nachname}`}
+                        name={`${auftrag.erstelltVon.vorname} ${auftrag.erstelltVon.nachname} → ${empfaengerNamen(auftrag.empfaenger)}`}
                       />
                     </div>
                   </li>

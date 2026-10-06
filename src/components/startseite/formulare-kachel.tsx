@@ -17,7 +17,7 @@ type VorlagenShortcut = { id: string; titel: string }
  * INNERHALB eines einzigen, durchgehenden Rahmens (Rückmeldung danach:
  * "optisch als EIN breites Kästchen") in zwei Hälften: links wie gehabt
  * der Stand (verlinkt auf /formulare), rechts ein Schnellzugriff auf bis
- * zu 5 selbst gewählte Vorlagen als kleine Buttons — jede für sich
+ * zu 5 selbst gewählte Vorlagen als kleine Buttons, untereinander (Rückmeldung 2026-10-05) — jede für sich
  * verlinkt direkt zum Ausfüllen. Nur eine dünne Trennlinie zwischen
  * beiden, keine zwei eigenständigen Karten. Bei KLEIN bleibt es beim
  * reinen Stand ohne Aufteilung.
@@ -138,12 +138,12 @@ export function FormulareKachel({
           {!shortcuts || shortcuts.length === 0 ? (
             <p className="mt-2 text-xs text-sekundaer">Keine Formulare ausgewählt.</p>
           ) : (
-            <div className="mt-2 flex min-h-0 flex-1 flex-row flex-wrap content-start gap-1.5 overflow-y-auto">
+            <div className="mt-2 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
               {shortcuts.map((vorlage) => (
                 <Link
                   key={vorlage.id}
                   href={`/formulare/${vorlage.id}`}
-                  className="max-w-full truncate rounded-full border border-rand px-2.5 py-1 text-xs font-medium text-primaer transition hover:border-marke-gruen-dunkel hover:text-marke-gruen-dunkel"
+                  className="block shrink-0 truncate rounded-full border border-rand px-2.5 py-1 text-xs font-medium text-primaer transition hover:border-marke-gruen-dunkel hover:text-marke-gruen-dunkel"
                 >
                   {vorlage.titel}
                 </Link>

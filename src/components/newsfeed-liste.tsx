@@ -1,5 +1,6 @@
 "use client"
 
+import { BestaetigungsLeiste } from "@/components/bestaetigungs-leiste"
 import { useEffect, useRef } from "react"
 import { BarChart3, Check, Clock, MessageCircle, Paperclip, ThumbsUp } from "lucide-react"
 
@@ -183,9 +184,7 @@ export function NewsfeedListe({
                           </button>
                         </form>
                       ))}
-                    <span className="text-xs text-tertiaer">
-                      {info.bestaetigtAnzahl} von {info.empfaengerAnzahl} bestätigt
-                    </span>
+                    <BestaetigungsLeiste bestaetigt={info.bestaetigtAnzahl} gesamt={info.empfaengerAnzahl} className="flex-1" />
                   </div>
                 )
               )}

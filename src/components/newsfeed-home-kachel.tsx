@@ -4,6 +4,7 @@ import { useRef } from "react"
 import Link from "next/link"
 import { BarChart3, Check, FileText, MessageCircle, Paperclip, ThumbsUp } from "lucide-react"
 
+import { BestaetigungsLeiste } from "@/components/bestaetigungs-leiste"
 import { InfoAnzeigenDialog, type InfoAnzeigenDialogHandle } from "@/components/info-anzeigen-dialog"
 import {
   infoBestaetigen,
@@ -34,6 +35,9 @@ type InfoEintrag = {
   umfrage: boolean
   /** Diese Person muss den Beitrag noch bestätigen — orange Rand bis dahin. */
   bestaetigungOffen: boolean
+  /** Stand der Bestätigungen (0/0 = Beitrag ohne Bestätigung) — als Fortschrittsbalken. */
+  bestaetigtAnzahl: number
+  empfaengerAnzahl: number
 }
 
 /**
@@ -185,6 +189,9 @@ export function NewsfeedHomeKachel({
                     )}
                     {info.umfrage && <BarChart3 className="h-3 w-3" aria-hidden />}
                   </div>
+                )}
+                {info.empfaengerAnzahl > 0 && (
+                  <BestaetigungsLeiste bestaetigt={info.bestaetigtAnzahl} gesamt={info.empfaengerAnzahl} className="mt-2" />
                 )}
               </button>
             </li>

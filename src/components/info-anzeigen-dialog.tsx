@@ -1,5 +1,6 @@
 "use client"
 
+import { BestaetigungsLeiste } from "@/components/bestaetigungs-leiste"
 import { forwardRef, useImperativeHandle, useRef, useState } from "react"
 import { Check, Clock, Paperclip, ThumbsUp, X } from "lucide-react"
 
@@ -223,9 +224,7 @@ export const InfoAnzeigenDialog = forwardRef<
                               Bestätigen
                             </button>
                           ))}
-                        <span className="text-xs text-tertiaer">
-                          {detail.bestaetigtAnzahl} von {detail.empfaengerAnzahl} bestätigt
-                        </span>
+                        <BestaetigungsLeiste bestaetigt={detail.bestaetigtAnzahl} gesamt={detail.empfaengerAnzahl} className="flex-1" />
                       </>
                     )}
                   </div>

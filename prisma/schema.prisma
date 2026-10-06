@@ -255,7 +255,7 @@ model Person {
   terminKommentare             TerminKommentar[]                @relation("TerminKommentarAutor")
   aufgaben                     Aufgabe[]                        @relation("AufgabePerson")
   auftraegeErstellt            Auftrag[]                        @relation("AuftragErsteller")
-  auftraegeZugewiesen          Auftrag[]                        @relation("AuftragZugewiesen")
+  auftragEmpfang               AuftragEmpfaenger[]
   auftragKommentare            AuftragKommentar[]               @relation("AuftragKommentarAutor")
   gruppen                      PersonGruppe[]
   berechtigungen               PersonBerechtigung[]
@@ -1261,17 +1261,21 @@ enum AuftragStatus {
 /// Selbstauftrag (die Server Action weist das zurück — dafür gibt es
 /// Aufgabe).
 ///
-/// Nur `zugewiesenAnId` darf `status`/`erledigtAm` setzen (wer die Arbeit
-/// macht, nimmt an und hakt ab), nur `erstelltVonId` darf löschen —
+/// Nur die Empfänger (`empfaenger`) dürfen `status`/`erledigtAm` setzen (wer
+/// die Arbeit macht, nimmt an und hakt ab), nur `erstelltVonId` darf löschen —
 /// dieselbe Aufteilung wie bei Termin (Ersteller vs. Eingeladene). Der
 /// Ablauf ist linear (OFFEN → ANGENOMMEN → ERLEDIGT, siehe
 /// AuftragStatus) — kein Überspringen von ANGENOMMEN, damit auch bei
 /// einfachen Aufträgen sichtbar ist, ob die zugewiesene Person schon
 /// Kenntnis genommen hat.
 ///
-/// `zugewiesenAnId` ist NUR bei `istEntwurf` leer — ein echter Auftrag
-/// (istEntwurf false) hat sie immer gesetzt, durchgesetzt von
+/// `empfaenger` ist NUR bei `istEntwurf` ggf. leer — ein echter Auftrag
+/// (istEntwurf false) hat mindestens einen, durchgesetzt von
 /// auftragErstellen/auftragEntwurfFinalisieren, nicht von der Datenbank.
+/// Mehrere Empfänger (Rückmeldung 2026-10-05) arbeiten GEMEINSAM an einem
+/// Auftrag (gemeinsamer Status, gemeinsame Checkliste, jeder darf annehmen/
+/// abhaken/erledigen); soll jede Person ihre eigene Aufgabe bekommen, legt
+/// auftragSpeichern stattdessen pro Person einen eigenen Auftrag an.
 /// Ein Entwurf entsteht, wenn der "+ Auftrag"-Dialog ohne zu speichern
 /// geschlossen wird (siehe auftragAlsEntwurfSpeichern) — bleibt bis zur
 /// Fertigstellung durch die erstellende Person unsichtbar für die
@@ -1297,17 +1301,47 @@ model Auftrag {
   erstelltAm   DateTime          @default(now())
   istEntwurf   Boolean           @default(false)
 
-  erstelltVonId  String
-  zugewiesenAnId String?
+  erstelltVonId String
 
-  erstelltVon  Person             @relation("AuftragErsteller", fields: [erstelltVonId], references: [benutzername])
-  zugewiesenAn Person?            @relation("AuftragZugewiesen", fields: [zugewiesenAnId], references: [benutzername])
-  anhaenge     AuftragAnhang[]
-  kommentare   AuftragKommentar[]
+  erstelltVon Person              @relation("AuftragErsteller", fields: [erstelltVonId], references: [benutzername])
+  empfaenger  AuftragEmpfaenger[]
+  anhaenge    AuftragAnhang[]
+  kommentare  AuftragKommentar[]
+  checkpunkte AuftragCheckpunkt[]
 
-  @@index([zugewiesenAnId, erledigtAm])
   @@index([erstelltVonId])
   @@index([erstelltVonId, geplantAm])
+}
+
+/// Wer einen Auftrag bekommt (Rückmeldung 2026-10-05: mehrere Personen sind
+/// möglich). Ersetzt die frühere Spalte Auftrag.zugewiesenAnId.
+model AuftragEmpfaenger {
+  auftragId String
+  personId  String
+
+  auftrag Auftrag @relation(fields: [auftragId], references: [id], onDelete: Cascade)
+  person  Person  @relation(fields: [personId], references: [benutzername])
+
+  @@id([auftragId, personId])
+  @@index([personId])
+}
+
+/// Unterpunkte einer Aufgabe ("Checkliste", Rückmeldung 2026-10-05, Vorbild
+/// Altsystem Überblick): Die erstellende Person legt sie an, die zugewiesene
+/// Person hakt sie ab (siehe auftragCheckpunktSetzen). Eine fertige Checkliste
+/// erledigt die Aufgabe NICHT von selbst — "erledigt" bleibt der bewusste
+/// Schritt der zugewiesenen Person. Kein "von wem abgehakt": es gibt nur
+/// eine abhakende Person, ein Name wäre zusätzliche Verhaltensdaten ohne Nutzen.
+model AuftragCheckpunkt {
+  id          String    @id @default(cuid())
+  auftragId   String
+  text        String
+  reihenfolge Int
+  erledigtAm  DateTime?
+
+  auftrag Auftrag @relation(fields: [auftragId], references: [id], onDelete: Cascade)
+
+  @@index([auftragId, reihenfolge])
 }
 
 /// Dateipfad wie überall sonst (Regel 7). Kein `hochgeladenVonId` wie bei

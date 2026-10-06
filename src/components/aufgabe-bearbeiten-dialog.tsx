@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useRef, type ReactNode } from "react"
 import { Pencil } from "lucide-react"
 
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
@@ -24,12 +24,15 @@ export function AufgabeBearbeitenDialog({
   bestehendeAnhaenge,
   aktualisierenAktion,
   anhangLoeschenAktion,
+  children,
 }: {
   aufgabeId: string
   standardwerte: AufgabeStandardwerte
   bestehendeAnhaenge: AufgabeAnhangAnzeige[]
   aktualisierenAktion: (aufgabeId: string, formData: FormData) => void
   anhangLoeschenAktion: (anhangId: string) => void
+  /** Optional: die klickbare Zeile (Titel, Fälligkeit …) — Klick darauf öffnet dasselbe Pop-Up wie der Stift. */
+  children?: ReactNode
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null)
 
@@ -37,12 +40,32 @@ export function AufgabeBearbeitenDialog({
     window.setTimeout(() => dialogRef.current?.close(), 0)
   }
 
+  function oeffnen() {
+    dialogRef.current?.showModal()
+  }
+
   return (
     <>
+      {children && (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={oeffnen}
+          onKeyDown={(ereignis) => {
+            if (ereignis.key === "Enter" || ereignis.key === " ") {
+              ereignis.preventDefault()
+              oeffnen()
+            }
+          }}
+          className="flex min-w-0 flex-1 cursor-pointer items-start gap-3 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+        >
+          {children}
+        </div>
+      )}
       <button
         type="button"
         aria-label="Aufgabe bearbeiten"
-        onClick={() => dialogRef.current?.showModal()}
+        onClick={oeffnen}
         className="mt-0.5 shrink-0 rounded p-1 text-tertiaer transition hover:bg-flaeche-100 hover:text-primaer"
       >
         <Pencil className="h-4 w-4" />

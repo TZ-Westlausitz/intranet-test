@@ -27,9 +27,34 @@ const SUPABASE_STORAGE_BUCKET = process.env.SUPABASE_STORAGE_BUCKET ?? "ablage"
 const supabase =
   SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) : null
 
+/**
+ * Supabase Storage akzeptiert nur ASCII-Zeichen in Schlüsseln — ein Umlaut
+ * oder Sonderzeichen im Dateinamen ("Gespräch Norman.pdf", "Foto (1).jpg")
+ * ergibt "InvalidKey" und damit einen Absturz beim Speichern. Der Schlüssel
+ * wird deshalb nur für Supabase umgeschrieben: Umlaute ausgeschrieben (ä →
+ * ae, ß → ss), alles andere Ungewöhnliche zu "_". Der Dateiname selbst
+ * bleibt unverändert in der Datenbank (Spalte `dateiname`) und beim
+ * Herunterladen sichtbar; in den Pfaden steht davor immer eine
+ * UUID, Kollisionen sind ausgeschlossen. Gewöhnliche Pfade ändern sich nicht,
+ * bereits abgelegte Dateien bleiben also lesbar.
+ */
+function supabaseSchluessel(relativerPfad: string): string {
+  return relativerPfad
+    .replaceAll("ä", "ae")
+    .replaceAll("ö", "oe")
+    .replaceAll("ü", "ue")
+    .replaceAll("Ä", "Ae")
+    .replaceAll("Ö", "Oe")
+    .replaceAll("Ü", "Ue")
+    .replaceAll("ß", "ss")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Za-z0-9._\-/@]/g, "_")
+}
+
 export async function dateiAblegen(relativerPfad: string, inhalt: Uint8Array): Promise<void> {
   if (supabase) {
-    const { error } = await supabase.storage.from(SUPABASE_STORAGE_BUCKET).upload(relativerPfad, inhalt, {
+    const { error } = await supabase.storage.from(SUPABASE_STORAGE_BUCKET).upload(supabaseSchluessel(relativerPfad), inhalt, {
       upsert: true,
     })
     if (error) throw error
@@ -47,7 +72,7 @@ export async function dateiAblegen(relativerPfad: string, inhalt: Uint8Array): P
 
 export async function dateiLesen(relativerPfad: string): Promise<Buffer> {
   if (supabase) {
-    const { data, error } = await supabase.storage.from(SUPABASE_STORAGE_BUCKET).download(relativerPfad)
+    const { data, error } = await supabase.storage.from(SUPABASE_STORAGE_BUCKET).download(supabaseSchluessel(relativerPfad))
     if (error) throw error
     return Buffer.from(await data.arrayBuffer())
   }
@@ -58,7 +83,7 @@ export async function dateiLesen(relativerPfad: string): Promise<Buffer> {
 /** Ignoriert "gibt es nicht" — Aufräumen soll nicht daran scheitern. */
 export async function dateiLoeschen(relativerPfad: string): Promise<void> {
   if (supabase) {
-    await supabase.storage.from(SUPABASE_STORAGE_BUCKET).remove([relativerPfad])
+    await supabase.storage.from(SUPABASE_STORAGE_BUCKET).remove([supabaseSchluessel(relativerPfad)])
     return
   }
 

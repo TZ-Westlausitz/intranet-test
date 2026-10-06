@@ -4,7 +4,8 @@ import { useEffect, useMemo, useRef, useState } from "react"
 
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
-import { AuftragFormFelder, LEERER_AUFTRAG_STANDARDWERTE, type AuftragStandardwerte } from "@/components/auftrag-form-felder"
+import { AuftragFormFelder } from "@/components/auftrag-form-felder"
+import { LEERER_AUFTRAG_STANDARDWERTE, type AuftragStandardwerte } from "@/lib/auftraege/standardwerte"
 import { EntwurfBestaetigenDialog } from "@/components/entwurf-bestaetigen-dialog"
 import type { Person } from "@/components/termin-form-felder"
 import type { verwendbareAufgabenVorlagen } from "@/lib/aufgaben-vorlagen/abfragen"
@@ -132,7 +133,7 @@ export function AuftragErstellenDialog({
           ereignis.preventDefault()
           setEntwurfNachfrageOffen(true)
         }}
-        className="fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
+        className="fixed top-1/2 left-1/2 w-full max-w-lg lg:max-w-4xl -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-rand bg-flaeche p-0 shadow-xl backdrop:bg-neutral-900/40"
       >
         <form
           ref={formRef}
@@ -162,7 +163,7 @@ export function AuftragErstellenDialog({
                 </select>
               </div>
             )}
-            <AuftragFormFelder key={vorlageId} standardwerte={standardwerte} personen={personen} />
+            <AuftragFormFelder key={vorlageId} standardwerte={standardwerte} personen={personen} mitVorschau />
           </div>
 
           <div className="flex justify-end gap-2 border-t border-rand px-5 py-4">

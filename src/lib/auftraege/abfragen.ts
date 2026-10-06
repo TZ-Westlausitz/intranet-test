@@ -2,6 +2,17 @@ import { prisma } from "@/lib/db"
 
 const ANHANG_SELECT = { id: true, dateiname: true, groesseBytes: true, mimetyp: true } as const
 
+const CHECKPUNKTE_INCLUDE = {
+  select: { id: true, text: true, erledigtAm: true },
+  orderBy: { reihenfolge: "asc" as const },
+}
+
+/** Empfänger mit Namen — Auftrag.empfaenger ist die Verbindungstabelle, die Person steckt darin. */
+const EMPFAENGER_INCLUDE = {
+  select: { person: { select: { benutzername: true, vorname: true, nachname: true } } },
+  orderBy: { person: { nachname: "asc" as const } },
+}
+
 const KOMMENTARE_INCLUDE = {
   include: {
     person: { select: { vorname: true, nachname: true } },
@@ -33,38 +44,44 @@ export async function auftraegeFuerPerson(personId: string) {
   const nochNichtGeplant = { OR: [{ geplantAm: null }, { geplantAm: { lte: jetzt } }] }
   const [zugewiesenOffen, zugewiesenErledigt, vergebenOffen, vergebenErledigt] = await Promise.all([
     prisma.auftrag.findMany({
-      where: { zugewiesenAnId: personId, istEntwurf: false, erledigtAm: null, ...nochNichtGeplant },
+      where: { empfaenger: { some: { personId } }, istEntwurf: false, erledigtAm: null, ...nochNichtGeplant },
       include: {
         erstelltVon: { select: { vorname: true, nachname: true } },
+        empfaenger: EMPFAENGER_INCLUDE,
         anhaenge: { where: { kommentarId: null }, select: ANHANG_SELECT },
         kommentare: KOMMENTARE_INCLUDE,
+        checkpunkte: CHECKPUNKTE_INCLUDE,
       },
       orderBy: [{ faelligAm: { sort: "asc", nulls: "last" } }, { prioritaet: "asc" }, { erstelltAm: "asc" }],
     }),
     prisma.auftrag.findMany({
-      where: { zugewiesenAnId: personId, istEntwurf: false, erledigtAm: { not: null } },
+      where: { empfaenger: { some: { personId } }, istEntwurf: false, erledigtAm: { not: null } },
       include: {
         erstelltVon: { select: { vorname: true, nachname: true } },
+        empfaenger: EMPFAENGER_INCLUDE,
         anhaenge: { where: { kommentarId: null }, select: ANHANG_SELECT },
         kommentare: KOMMENTARE_INCLUDE,
+        checkpunkte: CHECKPUNKTE_INCLUDE,
       },
       orderBy: { erledigtAm: "desc" },
     }),
     prisma.auftrag.findMany({
       where: { erstelltVonId: personId, istEntwurf: false, erledigtAm: null, ...nochNichtGeplant },
       include: {
-        zugewiesenAn: { select: { vorname: true, nachname: true } },
+        empfaenger: EMPFAENGER_INCLUDE,
         anhaenge: { where: { kommentarId: null }, select: ANHANG_SELECT },
         kommentare: KOMMENTARE_INCLUDE,
+        checkpunkte: CHECKPUNKTE_INCLUDE,
       },
       orderBy: [{ faelligAm: { sort: "asc", nulls: "last" } }, { prioritaet: "asc" }, { erstelltAm: "asc" }],
     }),
     prisma.auftrag.findMany({
       where: { erstelltVonId: personId, istEntwurf: false, erledigtAm: { not: null } },
       include: {
-        zugewiesenAn: { select: { vorname: true, nachname: true } },
+        empfaenger: EMPFAENGER_INCLUDE,
         anhaenge: { where: { kommentarId: null }, select: ANHANG_SELECT },
         kommentare: KOMMENTARE_INCLUDE,
+        checkpunkte: CHECKPUNKTE_INCLUDE,
       },
       orderBy: { erledigtAm: "desc" },
     }),
@@ -91,9 +108,10 @@ export async function alleOffenenAuftraege() {
     },
     include: {
       erstelltVon: { select: { vorname: true, nachname: true } },
-      zugewiesenAn: { select: { vorname: true, nachname: true } },
+      empfaenger: EMPFAENGER_INCLUDE,
       anhaenge: { where: { kommentarId: null }, select: ANHANG_SELECT },
       kommentare: KOMMENTARE_INCLUDE,
+      checkpunkte: CHECKPUNKTE_INCLUDE,
     },
     orderBy: [{ faelligAm: { sort: "asc", nulls: "last" } }, { prioritaet: "asc" }, { erstelltAm: "asc" }],
   })
@@ -103,7 +121,11 @@ export async function alleOffenenAuftraege() {
 export async function eigeneAuftragEntwuerfe(personId: string) {
   return prisma.auftrag.findMany({
     where: { erstelltVonId: personId, istEntwurf: true },
-    include: { anhaenge: { where: { kommentarId: null }, select: ANHANG_SELECT } },
+    include: {
+      anhaenge: { where: { kommentarId: null }, select: ANHANG_SELECT },
+      checkpunkte: CHECKPUNKTE_INCLUDE,
+      empfaenger: { select: { personId: true } },
+    },
     orderBy: { erstelltAm: "desc" },
   })
 }
@@ -119,17 +141,38 @@ export async function auftraegeStatusAnzahl(personId: string): Promise<{ offen: 
   const jetzt = new Date()
   const nochNichtGeplant = { OR: [{ geplantAm: null }, { geplantAm: { lte: jetzt } }] }
   const [offen, angenommen] = await Promise.all([
-    prisma.auftrag.count({ where: { zugewiesenAnId: personId, istEntwurf: false, status: "OFFEN", ...nochNichtGeplant } }),
-    prisma.auftrag.count({ where: { zugewiesenAnId: personId, istEntwurf: false, status: "ANGENOMMEN", ...nochNichtGeplant } }),
+    prisma.auftrag.count({ where: { empfaenger: { some: { personId } }, istEntwurf: false, status: "OFFEN", ...nochNichtGeplant } }),
+    prisma.auftrag.count({ where: { empfaenger: { some: { personId } }, istEntwurf: false, status: "ANGENOMMEN", ...nochNichtGeplant } }),
   ])
   return { offen, angenommen }
+}
+
+/**
+ * Für die Startseiten-Kachel "Aufgaben": die offenen und angenommenen
+ * Aufträge der Person (nicht erledigt, kein Entwurf, nichts noch Verstecktes)
+ * mit dem Nötigsten pro Zeile — jede Zeile verlinkt als Titel direkt auf das
+ * Aufgaben-Pop-Up (`/aufgaben?auftrag=<id>`). Sortierung wie auf /aufgaben:
+ * Fälligkeit, dann Priorität.
+ */
+export async function offeneAuftraegeFuerKachel(personId: string) {
+  const jetzt = new Date()
+  return prisma.auftrag.findMany({
+    where: {
+      empfaenger: { some: { personId } },
+      istEntwurf: false,
+      erledigtAm: null,
+      OR: [{ geplantAm: null }, { geplantAm: { lte: jetzt } }],
+    },
+    select: { id: true, titel: true, status: true, prioritaet: true, faelligAm: true },
+    orderBy: [{ faelligAm: { sort: "asc", nulls: "last" } }, { prioritaet: "asc" }, { erstelltAm: "asc" }],
+  })
 }
 
 /** Für die Kalenderseite "Geplante Aktionen" — eigene (von mir vergebene) geplante Aufträge im Zeitraum. */
 export async function auftraegeGeplantFuerZeitraum(personId: string, von: Date, bis: Date) {
   return prisma.auftrag.findMany({
     where: { erstelltVonId: personId, istEntwurf: false, geplantAm: { not: null, gte: von, lte: bis } },
-    include: { zugewiesenAn: { select: { vorname: true, nachname: true } } },
+    include: { empfaenger: EMPFAENGER_INCLUDE },
     orderBy: { geplantAm: "asc" },
   })
 }

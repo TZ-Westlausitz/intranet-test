@@ -1,13 +1,16 @@
 import Link from "next/link"
 
+import { AufgabenKachelListe, type AufgabeZeile } from "@/components/startseite/aufgaben-kachel-liste"
 import { modulAkzentKlassen } from "@/lib/startseite/raster"
 
 export type AufgabenKachelProjekt = { id: string; titel: string; anzahl: number }
 
 /**
  * Startseiten-Kachel "Aufgaben" — aus src/app/page.tsx herausgelöst, siehe
- * KalenderKachel. Zweigeteilt (Rückmeldung 2026-09-28): obere Hälfte zählt
- * Aufträge (Offen/Angenommen), untere Hälfte ist eine eigene, genauso große
+ * KalenderKachel. Zweigeteilt (Rückmeldung 2026-09-28): obere Hälfte listet
+ * die eigenen offenen Aufgaben mit Titel als Link zum Pop-Up (statt der
+ * früheren Zähler Offen/Angenommen, Rückmeldung 2026-10-05; passt nicht
+ * alles, steht in der letzten Zeile "+ X weitere"), untere Hälfte ist eine eigene, genauso große
  * Überschrift "Projekte" (verlinkt auf /aufgaben/projekte) mit den eigenen
  * Projekten darunter — jedes Projekt für sich verlinkt auf seine
  * Unterseite. Nur Projekte mit mindestens einer offenen eigenen Aufgabe,
@@ -21,17 +24,15 @@ export type AufgabenKachelProjekt = { id: string; titel: string; anzahl: number 
  */
 export function AufgabenKachel({
   className,
-  auftraegeOffen,
-  auftraegeAngenommen,
+  aufgaben,
   projekte,
 }: {
   className: string
-  auftraegeOffen: number
-  auftraegeAngenommen: number
+  aufgaben: AufgabeZeile[]
   projekte: AufgabenKachelProjekt[]
 }) {
   const projektAufgabenGesamt = projekte.reduce((summe, p) => summe + p.anzahl, 0)
-  const gesamtOffen = auftraegeOffen + auftraegeAngenommen + projektAufgabenGesamt
+  const gesamtOffen = aufgaben.length + projektAufgabenGesamt
 
   return (
     <div
@@ -56,34 +57,23 @@ export function AufgabenKachel({
         <p className="mt-2 text-xs text-sekundaer">Alles erledigt</p>
       ) : (
         <div className="mt-2 flex min-h-0 flex-1 flex-col gap-2">
-          {/* Obere Hälfte: Aufträge. */}
-          {(auftraegeOffen > 0 || auftraegeAngenommen > 0) && (
-            <div className="flex flex-col gap-1.5">
-              {auftraegeOffen > 0 && (
-                <div className="flex items-center justify-between text-xs text-primaer">
-                  <span>Offen</span>
-                  <span className="font-medium">{auftraegeOffen}</span>
-                </div>
-              )}
-              {auftraegeAngenommen > 0 && (
-                <div className="flex items-center justify-between text-xs text-primaer">
-                  <span>Angenommen</span>
-                  <span className="font-medium">{auftraegeAngenommen}</span>
-                </div>
-              )}
+          {/* Obere Hälfte: eigene offene Aufgaben (Titel als Link zum Pop-Up). */}
+          {aufgaben.length > 0 && (
+            <div className="flex min-h-0 flex-1 flex-col">
+              <AufgabenKachelListe aufgaben={aufgaben} />
             </div>
           )}
 
           {/* Untere Hälfte: eigene Projekte mit offenen Aufgaben. */}
           {projekte.length > 0 && (
-            <div className="min-h-0 flex-1 border-t border-flaeche-100 pt-2">
+            <div className="flex min-h-0 flex-1 flex-col border-t border-flaeche-100 pt-2">
               <Link
                 href="/aufgaben/projekte"
                 className="rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
               >
                 <h3 className="text-sm font-semibold text-ueberschrift hover:underline">Projekte</h3>
               </Link>
-              <ul className="mt-1 flex flex-col gap-1 overflow-y-auto">
+              <ul className="mt-1 flex min-h-0 flex-col gap-1 overflow-y-auto">
                 {projekte.map((p) => (
                   <li key={p.id}>
                     <Link

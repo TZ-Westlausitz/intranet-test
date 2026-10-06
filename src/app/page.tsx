@@ -8,7 +8,7 @@ import { AusleiheStatus } from "@/generated/prisma/enums"
 import { MONATSNAMEN, istGleicherTag } from "@/lib/kalender"
 import { naechsterTermin, faelligeErinnerungenAnzahl } from "@/lib/termine/abfragen"
 import { aufgabenFuerPerson, naechsteGeplantAufgaben } from "@/lib/aufgaben/abfragen"
-import { auftraegeStatusAnzahl, naechsteGeplantAuftraege } from "@/lib/auftraege/abfragen"
+import { naechsteGeplantAuftraege, offeneAuftraegeFuerKachel } from "@/lib/auftraege/abfragen"
 import { projektAufgabenFuerPerson } from "@/lib/projekte/abfragen"
 import {
   infosFuerPerson,
@@ -20,6 +20,7 @@ import {
 import { NewsfeedHomeKachel } from "@/components/newsfeed-home-kachel"
 import { KalenderKachel } from "@/components/startseite/kalender-kachel"
 import { AufgabenKachel } from "@/components/startseite/aufgaben-kachel"
+import { AufgabenKachelListe } from "@/components/startseite/aufgaben-kachel-liste"
 import { WissensbereichKachel } from "@/components/startseite/wissensbereich-kachel"
 import { FahrzeugeKachel } from "@/components/startseite/fahrzeuge-kachel"
 import { TodoListeKachel } from "@/components/startseite/todo-liste-kachel"
@@ -147,12 +148,12 @@ export default async function Startseite() {
     naechsteGeplantAuftraege(kontext.personId, 5),
   ])
 
-  const [termin, faelligeErinnerungen, { offen: offeneAufgaben }, auftraegeStatus, offeneProjektAufgaben, infos, offeneBestaetigungen] =
+  const [termin, faelligeErinnerungen, { offen: offeneAufgaben }, offeneAuftraege, offeneProjektAufgaben, infos, offeneBestaetigungen] =
     await Promise.all([
       naechsterTermin(kontext.personId, heute),
       faelligeErinnerungenAnzahl(kontext.personId, heute),
       aufgabenFuerPerson(kontext.personId),
-      auftraegeStatusAnzahl(kontext.personId),
+      offeneAuftraegeFuerKachel(kontext.personId),
       projektAufgabenFuerPerson(kontext.personId),
       // Admin-Modus (siehe Kontext.adminModusAktiv): dieselbe firmenweite
       // Sicht wie im vollen /newsfeed-Feed (Rückmeldung vom 2026-09-14) —
@@ -198,6 +199,8 @@ export default async function Startseite() {
       // Bestätigung steht noch aus — die Kachel hebt solche Beiträge
       // orange hervor (siehe NewsfeedHomeKachel).
       bestaetigungOffen: info.mitBestaetigung && info.istEmpfaenger && !info.selbstBestaetigt,
+      bestaetigtAnzahl: info.bestaetigtAnzahl,
+      empfaengerAnzahl: info.empfaengerAnzahl,
     }))
   // Handy-Startseite zeigt nur die 3 neuesten Infos direkt (kompakte,
   // natürlich mitscrollende Liste statt einer intern scrollenden Box wie
@@ -207,7 +210,17 @@ export default async function Startseite() {
   // Die Aufgaben-Kachel zeigt jetzt nur noch Aufträge (mit Offen/
   // Angenommen-Abstufung) und Projekt-Aufgaben — die To-Do-Liste hat eine
   // eigene Kachel weiter unten im Raster.
-  const auftraegeGesamtOffen = auftraegeStatus.offen + auftraegeStatus.angenommen
+  const auftraegeGesamtOffen = offeneAuftraege.length
+  // Für die Aufgaben-Kachel: Titel als Link zum Pop-Up, mit Fälligkeit.
+  const aufgabenZeilen = offeneAuftraege.map((auftrag) => ({
+    id: auftrag.id,
+    titel: auftrag.titel,
+    prioritaet: auftrag.prioritaet,
+    faelligText: auftrag.faelligAm
+      ? auftrag.faelligAm.toLocaleDateString("de-DE", { timeZone: "Europe/Berlin", weekday: "short", day: "2-digit", month: "2-digit" })
+      : null,
+    ueberfaellig: auftrag.faelligAm !== null && auftrag.faelligAm < heute,
+  }))
   const aufgabenGesamtOffen = auftraegeGesamtOffen + offeneProjektAufgaben.length
   // Für die Aufgaben-Kachel (untere Hälfte, Rückmeldung 2026-09-28): die
   // ohnehin schon geladenen offenen Projekt-Aufgaben nach Projekt
@@ -270,12 +283,15 @@ export default async function Startseite() {
             </div>
           </Link>
 
-          <Link
-            href="/aufgaben"
-            className="rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen-dunkel bg-flaeche p-4 shadow-sm transition hover:border-marke-gruen-dunkel focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
-          >
-            <div className="flex items-center justify-between gap-1.5">
-              <h2 className="text-lg font-semibold text-ueberschrift">Aufgaben</h2>
+          {/* Kein einzelner Link mehr um die ganze Kachel: Kopfzeile, jede Aufgabe
+              und die Projekt-Zeile verlinken für sich (verschachtelte Links
+              wären ungültiges HTML) — siehe AufgabenKachel auf dem Desktop. */}
+          <div className="rounded-2xl border border-x-rand border-b-rand border-t-4 border-t-marke-gruen-dunkel bg-flaeche p-4 shadow-sm">
+            <Link
+              href="/aufgaben"
+              className="flex items-center justify-between gap-1.5 rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+            >
+              <h2 className="text-lg font-semibold text-ueberschrift hover:underline">Aufgaben</h2>
               {aufgabenGesamtOffen > 0 && (
                 <span
                   aria-label={`${aufgabenGesamtOffen} offene Aufgabe${aufgabenGesamtOffen === 1 ? "" : "n"}`}
@@ -284,30 +300,25 @@ export default async function Startseite() {
                   {aufgabenGesamtOffen}
                 </span>
               )}
-            </div>
+            </Link>
 
             {aufgabenGesamtOffen === 0 ? (
               <p className="mt-1.5 text-sm text-sekundaer">Alles erledigt</p>
             ) : (
-              <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-primaer">
-                {auftraegeStatus.offen > 0 && (
-                  <span>
-                    Offen <span className="font-medium">{auftraegeStatus.offen}</span>
-                  </span>
-                )}
-                {auftraegeStatus.angenommen > 0 && (
-                  <span>
-                    Angenommen <span className="font-medium">{auftraegeStatus.angenommen}</span>
-                  </span>
-                )}
+              <div className="mt-2 flex flex-col gap-1.5">
+                {aufgabenZeilen.length > 0 && <AufgabenKachelListe aufgaben={aufgabenZeilen} maxZeilen={5} messen={false} />}
                 {offeneProjektAufgaben.length > 0 && (
-                  <span>
-                    Projekt-Aufgaben <span className="font-medium">{offeneProjektAufgaben.length}</span>
-                  </span>
+                  <Link
+                    href="/aufgaben/projekte"
+                    className="flex items-center justify-between gap-2 rounded border-t border-flaeche-100 pt-1.5 text-xs text-primaer hover:text-marke-gruen-dunkel hover:underline"
+                  >
+                    <span>Projekt-Aufgaben</span>
+                    <span className="font-medium">{offeneProjektAufgaben.length}</span>
+                  </Link>
                 )}
               </div>
             )}
-          </Link>
+          </div>
 
           {/* Alle übrigen Bausteine als einfache Kacheln ohne Vorschau —
               scrollt ohnehin mit der Seite, ein 2-spaltiges Raster hält
@@ -409,8 +420,7 @@ export default async function Startseite() {
                     <AufgabenKachel
                       key="AUFGABEN"
                       className={gitterKlasse}
-                      auftraegeOffen={auftraegeStatus.offen}
-                      auftraegeAngenommen={auftraegeStatus.angenommen}
+                      aufgaben={aufgabenZeilen}
                       projekte={projekteMitOffenenAufgaben}
                     />
                   )

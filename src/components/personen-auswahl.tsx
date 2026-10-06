@@ -38,6 +38,8 @@ export function PersonenAuswahl({
   name = "teilnehmer",
   mehrfach = true,
   id: eigeneId,
+  onAenderung,
+  chipsUnten = false,
 }: {
   personen: Person[]
   ausgewaehlteIds: string[]
@@ -45,6 +47,10 @@ export function PersonenAuswahl({
   mehrfach?: boolean
   /** Für ein `<label htmlFor>` der aufrufenden Seite — ohne Angabe wird ein Suchfeld-Element ohne verknüpftes Label erzeugt. */
   id?: string
+  /** Meldet die aktuelle Auswahl nach jeder Änderung (z. B. um ein Feld erst ab zwei Personen zu zeigen). */
+  onAenderung?: (ids: string[]) => void
+  /** Ausgewählte Personen UNTER dem Suchfeld statt darüber (z. B. beim Zuweisen von Aufgaben). */
+  chipsUnten?: boolean
 }) {
   const generierteId = useId()
   const id = eigeneId ?? generierteId
@@ -71,13 +77,17 @@ export function PersonenAuswahl({
   }, [hervorgehobenerIndex, geoeffnet])
 
   function hinzufuegen(personId: string) {
-    setAusgewaehlt((bisher) => (mehrfach ? [...bisher, personId] : [personId]))
+    const neu = mehrfach ? [...ausgewaehlt, personId] : [personId]
+    setAusgewaehlt(neu)
+    onAenderung?.(neu)
     setSuchtext("")
     setHervorgehoben(0)
   }
 
   function entfernen(personId: string) {
-    setAusgewaehlt((bisher) => bisher.filter((x) => x !== personId))
+    const neu = ausgewaehlt.filter((x) => x !== personId)
+    setAusgewaehlt(neu)
+    onAenderung?.(neu)
   }
 
   function beiTaste(ereignis: React.KeyboardEvent<HTMLInputElement>) {
@@ -97,14 +107,9 @@ export function PersonenAuswahl({
     }
   }
 
-  return (
-    <div className="relative">
-      {ausgewaehlt.map((personId) => (
-        <input key={personId} type="hidden" name={name} value={personId} />
-      ))}
-
-      {ausgewaehlt.length > 0 && (
-        <div className="mb-1.5 flex flex-wrap gap-1.5">
+  const chipsBlock = (
+ausgewaehlt.length > 0 && (
+        <div className={chipsUnten ? "mt-1.5 flex flex-wrap gap-1.5" : "mb-1.5 flex flex-wrap gap-1.5"}>
           {ausgewaehlt.map((personId) => {
             const person = personenNachId.get(personId)
             if (!person) return null
@@ -126,7 +131,16 @@ export function PersonenAuswahl({
             )
           })}
         </div>
-      )}
+      )
+  )
+
+  return (
+    <div className="relative">
+      {ausgewaehlt.map((personId) => (
+        <input key={personId} type="hidden" name={name} value={personId} />
+      ))}
+
+      {!chipsUnten && chipsBlock}
 
       <div className="relative">
         <Search aria-hidden className="pointer-events-none absolute top-1/2 left-2 h-4 w-4 -translate-y-1/2 text-tertiaer" />
@@ -184,6 +198,8 @@ export function PersonenAuswahl({
           )}
         </div>
       )}
+
+      {chipsUnten && chipsBlock}
     </div>
   )
 }

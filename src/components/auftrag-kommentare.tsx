@@ -26,10 +26,9 @@ function AnhangZeile({ auftragId, anhang }: { auftragId: string; anhang: Auftrag
 }
 
 /**
- * Rückfragen/Chat zu einem Auftrag — dasselbe Muster wie bei Terminen
- * (siehe TerminInfoDialog), hier aber als <details> in der Listenzeile
- * statt in einem eigenen Pop-Up, weil die Auftrags-Übersicht schon eine
- * flache Liste ist und kein zweites Pop-Up darüber braucht.
+ * Kommentare zu einem Auftrag (früher "Rückfragen", umbenannt 2026-10-05) —
+ * dasselbe Muster wie bei Terminen (siehe TerminInfoDialog). Steht im
+ * Aufgaben-Pop-Up (AuftragDialog), nicht mehr in der Listenzeile.
  */
 export function AuftragKommentare({
   auftragId,
@@ -43,12 +42,12 @@ export function AuftragKommentare({
   const [anhaenge, setAnhaenge] = useState<string[]>([])
 
   return (
-    <details className="mt-1.5">
-      <summary className="cursor-pointer text-xs font-medium text-marke-gruen-dunkel">
-        Rückfragen{kommentare.length > 0 ? ` (${kommentare.length})` : ""}
-      </summary>
+    <section>
+      <h3 className="text-sm font-semibold text-ueberschrift">
+        Kommentare{kommentare.length > 0 ? ` (${kommentare.length})` : ""}
+      </h3>
 
-      <div className="mt-1.5">
+      <div className="mt-2">
         {kommentare.length > 0 && (
           <ul className="flex flex-col gap-2">
             {kommentare.map((kommentar) => (
@@ -88,7 +87,7 @@ export function AuftragKommentare({
               type="text"
               name="text"
               required
-              placeholder="Frage oder Hinweis …"
+              placeholder="Kommentar schreiben …"
               className="h-9 flex-1 rounded-lg border border-flaeche-300 px-2 text-sm"
             />
             <label
@@ -115,6 +114,6 @@ export function AuftragKommentare({
           {anhaenge.length > 0 && <p className="text-xs text-sekundaer">Anhang: {anhaenge.join(", ")}</p>}
         </form>
       </div>
-    </details>
+    </section>
   )
 }

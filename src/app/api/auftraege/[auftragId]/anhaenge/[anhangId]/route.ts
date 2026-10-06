@@ -20,10 +20,14 @@ export async function GET(
     include: { auftrag: true },
   })
 
-  const darfSehen =
+  const istEmpfaenger =
     anhang !== null &&
-    anhang.auftragId === auftragId &&
-    (anhang.auftrag.erstelltVonId === kontext.personId || anhang.auftrag.zugewiesenAnId === kontext.personId)
+    (await prisma.auftragEmpfaenger.findUnique({
+      where: { auftragId_personId: { auftragId, personId: kontext.personId } },
+    })) !== null
+
+  const darfSehen =
+    anhang !== null && anhang.auftragId === auftragId && (anhang.auftrag.erstelltVonId === kontext.personId || istEmpfaenger)
 
   if (!anhang || !darfSehen) {
     return new Response("Nicht gefunden", { status: 404 })
