@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db"
+import { pushSenden } from "@/lib/push/senden"
 
 /**
  * Bewusst KEIN "use server" hier: Jede exportierte Funktion in einer
@@ -11,4 +12,13 @@ import { prisma } from "@/lib/db"
  */
 export async function benachrichtigungErstellen(daten: { personId: string; text: string; link?: string }) {
   await prisma.benachrichtigung.create({ data: daten })
+
+  // Zusätzlich aufs Handy, falls die Person Push-Mitteilungen aktiviert hat —
+  // mit neutralem Text, nicht dem Glocken-Text (siehe src/lib/push/senden.ts).
+  // Ein Fehler dort darf nie die auslösende Aktion kippen.
+  try {
+    await pushSenden(daten.personId, daten.link)
+  } catch (fehler) {
+    console.error("Push-Versand fehlgeschlagen", fehler)
+  }
 }

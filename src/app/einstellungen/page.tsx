@@ -8,6 +8,8 @@ import { rasterAufStandardZuruecksetzen } from "@/lib/startseite/aktionen"
 import { personenAuswahlListe } from "@/lib/kontakte/abfragen"
 import { ordnerUebersicht } from "@/lib/wissen/abfragen"
 import { verfuegbareFormulare } from "@/lib/formulare/abfragen"
+import { PushEinstellung } from "@/components/einstellungen/push-einstellung"
+import { pushAboLoeschen, pushAboSpeichern, pushTestSenden } from "@/lib/push/aktionen"
 
 /**
  * Alle persönlichen Einstellungen auf einer Seite (Rückmeldung 2026-09-11:
@@ -78,6 +80,21 @@ export default async function EinstellungenSeite() {
             Auf Standard zurücksetzen
           </button>
         </form>
+      </section>
+
+      <section className="mt-4 rounded-xl border border-rand bg-flaeche p-4">
+        <h2 className="text-base font-semibold text-ueberschrift">Mitteilungen aufs Handy</h2>
+        <p className="mt-1 text-sm text-sekundaer">
+          Bekomme einen Hinweis auf dem Gerät, wenn es im Intranet etwas Neues für dich gibt, zum Beispiel eine
+          Aufgabe oder eine Terminänderung. Auf dem Sperrbildschirm steht dabei nur ein neutraler Text ohne Namen und
+          Titel; die Details siehst du erst in der App. Jedes Gerät schaltest du einzeln ein.
+        </p>
+        <PushEinstellung
+          oeffentlicherSchluessel={process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY ? process.env.VAPID_PUBLIC_KEY : null}
+          speichernAktion={pushAboSpeichern}
+          loeschenAktion={pushAboLoeschen}
+          testAktion={pushTestSenden}
+        />
       </section>
 
       <ZurueckButton />

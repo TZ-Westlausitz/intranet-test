@@ -256,6 +256,7 @@ model Person {
   aufgaben                     Aufgabe[]                        @relation("AufgabePerson")
   auftraegeErstellt            Auftrag[]                        @relation("AuftragErsteller")
   auftragEmpfang               AuftragEmpfaenger[]
+  pushAbos                     PushAbo[]
   auftragKommentare            AuftragKommentar[]               @relation("AuftragKommentarAutor")
   gruppen                      PersonGruppe[]
   berechtigungen               PersonBerechtigung[]
@@ -1311,6 +1312,27 @@ model Auftrag {
 
   @@index([erstelltVonId])
   @@index([erstelltVonId, geplantAm])
+}
+
+/// Ein Gerät, auf das Push-Mitteilungen gehen (Web Push, Rückmeldung
+/// 2026-10-05). Eine Person kann mehrere Geräte haben (Handy, Tablet, PC) —
+/// jedes meldet sich selbst an und wieder ab. `endpoint` ist die Adresse beim
+/// Push-Dienst des Geräts (Apple/Google/…), `p256dh` und `auth` sind die
+/// Schlüssel dafür; zusammen reichen sie, um dieses eine Gerät anzusprechen.
+/// Tote Abos (Gerät abgemeldet, App gelöscht) räumt der Versand beim nächsten
+/// Fehlschlag selbst weg (siehe pushSenden). Gesendet werden bewusst nur
+/// neutrale Texte ohne Namen/Titel (siehe src/lib/push/).
+model PushAbo {
+  id         String   @id @default(cuid())
+  personId   String
+  endpoint   String   @unique
+  p256dh     String
+  auth       String
+  erstelltAm DateTime @default(now())
+
+  person Person @relation(fields: [personId], references: [benutzername], onDelete: Cascade)
+
+  @@index([personId])
 }
 
 /// Wer einen Auftrag bekommt (Rückmeldung 2026-10-05: mehrere Personen sind
