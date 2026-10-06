@@ -54,8 +54,8 @@ export async function alleFertigenProjekte() {
  * gilt es als erreicht. Geteilt zwischen Projekt-Detailseite und der
  * Zeitstrahl-Vorschau auf der Übersichtsseite.
  */
-export function zwischenzieleMitFortschritt(
-  zwischenziele: { id: string; titel: string; frist: Date }[],
+export function zwischenzieleMitFortschritt<Z extends { id: string; titel: string; frist: Date }>(
+  zwischenziele: Z[],
   aufgaben: { status: AufgabeStatus | null; zwischenzielId: string | null }[],
 ) {
   return zwischenziele.map((z) => {

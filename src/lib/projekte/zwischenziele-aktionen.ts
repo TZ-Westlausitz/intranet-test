@@ -7,6 +7,13 @@ import { prisma } from "@/lib/db"
 import { kalendertagAusEingabe } from "@/lib/datum"
 import { projektMitgliedschaftPruefen } from "@/lib/projekte/mitgliedschaft"
 
+const NOTIZ_MAX_LAENGE = 2000
+
+/** Optionale Notiz: schlichter Text, getrimmt und gekürzt; leer = keine Notiz. */
+function notizAusFormData(formData: FormData): string | null {
+  return String(formData.get("notiz") ?? "").trim().slice(0, NOTIZ_MAX_LAENGE) || null
+}
+
 /** Legt ein Zwischenziel an — nur die Leitung, nur solange das Projekt schreibbar ist. Reiht sich anhand der Frist automatisch richtig ein (siehe Kommentar am Model). */
 export async function zwischenzielErstellen(projektId: string, formData: FormData) {
   const kontext = await berechtigung()
@@ -19,7 +26,7 @@ export async function zwischenzielErstellen(projektId: string, formData: FormDat
   const frist = kalendertagAusEingabe(fristEingabe)
   if (!frist) return
 
-  await prisma.zwischenziel.create({ data: { projektId, titel, frist } })
+  await prisma.zwischenziel.create({ data: { projektId, titel, frist, notiz: notizAusFormData(formData) } })
 
   revalidatePath(`/aufgaben/projekte/${projektId}`)
 }
@@ -40,7 +47,7 @@ export async function zwischenzielAktualisieren(projektId: string, zwischenzielI
   const frist = kalendertagAusEingabe(fristEingabe)
   if (!frist) return
 
-  await prisma.zwischenziel.update({ where: { id: zwischenzielId }, data: { titel, frist } })
+  await prisma.zwischenziel.update({ where: { id: zwischenzielId }, data: { titel, frist, notiz: notizAusFormData(formData) } })
 
   revalidatePath(`/aufgaben/projekte/${projektId}`)
 }

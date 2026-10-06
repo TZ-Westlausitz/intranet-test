@@ -1577,6 +1577,9 @@ model Zwischenziel {
   projektId String
   titel     String
   frist     DateTime
+  /// Optionale genauere Beschreibung (Rückmeldung 2026-10-06), schlichter
+  /// Text mit Zeilenumbrüchen, kein Rich-Text.
+  notiz     String?
 
   projekt  Projekt   @relation(fields: [projektId], references: [id], onDelete: Cascade)
   aufgaben Aufgabe[]

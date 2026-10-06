@@ -6,12 +6,15 @@ import { Pencil } from "lucide-react"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { datumIsoAusDate, relativesDatum } from "@/lib/datum"
 import { zwischenzielStatus, ZWISCHENZIEL_STATUS_KLASSEN } from "@/lib/projekte-optionen"
+import { DatumFeld } from "@/components/datum-feld"
 import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 export type ZwischenzielListenAnzeige = {
   id: string
   titel: string
   frist: Date
+  /** Optionale genauere Beschreibung (schlichter Text). */
+  notiz: string | null
   /** Abgeleitet, nicht gespeichert: true sobald es mindestens eine Aufgabe hat und alle davon erledigt sind (siehe Kommentar am Model Zwischenziel). */
   erreicht: boolean
   aufgabenErledigt: number
@@ -74,49 +77,63 @@ export function ProjektZwischenziele({
                       aktualisierenAktion(projektId, zwischenziel.id, formData)
                       setBearbeiteId(null)
                     }}
-                    className="flex flex-wrap items-end gap-2"
+                    className="flex flex-col gap-2"
                   >
-                    <div>
-                      <label className="block text-xs font-medium text-primaer">Titel</label>
-                      <input
-                        name="titel"
-                        type="text"
-                        required
-                        defaultValue={zwischenziel.titel}
-                        className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
-                      />
+                    <div className="flex flex-wrap items-end gap-2">
+                      <div className="min-w-0 flex-1">
+                        <label className="block text-xs font-medium text-primaer">Titel</label>
+                        <input
+                          name="titel"
+                          type="text"
+                          required
+                          defaultValue={zwischenziel.titel}
+                          className="mt-1 h-9 w-full min-w-40 rounded-lg border border-flaeche-300 px-2 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-primaer">Frist</label>
+                        <DatumFeld
+                          name="frist"
+                          required
+                          defaultValue={datumIsoAusDate(zwischenziel.frist)}
+                          ariaLabel="Frist"
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-primaer">Frist</label>
-                      <input
-                        name="frist"
-                        type="date"
-                        required
-                        defaultValue={datumIsoAusDate(zwischenziel.frist)}
-                        className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+                      <label className="block text-xs font-medium text-primaer">Notiz (optional)</label>
+                      <textarea
+                        name="notiz"
+                        rows={3}
+                        maxLength={2000}
+                        defaultValue={zwischenziel.notiz ?? ""}
+                        className="mt-1 w-full rounded-lg border border-flaeche-300 px-2 py-1.5 text-sm"
                       />
                     </div>
-                    <SpeichernKnopf
-                      type="submit"
-                      className="h-9 shrink-0 rounded-lg bg-marke-gruen px-3 text-sm font-medium text-neutral-900 transition hover:bg-marke-gruen-dunkel"
-                    >
-                      Speichern
-                    </SpeichernKnopf>
-                    <button
-                      type="button"
-                      onClick={() => setBearbeiteId(null)}
-                      className="h-9 shrink-0 rounded-lg px-3 text-sm font-medium text-tertiaer transition hover:bg-flaeche-100"
-                    >
-                      Abbrechen
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBearbeiteId(null)}
+                        className="h-9 shrink-0 rounded-lg px-3 text-sm font-medium text-tertiaer transition hover:bg-flaeche-100"
+                      >
+                        Abbrechen
+                      </button>
+                      <SpeichernKnopf
+                        type="submit"
+                        className="h-9 shrink-0 rounded-lg bg-marke-gruen px-3 text-sm font-medium text-neutral-900 transition hover:bg-marke-gruen-dunkel"
+                      >
+                        Speichern
+                      </SpeichernKnopf>
+                    </div>
                   </form>
                 </li>
               )
             }
 
             return (
-              <li key={zwischenziel.id} className="flex items-center justify-between gap-2 py-2">
-                <div className="flex min-w-0 items-center gap-2.5">
+              <li key={zwischenziel.id} className="flex items-start justify-between gap-2 py-2">
+                <div className="flex min-w-0 items-start gap-2.5">
                   <span
                     className={
                       "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white " +
@@ -126,17 +143,21 @@ export function ProjektZwischenziele({
                     {index + 1}
                   </span>
                   <div className="min-w-0">
-                    <span className={"block truncate text-sm " + (zwischenziel.erreicht ? "text-tertiaer line-through" : "text-primaer")}>
+                    {/* break-words statt truncate: lange Namen brechen um (Rückmeldung 2026-10-06). */}
+                    <span className={"block text-sm break-words " + (zwischenziel.erreicht ? "text-tertiaer line-through" : "text-primaer")}>
                       {zwischenziel.titel}
                     </span>
                     <span className={"text-xs " + (status === "UEBERFAELLIG" ? "font-medium text-red-600" : "text-tertiaer")}>
                       {relativesDatum(zwischenziel.frist, heute)}
                     </span>
+                    {zwischenziel.notiz && (
+                      <p className="mt-1 text-xs break-words whitespace-pre-line text-sekundaer">{zwischenziel.notiz}</p>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-2">
-                  <span className="text-xs text-tertiaer">
+                  <span className="mt-0.5 text-xs text-tertiaer">
                     {zwischenziel.aufgabenErledigt}/{zwischenziel.aufgabenGesamt} Aufgaben
                   </span>
 
@@ -169,23 +190,35 @@ export function ProjektZwischenziele({
       )}
 
       {istLeitung && !schreibgeschuetzt && (
-        <form action={erstellenAktion.bind(null, projektId)} className="mt-auto flex items-end gap-2 border-t border-flaeche-100 pt-3">
-          <div>
-            <label className="block text-xs font-medium text-primaer">Neues Zwischenziel</label>
-            <input
-              name="titel"
-              type="text"
-              required
-              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
-            />
+        <form action={erstellenAktion.bind(null, projektId)} className="mt-auto flex flex-col gap-2 border-t border-flaeche-100 pt-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-0 flex-1">
+              <label className="block text-xs font-medium text-primaer">Neues Zwischenziel</label>
+              <input
+                name="titel"
+                type="text"
+                required
+                className="mt-1 h-9 w-full min-w-40 rounded-lg border border-flaeche-300 px-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-primaer">Frist</label>
+              <DatumFeld name="frist" required ariaLabel="Frist" className="mt-1" />
+            </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-primaer">Frist</label>
-            <input name="frist" type="date" required className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm" />
+            <label className="block text-xs font-medium text-primaer">Notiz (optional)</label>
+            <textarea
+              name="notiz"
+              rows={2}
+              maxLength={2000}
+              placeholder="Genauere Beschreibung …"
+              className="mt-1 w-full rounded-lg border border-flaeche-300 px-2 py-1.5 text-sm"
+            />
           </div>
           <button
             type="submit"
-            className="h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200"
+            className="ml-auto h-9 shrink-0 rounded-lg bg-flaeche-100 px-3 text-sm font-medium text-primaer transition hover:bg-flaeche-200"
           >
             Hinzufügen
           </button>

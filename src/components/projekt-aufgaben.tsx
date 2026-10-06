@@ -1,12 +1,13 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { Paperclip } from "lucide-react"
 
 import { PersonenAuswahl } from "@/components/personen-auswahl"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAETEN } from "@/lib/aufgaben-optionen"
 import { AUFGABE_STATUS_KLASSEN, AUFGABE_STATUS_NAMEN } from "@/lib/projekte-optionen"
+import { DatumFeld } from "@/components/datum-feld"
 import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 export type ProjektAufgabeAnzeige = {
@@ -200,7 +201,7 @@ export function ProjektAufgaben({
     { id: null, titel: "Ohne Zwischenziel", aufgaben: aufgaben.filter((a) => a.zwischenzielId === null) },
   ].filter((gruppe) => gruppe.aufgaben.length > 0)
 
-  const faelligRef = useRef<HTMLInputElement>(null)
+  const [faelligWert, setFaelligWert] = useState("")
 
   // Erzwingt nach dem Absenden ein Neu-Mounten des gesamten Anlegen-
   // Formulars (key wechselt) — ein einfaches form.reset() würde die
@@ -211,7 +212,10 @@ export function ProjektAufgaben({
   // Muster wie beim Zurücksetzen des Nachrichtenfelds in ProjektThread.
   const [formVersion, setFormVersion] = useState(0)
   function beiErstellenAbsenden() {
-    window.setTimeout(() => setFormVersion((v) => v + 1), 0)
+    window.setTimeout(() => {
+      setFormVersion((v) => v + 1)
+      setFaelligWert("")
+    }, 0)
   }
 
   // Übernimmt beim Auswählen eines Zwischenziels dessen Frist als Vorschlag
@@ -221,9 +225,7 @@ export function ProjektAufgaben({
   // überschreibt es einfach wieder (kein erzwungener Wert).
   function beiZwischenzielAendern(ereignis: React.ChangeEvent<HTMLSelectElement>) {
     const zwischenziel = zwischenziele.find((m) => m.id === ereignis.target.value)
-    if (zwischenziel && faelligRef.current) {
-      faelligRef.current.value = zwischenziel.fristIso
-    }
+    if (zwischenziel) setFaelligWert(zwischenziel.fristIso)
   }
 
   return (
@@ -292,12 +294,7 @@ export function ProjektAufgaben({
 
             <div>
               <label className="block text-xs font-medium text-primaer">Fällig am</label>
-              <input
-                name="faelligAm"
-                type="date"
-                ref={faelligRef}
-                className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
-              />
+              <DatumFeld name="faelligAm" wert={faelligWert} onAenderung={setFaelligWert} ariaLabel="Fällig am" className="mt-1" />
             </div>
 
             <fieldset>

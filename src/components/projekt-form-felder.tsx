@@ -1,7 +1,8 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useState } from "react"
 
+import { DatumFeld } from "@/components/datum-feld"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { PROJEKT_STATUS } from "@/lib/projekte-optionen"
 
@@ -29,21 +30,19 @@ export function ProjektFormFelder({
   standardwerte: ProjektStandardwerte
   zeigeStatus?: boolean
 }) {
-  const endeRef = useRef<HTMLInputElement>(null)
-  const [minEnde, setMinEnde] = useState(standardwerte.start)
+  const [start, setStart] = useState(standardwerte.start)
+  const [ende, setEnde] = useState(standardwerte.ende)
 
-  // Rutscht "Start" über "Enddatum" hinaus, zieht das Enddatum automatisch
-  // nach (mindestens derselbe Tag) — bleibt danach aber frei änderbar,
-  // z. B. für ein Projekt über mehrere Monate. `min` auf dem Enddatum-Feld
-  // sorgt zusätzlich dafür, dass sich auch von Hand kein Enddatum vor dem
-  // Start mehr auswählen lässt — derselbe Mechanismus wie beim
-  // ganztägigen Termin (siehe beiVonDatumAendern in TerminFormFelder).
-  function beiStartAendern(ereignis: React.ChangeEvent<HTMLInputElement>) {
-    const neuerStart = ereignis.target.value
-    if (endeRef.current && endeRef.current.value < neuerStart) {
-      endeRef.current.value = neuerStart
-    }
-    setMinEnde(neuerStart)
+  // Rutscht "Start" über "Enddatum" hinaus (oder ist das Enddatum noch leer),
+  // zieht das Enddatum automatisch nach (mindestens derselbe Tag) — bleibt
+  // danach aber frei änderbar, z. B. für ein Projekt über mehrere Monate.
+  // `min` auf dem Enddatum-Feld sorgt zusätzlich dafür, dass sich auch von
+  // Hand kein Enddatum vor dem Start mehr eintragen lässt — derselbe
+  // Mechanismus wie beim ganztägigen Termin (siehe beiVonDatumAendern in
+  // TerminFormFelder).
+  function beiStartAendern(neuerStart: string) {
+    setStart(neuerStart)
+    if (neuerStart && ende < neuerStart) setEnde(neuerStart)
   }
 
   return (
@@ -69,25 +68,18 @@ export function ProjektFormFelder({
       <div className="flex flex-wrap items-end gap-3">
         <div>
           <label className="block text-xs font-medium text-primaer">Start</label>
-          <input
-            name="start"
-            type="date"
-            required
-            defaultValue={standardwerte.start}
-            onChange={beiStartAendern}
-            className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
-          />
+          <DatumFeld name="start" required wert={start} onAenderung={beiStartAendern} ariaLabel="Start" className="mt-1" />
         </div>
         <div>
           <label className="block text-xs font-medium text-primaer">Enddatum</label>
-          <input
+          <DatumFeld
             name="ende"
-            type="date"
             required
-            min={minEnde}
-            defaultValue={standardwerte.ende}
-            ref={endeRef}
-            className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+            wert={ende}
+            onAenderung={setEnde}
+            min={start || undefined}
+            ariaLabel="Enddatum"
+            className="mt-1"
           />
         </div>
 
