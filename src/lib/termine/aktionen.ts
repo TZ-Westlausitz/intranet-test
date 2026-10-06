@@ -351,6 +351,7 @@ export async function terminAktualisieren(terminId: string, formData: FormData) 
     for (const personId of teilnehmerIds) {
       await benachrichtigungErstellen({
         personId,
+        absender: kontext.name,
         text: `${kontext.name} hat "${felder.titel}" auf ${neueZeit} verschoben`,
         link: terminLink(terminId, felder.beginn),
       })
@@ -383,6 +384,7 @@ export async function terminLoeschen(terminId: string, formData: FormData) {
   for (const teilnehmer of termin.teilnehmer) {
     await benachrichtigungErstellen({
       personId: teilnehmer.personId,
+      absender: kontext.name,
       text: `${kontext.name} hat den Termin "${termin.titel}" gelöscht`,
     })
   }
@@ -419,6 +421,7 @@ export async function terminSerieLoeschen(serieId: string, formData: FormData) {
   for (const personId of betroffenePersonen) {
     await benachrichtigungErstellen({
       personId,
+      absender: kontext.name,
       text: `${kontext.name} hat die Terminserie "${titel}" gelöscht`,
     })
   }
@@ -463,6 +466,7 @@ export async function terminSerieAbHierLoeschen(terminId: string, formData: Form
   for (const personId of betroffenePersonen) {
     await benachrichtigungErstellen({
       personId,
+      absender: kontext.name,
       text: `${kontext.name} hat "${titel}" ab dem ${formatiereDatumAusDate(ausgangsTermin.beginn)} nicht mehr wiederholt (spätere Termine der Serie gelöscht)`,
     })
   }
@@ -496,6 +500,7 @@ export async function terminTeilnahmeAntworten(terminId: string, status: TerminT
 
   await benachrichtigungErstellen({
     personId: teilnahme.termin.erstelltVonId,
+    absender: kontext.name,
     text: `${kontext.name} hat "${teilnahme.termin.titel}" ${status === TerminTeilnahmeStatus.ZUGESAGT ? "zugesagt" : "abgesagt"}`,
     link: terminLink(terminId, teilnahme.termin.beginn),
   })
@@ -547,6 +552,7 @@ export async function terminKommentarErstellen(terminId: string, formData: FormD
   for (const personId of empfaengerIds) {
     await benachrichtigungErstellen({
       personId,
+      absender: kontext.name,
       text: `${kontext.name} hat zu "${termin.titel}" kommentiert`,
       link: terminLink(terminId, termin.beginn),
     })

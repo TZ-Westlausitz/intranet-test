@@ -191,6 +191,7 @@ export async function projektMitgliedHinzufuegen(projektId: string, formData: Fo
     for (const personId of neuePersonenIds) {
       await benachrichtigungErstellen({
         personId,
+        absender: kontext.name,
         text: `${kontext.name} hat dich zum Projekt "${projekt?.titel}" hinzugefügt`,
         link: `/aufgaben/projekte/${projektId}`,
       })

@@ -92,6 +92,7 @@ export async function projektAufgabeErstellen(projektId: string, formData: FormD
     if (projekt?.status !== ProjektStatus.PLANUNG) {
       await benachrichtigungErstellen({
         personId: zugewiesenAnId,
+        absender: kontext.name,
         text: `${kontext.name} hat dir im Projekt "${projekt?.titel}" die Aufgabe "${titel}" zugewiesen`,
         link: `/aufgaben/projekte/${projektId}`,
       })

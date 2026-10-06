@@ -276,6 +276,7 @@ export async function fahrzeugTerminAnnehmen(vorschlagId: string) {
 
   await benachrichtigungErstellen({
     personId: vorschlag.vorgeschlagenVonId,
+    absender: kontext.name,
     text: `${kontext.name} hat den Termin (${titel}, ${formatiereDatumAusDate(vorschlag.datum)}) angenommen.`,
     link: `/fuhrpark/${vorschlag.fahrzeugId}`,
   })
@@ -308,6 +309,7 @@ export async function fahrzeugTerminNeuenSuchen(vorschlagId: string) {
   const titel = `${FAHRZEUGTERMIN_ART_TEXT[vorschlag.art]}: ${vorschlag.fahrzeug.bezeichnung} (${vorschlag.fahrzeug.kennzeichen})`
   await benachrichtigungErstellen({
     personId: vorschlag.vorgeschlagenVonId,
+    absender: kontext.name,
     text: `${kontext.name} kann den vorgeschlagenen Termin (${titel}, ${formatiereDatumAusDate(vorschlag.datum)}) nicht wahrnehmen — bitte einen neuen Termin vorschlagen.`,
     link: `/fuhrpark/${vorschlag.fahrzeugId}`,
   })

@@ -229,6 +229,7 @@ export async function infoErstellen(formData: FormData) {
       empfaengerIds.map((personId) =>
         benachrichtigungErstellen({
           personId,
+          absender: absenderName,
           text: `${absenderName} hat eine neue Info veröffentlicht: "${titel}"`,
           // Infos haben keine eigene Seite mehr (siehe InfoAnzeigenDialog) —
           // "?info=" öffnet beim Laden von /newsfeed automatisch das
@@ -598,6 +599,7 @@ export async function infoAktualisieren(infoId: string, formData: FormData) {
       empfaengerIds.map((personId) =>
         benachrichtigungErstellen({
           personId,
+          absender: absenderName,
           text: `${absenderName} hat eine neue Info veröffentlicht: "${titel}"`,
           link: `/newsfeed?info=${infoId}`,
         }),

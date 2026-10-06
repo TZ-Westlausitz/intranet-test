@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache"
 
 import { berechtigung, NichtBerechtigt } from "@/lib/auth/berechtigung"
 import { prisma } from "@/lib/db"
-import { chatSichtbarFuer, direktSchluesselBilden } from "@/lib/chat/sichtbarkeit"
+import { chatSichtbarFuer, direktSchluesselBilden, konversationTeilnehmerIds } from "@/lib/chat/sichtbarkeit"
+import { pushSenden } from "@/lib/push/senden"
 import {
   konversationNachrichten as konversationNachrichtenAbfrage,
   konversationTeilnehmerUndGelesenStand,
@@ -228,7 +229,7 @@ export async function gruppeAdminMachen(konversationId: string, personId: string
  * Model ChatNachricht). Text ODER mindestens ein Anhang ist Pflicht, nicht
  * zwingend beides (Foto ohne Bildunterschrift ist ein gültiger Chat).
  *
- * Erzeugt bewusst KEINE allgemeine Benachrichtigung (Rückmeldung
+ * Erzeugt bewusst KEINE allgemeine Benachrichtigung in der Glocke (Rückmeldung
  * 2026-09-10: "nur unten auf dem Chat-Symbol, nicht oben bei der
  * allgemeinen Glocke") — der Ungelesen-Zähler auf ChatWidget/`/chat`
  * kommt unabhängig davon direkt aus `ChatKonversationGelesen`
@@ -259,6 +260,25 @@ export async function nachrichtSenden(konversationId: string, formData: FormData
     create: { konversationId, personId: kontext.personId },
     update: { zuletztGelesenAm: new Date() },
   })
+
+  // Push aufs Handy (nur Push, keine Glocke — siehe oben): an alle anderen
+  // Teilnehmenden, die die Konversation nicht stummgeschaltet haben, mit
+  // kurzem Text "von <Name> / Nachricht" (nie der Inhalt, siehe
+  // src/lib/push/senden.ts). Ein Fehler beim Versand darf das Senden nie kippen.
+  try {
+    const [teilnehmerIds, stumme] = await Promise.all([
+      konversationTeilnehmerIds(konversation),
+      prisma.chatKonversationGelesen.findMany({
+        where: { konversationId, stumm: true },
+        select: { personId: true },
+      }),
+    ])
+    const stummeIds = new Set(stumme.map((eintrag) => eintrag.personId))
+    const empfaenger = teilnehmerIds.filter((id) => id !== kontext.personId && !stummeIds.has(id))
+    await Promise.allSettled(empfaenger.map((personId) => pushSenden(personId, `/chat/${konversationId}`, { absender: kontext.name })))
+  } catch (fehler) {
+    console.error("Chat-Push fehlgeschlagen", fehler)
+  }
 
   revalidatePath("/chat")
 }

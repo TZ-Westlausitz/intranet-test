@@ -8,6 +8,7 @@ import { rasterAufStandardZuruecksetzen } from "@/lib/startseite/aktionen"
 import { personenAuswahlListe } from "@/lib/kontakte/abfragen"
 import { ordnerUebersicht } from "@/lib/wissen/abfragen"
 import { verfuegbareFormulare } from "@/lib/formulare/abfragen"
+import { InfoHinweis } from "@/components/info-hinweis"
 import { PushEinstellung } from "@/components/einstellungen/push-einstellung"
 import { pushAboLoeschen, pushAboSpeichern, pushTestSenden } from "@/lib/push/aktionen"
 
@@ -83,12 +84,10 @@ export default async function EinstellungenSeite() {
       </section>
 
       <section className="mt-4 rounded-xl border border-rand bg-flaeche p-4">
-        <h2 className="text-base font-semibold text-ueberschrift">Mitteilungen aufs Handy</h2>
-        <p className="mt-1 text-sm text-sekundaer">
-          Bekomme einen Hinweis auf dem Gerät, wenn es im Intranet etwas Neues für dich gibt, zum Beispiel eine
-          Aufgabe oder eine Terminänderung. Auf dem Sperrbildschirm steht dabei nur ein neutraler Text ohne Namen und
-          Titel; die Details siehst du erst in der App. Jedes Gerät schaltest du einzeln ein.
-        </p>
+        <div className="flex items-center gap-1.5">
+          <h2 className="text-base font-semibold text-ueberschrift">Mitteilungen aufs Handy</h2>
+          <InfoHinweis text="Du bekommst einen Hinweis auf dem Gerät, wenn es etwas Neues für dich gibt, z. B. eine Aufgabe. Auf dem Sperrbildschirm stehen nur der Name der Person und die Art (z. B. Aufgabe), nie der Inhalt. Jedes Gerät schaltest du einzeln ein." />
+        </div>
         <PushEinstellung
           oeffentlicherSchluessel={process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY ? process.env.VAPID_PUBLIC_KEY : null}
           speichernAktion={pushAboSpeichern}

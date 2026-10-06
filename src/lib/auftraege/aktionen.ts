@@ -184,6 +184,7 @@ async function auftragSpeichern(
       for (const personId of gruppe) {
         await benachrichtigungErstellen({
           personId,
+          absender: kontext.name,
           text: `${kontext.name} hat dir eine Aufgabe zugewiesen: "${felder.titel}"`,
           link: `/aufgaben?auftrag=${auftrag.id}`,
         })
@@ -322,6 +323,7 @@ export async function auftragAktualisieren(auftragId: string, formData: FormData
     for (const personId of await empfaengerIdsVon(auftragId)) {
       await benachrichtigungErstellen({
         personId,
+        absender: kontext.name,
         text: `${kontext.name} hat die Aufgabe "${titel}" geändert`,
         link: `/aufgaben?auftrag=${auftragId}`,
       })
@@ -368,6 +370,7 @@ export async function auftragCheckpunktSetzen(checkpunktId: string, erledigt: bo
     if (offen === 0) {
       await benachrichtigungErstellen({
         personId: punkt.auftrag.erstelltVonId,
+        absender: kontext.name,
         text: `${kontext.name} hat alle Punkte von "${punkt.auftrag.titel}" abgehakt`,
         link: `/aufgaben?auftrag=${punkt.auftragId}`,
       })
@@ -397,6 +400,7 @@ export async function auftragAnnehmen(auftragId: string) {
 
   await benachrichtigungErstellen({
     personId: auftrag.erstelltVonId,
+    absender: kontext.name,
     text: `${kontext.name} hat "${auftrag.titel}" angenommen`,
     link: `/aufgaben?auftrag=${auftragId}`,
   })
@@ -436,6 +440,7 @@ export async function auftragErledigtSetzen(auftragId: string, erledigt: boolean
   if (erledigt) {
     await benachrichtigungErstellen({
       personId: auftrag.erstelltVonId,
+      absender: kontext.name,
       text: `${kontext.name} hat "${auftrag.titel}" erledigt`,
       link: `/aufgaben?auftrag=${auftragId}`,
     })
@@ -472,6 +477,7 @@ export async function auftragLoeschen(auftragId: string) {
     for (const personId of empfaenger) {
       await benachrichtigungErstellen({
         personId,
+        absender: kontext.name,
         text: `${kontext.name} hat die Aufgabe "${auftrag.titel}" zurückgezogen`,
       })
     }
@@ -536,6 +542,7 @@ export async function auftragKommentarErstellen(auftragId: string, formData: For
   for (const personId of beteiligte) {
     await benachrichtigungErstellen({
       personId,
+      absender: kontext.name,
       text: `${kontext.name} hat zu "${auftrag.titel}" kommentiert`,
       link: `/aufgaben?auftrag=${auftragId}`,
     })

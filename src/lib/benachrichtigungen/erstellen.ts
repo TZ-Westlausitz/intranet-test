@@ -10,14 +10,25 @@ import { pushSenden } from "@/lib/push/senden"
  * andere Server Actions gedacht (z. B. terminTeilnahmeAntworten), die die
  * Berechtigung selbst schon geprüft haben.
  */
-export async function benachrichtigungErstellen(daten: { personId: string; text: string; link?: string }) {
-  await prisma.benachrichtigung.create({ data: daten })
+export async function benachrichtigungErstellen(daten: {
+  personId: string
+  text: string
+  link?: string
+  /**
+   * Name der Person, die die Mitteilung auslöst — nur für den Push-Text
+   * ("von Anna Vogel"), nicht in der Glocke gespeichert (dort steht er schon
+   * im Text). Weglassen bei Systemmeldungen und der Meldestelle.
+   */
+  absender?: string
+}) {
+  const { absender, ...fuerDatenbank } = daten
+  await prisma.benachrichtigung.create({ data: fuerDatenbank })
 
   // Zusätzlich aufs Handy, falls die Person Push-Mitteilungen aktiviert hat —
-  // mit neutralem Text, nicht dem Glocken-Text (siehe src/lib/push/senden.ts).
+  // mit kurzem Text (Absender + Art), nicht dem Glocken-Text (siehe src/lib/push/senden.ts).
   // Ein Fehler dort darf nie die auslösende Aktion kippen.
   try {
-    await pushSenden(daten.personId, daten.link)
+    await pushSenden(daten.personId, daten.link, { absender })
   } catch (fehler) {
     console.error("Push-Versand fehlgeschlagen", fehler)
   }

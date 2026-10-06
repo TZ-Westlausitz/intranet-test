@@ -31,7 +31,7 @@ function alsAppGeoeffnet(): boolean {
 }
 
 /**
- * Schalter "Mitteilungen auf diesem Gerät" (Web Push, siehe src/lib/push/).
+ * Schieberegler "Mitteilungen auf diesem Gerät" (Web Push, siehe src/lib/push/).
  * Jedes Gerät meldet sich selbst an — Handy, Tablet und PC getrennt. Der
  * Browser fragt dabei nach der Erlaubnis; das muss ein Tipp der Person
  * auslösen, sonst blockiert vor allem iOS die Abfrage. Auf iPhone/iPad
@@ -137,58 +137,54 @@ export function PushEinstellung({
     }
   }
 
-  const knopfKlasse =
-    "h-9 rounded-lg px-3 text-sm font-semibold transition disabled:opacity-60"
   const hinweis: Partial<Record<Zustand, string>> = {
     nichtUnterstuetzt: "Dieses Gerät oder dieser Browser unterstützt keine Mitteilungen von Web-Apps.",
     iosOhneApp:
-      "Auf iPhone und iPad gehen Mitteilungen nur, wenn die App auf dem Home-Bildschirm liegt: In Safari auf Teilen tippen, „Zum Home-Bildschirm“ wählen und die App von dort öffnen. Dann kannst du die Mitteilungen hier einschalten.",
+      "Auf iPhone und iPad gehen Mitteilungen nur, wenn die App auf dem Home-Bildschirm liegt: In Safari auf Teilen tippen, „Zum Home-Bildschirm“ wählen und die App von dort öffnen.",
     nichtEingerichtet: "Der Versand von Mitteilungen ist auf dem Server noch nicht eingerichtet.",
     verweigert:
       "Mitteilungen sind für diese Seite blockiert. Erlaube sie in den Einstellungen deines Geräts oder Browsers und lade die Seite danach neu.",
   }
+  const eingeschaltet = zustand === "an"
+  const bedienbar = (zustand === "an" || zustand === "aus") && !beschaeftigt
 
   return (
     <div className="mt-3">
-      {zustand === "pruefe" && <p className="text-sm text-sekundaer">Wird geprüft …</p>}
-
-      {hinweis[zustand] && (
-        <p className="rounded-lg bg-flaeche-schwach px-3 py-2 text-sm text-sekundaer">{hinweis[zustand]}</p>
-      )}
-
-      {zustand === "aus" && (
-        <button
-          type="button"
-          onClick={aktivieren}
-          disabled={beschaeftigt}
-          className={`${knopfKlasse} bg-marke-gruen text-neutral-900 hover:bg-marke-gruen-dunkel`}
+      {/* Schieberegler wie beim Farbschema; schaltet sofort um. */}
+      <div className="flex items-center gap-3">
+        <label
+          className={"relative inline-flex h-6 w-11 shrink-0 items-center " + (bedienbar ? "cursor-pointer" : "opacity-50")}
         >
-          Mitteilungen auf diesem Gerät einschalten
-        </button>
-      )}
-
-      {zustand === "an" && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-marke-gruen/15 px-2.5 py-1 text-xs font-medium text-marke-gruen-dunkel">
-            Auf diesem Gerät eingeschaltet
-          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            checked={eingeschaltet}
+            disabled={!bedienbar}
+            onChange={(ereignis) => (ereignis.target.checked ? aktivieren() : deaktivieren())}
+            className="peer sr-only"
+            aria-label="Mitteilungen auf diesem Gerät"
+          />
+          <span className="absolute inset-0 rounded-full bg-flaeche-300 transition peer-checked:bg-marke-gruen" />
+          {/* bg-white bewusst literal: Der Knopf bleibt in beiden Farbschemata weiß (wie FarbschemaSchalter). */}
+          <span className="absolute left-0.5 h-5 w-5 translate-x-0 rounded-full bg-white shadow transition peer-checked:translate-x-5" />
+        </label>
+        <span className="text-sm font-medium text-ueberschrift">
+          {zustand === "pruefe" ? "Wird geprüft …" : eingeschaltet ? "Auf diesem Gerät an" : "Auf diesem Gerät aus"}
+        </span>
+        {eingeschaltet && (
           <button
             type="button"
             onClick={testen}
             disabled={beschaeftigt}
-            className={`${knopfKlasse} border border-rand font-medium text-primaer hover:bg-flaeche-100`}
+            className="ml-auto h-8 rounded-lg px-2.5 text-xs font-medium text-marke-gruen-dunkel transition hover:bg-flaeche-100 disabled:opacity-60"
           >
-            Test-Mitteilung senden
+            Test senden
           </button>
-          <button
-            type="button"
-            onClick={deaktivieren}
-            disabled={beschaeftigt}
-            className={`${knopfKlasse} font-medium text-sekundaer hover:bg-flaeche-100`}
-          >
-            Ausschalten
-          </button>
-        </div>
+        )}
+      </div>
+
+      {hinweis[zustand] && (
+        <p className="mt-2 rounded-lg bg-flaeche-schwach px-3 py-2 text-sm text-sekundaer">{hinweis[zustand]}</p>
       )}
 
       {meldung && (

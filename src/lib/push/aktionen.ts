@@ -44,6 +44,6 @@ export async function pushAboLoeschen(endpoint: string): Promise<void> {
 export async function pushTestSenden(): Promise<{ eingerichtet: boolean; zugestellt: number }> {
   const kontext = await berechtigung()
   if (!pushVerfuegbar()) return { eingerichtet: false, zugestellt: 0 }
-  const zugestellt = await pushSenden(kontext.personId, "/einstellungen", "Test: Mitteilungen funktionieren")
+  const zugestellt = await pushSenden(kontext.personId, "/einstellungen", { text: "Test: Mitteilungen funktionieren" })
   return { eingerichtet: true, zugestellt }
 }
