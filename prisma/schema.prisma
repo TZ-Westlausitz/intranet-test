@@ -419,7 +419,9 @@ model PersonGruppe {
 /// — das frühere `Zugehoerigkeit.rolle`-Enum wurde vollständig abgelöst,
 /// u. a. durch die Einträge "Werkstattleiter" (Fuhrpark-Zugriff),
 /// "Adminbereich" (Zugriff auf /admin) und "Admin" (zusätzlich: schaltet
-/// den unternehmensweiten Admin-Modus frei).
+/// den unternehmensweiten Admin-Modus frei). Wer "Admin" hat, bekommt in
+/// berechtigung() automatisch ALLE anderen aktiven Berechtigungen, auch
+/// ohne Haken — nur "Meldestelle" nie (bewusste Einzelzuweisung).
 model Berechtigung {
   id    String  @id @default(cuid())
   name  String  @unique

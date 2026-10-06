@@ -140,6 +140,19 @@ export async function berechtigung(optionen?: {
   ]
   const berechtigungen = [...new Set(person.berechtigungen.map((b) => b.berechtigung.name))]
 
+  // "Admin" umfasst automatisch alle anderen aktiven Berechtigungen, auch die
+  // nicht angehakten (Rückmeldung 2026-10-06) — mit EINER Ausnahme: die
+  // "Meldestelle" gibt es nie automatisch. Sie ist eine bewusste Zuweisung
+  // (Hinweisgeberschutz, Zugriff auf vertrauliche Meldungen) und darf nicht
+  // als Nebenwirkung eines anderen Rechts entstehen. Weil jede Rechteprüfung
+  // über diese Liste läuft, wirkt die Regel überall ohne weitere Änderung.
+  if (berechtigungen.includes("Admin")) {
+    const alle = await prisma.berechtigung.findMany({ where: { aktiv: true }, select: { name: true } })
+    for (const { name } of alle) {
+      if (name !== "Meldestelle" && !berechtigungen.includes(name)) berechtigungen.push(name)
+    }
+  }
+
   if (optionen?.benoetigteBerechtigung) {
     const erforderlich = Array.isArray(optionen.benoetigteBerechtigung)
       ? optionen.benoetigteBerechtigung

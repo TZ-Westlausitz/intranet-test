@@ -75,6 +75,9 @@ export function PersonBearbeitenDialog({
   const [istPending, startTransition] = useTransition()
   const [neuesPasswort, setNeuesPasswort] = useState<string | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
+  const adminRef = useRef<HTMLInputElement>(null)
+  // "Admin" angehakt? Dann gelten alle anderen Berechtigungen (außer Meldestelle) automatisch.
+  const [adminAn, setAdminAn] = useState(() => berechtigungenListe.some((b) => b.name === "Admin" && ausgewaehlteBerechtigungIds.includes(b.id)))
   const [ergebnis, speichernFormAktion, speichertGerade] = useActionState(personSpeichernAktion.bind(null, personId), null)
   const [, speichernStarten] = useTransition()
   // Vorgemerkte "Beenden"-Markierungen gehören zu EINEM Speicher-Ergebnis: Nach
@@ -129,6 +132,8 @@ export function PersonBearbeitenDialog({
             Absenden zurück, auch nach einem Fehler — dann wären die Eingaben weg. */}
         <form
           ref={formRef}
+          // Nach einem Zurücksetzen (z. B. nach dem Speichern) den Haken von "Admin" neu einlesen.
+          onReset={() => window.setTimeout(() => setAdminAn(adminRef.current?.checked ?? false), 0)}
           onSubmit={(ereignis) => {
             ereignis.preventDefault()
             const daten = new FormData(ereignis.currentTarget)
@@ -249,19 +254,32 @@ export function PersonBearbeitenDialog({
 
             <section>
               <h3 className="text-xs font-semibold text-primaer">Berechtigungen</h3>
+              <p className="mt-1 text-xs text-sekundaer">
+                Mit „Admin“ gelten automatisch alle anderen Berechtigungen, auch ohne Haken. Nur die „Meldestelle“ muss
+                immer einzeln vergeben werden.
+              </p>
               <div className="mt-2 grid max-h-40 grid-cols-2 gap-1.5 overflow-y-auto rounded-lg border border-rand p-2.5">
-                {berechtigungenListe.map((berechtigung) => (
-                  <label key={berechtigung.id} className="flex items-center gap-1.5 text-xs text-primaer">
-                    <input
-                      type="checkbox"
-                      name="berechtigungen"
-                      value={berechtigung.id}
-                      defaultChecked={ausgewaehlteBerechtigungIds.includes(berechtigung.id)}
-                      className="h-3.5 w-3.5 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
-                    />
-                    {berechtigung.name}
-                  </label>
-                ))}
+                {berechtigungenListe.map((berechtigung) => {
+                  const istAdmin = berechtigung.name === "Admin"
+                  const durchAdmin = adminAn && !istAdmin && berechtigung.name !== "Meldestelle"
+                  return (
+                    <label key={berechtigung.id} className="flex items-center gap-1.5 text-xs text-primaer">
+                      <input
+                        ref={istAdmin ? adminRef : undefined}
+                        type="checkbox"
+                        name="berechtigungen"
+                        value={berechtigung.id}
+                        defaultChecked={ausgewaehlteBerechtigungIds.includes(berechtigung.id)}
+                        onChange={istAdmin ? (ereignis) => setAdminAn(ereignis.target.checked) : undefined}
+                        className="h-3.5 w-3.5 rounded border-flaeche-300 text-marke-gruen focus:ring-marke-gruen"
+                      />
+                      <span>
+                        {berechtigung.name}
+                        {durchAdmin && <span className="ml-1 text-tertiaer">(durch Admin)</span>}
+                      </span>
+                    </label>
+                  )
+                })}
               </div>
             </section>
 
