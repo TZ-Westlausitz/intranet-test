@@ -58,27 +58,29 @@ export default async function Anmeldeseite({
 
   return (
     <main className="relative flex min-h-dvh items-center justify-center overflow-hidden px-5 py-10">
-      {/* Suchbild-Motiv als Seitenhintergrund, nur auf der Anmeldeseite
-          (Rückmeldung 2026-09-11) — bewusst die graue statt die weiße
-          Variante der Datei: /anmelden bleibt immer hell (kein
-          data-theme, siehe berechtigung()), weiße Linien wären auf hellem
-          Grund unsichtbar. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-flaeche-schwach"
-        style={{
-          backgroundImage: 'url("/hg-transparent-grau.svg")',
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-        }}
-      />
+      {/* Hintergrundbild je nach Format des Bildschirms (Rückmeldung 2026-10-06,
+          drei eigene Motive statt der früheren Linien-Grafik): Hochformat
+          (Handy, Tablet hochkant) → hg-login-handy, annähernd quadratische bis
+          4:3-/3:2-Querformate (Tablets) → hg-login-tablet, breitere Querformate
+          (Laptop, Desktop, Handy quer) → hg-login-desktop. Entscheidend ist das
+          Seitenverhältnis des Fensters, nicht der Gerätetyp — dann passt das
+          Motiv auch bei gedrehtem oder verkleinertem Fenster. <picture> lädt
+          nur das passende Bild; die Dateien sind als WebP verkleinert (rund
+          200 KB statt 2 MB, die PNG-Vorlagen liegen nicht mehr im Einsatz).
+          Die Motive lassen die Mitte frei, dort sitzt das Anmeldefenster.
+          /anmelden bleibt immer hell (kein data-theme, siehe berechtigung()). */}
+      <picture className="pointer-events-none absolute inset-0 -z-10 block bg-flaeche-schwach">
+        <source media="(max-aspect-ratio: 1/1)" srcSet="/hg-login-handy.webp" />
+        <source media="(max-aspect-ratio: 3/2)" srcSet="/hg-login-tablet.webp" />
+        <img src="/hg-login-desktop.webp" alt="" fetchPriority="high" className="h-full w-full object-cover" />
+      </picture>
 
-      {/* /90: das Fenster selbst leicht transparent, damit die Hintergrundgrafik
-          durchscheint (Rückmeldung 2026-09-11) — Eingabefelder und Knopf
+      {/* /95 + leichte Unschärfe: das Fenster selbst ist leicht transparent, damit die
+          Hintergrundgrafik durchscheint (Rückmeldung 2026-09-11), die Zeichnungen
+          dahinter stören aber nicht beim Lesen — Eingabefelder und Knopf
           darin bleiben bewusst voll deckend (bg-flaeche bzw. bg-marke-gruen
           ohne Opazität), nur die Fensterfläche drumherum ist betroffen. */}
-      <div className="w-full max-w-sm rounded-2xl border border-rand bg-flaeche/90 p-6 shadow-xl">
+      <div className="w-full max-w-sm rounded-2xl border border-rand bg-flaeche/95 p-6 shadow-xl backdrop-blur-sm">
         <div className="flex flex-col items-center text-center">
           <Image
             src="/logo.png"
