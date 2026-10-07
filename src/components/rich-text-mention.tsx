@@ -6,7 +6,7 @@ import { ReactRenderer } from "@tiptap/react"
 import Mention from "@tiptap/extension-mention"
 import type { SuggestionKeyDownProps, SuggestionProps } from "@tiptap/suggestion"
 
-type ErwaehnungsEintrag = { id: string; label: string }
+export type ErwaehnungsEintrag = { id: string; label: string; hinweis?: string }
 
 /**
  * @Erwähnung im Editor — verlinkt auf die Kontakte-Detailseite der
@@ -27,6 +27,18 @@ type ErwaehnungsEintrag = { id: string; label: string }
  * automatisch. Deshalb KEIN tippy.js und KEINE eigene floating-ui-Nutzung
  * nötig, obwohl `@tiptap/suggestion` floating-ui selbst intern verwendet.
  */
+/**
+ * Treffer für die Eingabe nach dem "@"/"#": Namen, bei denen ein WORT mit der
+ * Eingabe beginnt, stehen vor solchen, die sie nur irgendwo enthalten
+ * ("Ann" findet erst "Anna Schmidt", dann "Leon Hartmann").
+ */
+export function eintraegeFiltern<T extends { name: string }>(liste: T[], eingabe: string, max = 8): T[] {
+  const suche = eingabe.toLowerCase()
+  const wortAnfang = (name: string) => name.toLowerCase().split(/[\s·›-]+/).some((wort) => wort.startsWith(suche))
+  const enthalten = liste.filter((e) => e.name.toLowerCase().includes(suche))
+  return [...enthalten.filter((e) => wortAnfang(e.name)), ...enthalten.filter((e) => !wortAnfang(e.name))].slice(0, max)
+}
+
 export function Erwaehnung(personen: { id: string; name: string }[]) {
   return Mention.extend({
     addAttributes() {
@@ -63,38 +75,50 @@ export function Erwaehnung(personen: { id: string; name: string }[]) {
   }).configure({
     suggestion: {
       items: ({ query }: { query: string }): ErwaehnungsEintrag[] =>
-        personen
-          .filter((p) => p.name.toLowerCase().includes(query.toLowerCase()))
-          .slice(0, 8)
-          .map((p) => ({ id: p.id, label: p.name })),
-      render: () => {
-        let component: ReactRenderer<MentionListeHandle, SuggestionProps<ErwaehnungsEintrag, ErwaehnungsEintrag>> | null =
-          null
-        let beenden: (() => void) | null = null
-
-        return {
-          onStart: (props) => {
-            component = new ReactRenderer(MentionListe, { props, editor: props.editor })
-            beenden = props.mount(component.element)
-          },
-          onUpdate: (props) => {
-            component?.updateProps(props)
-          },
-          onKeyDown: (props) => {
-            if (props.event.key === "Escape") {
-              beenden?.()
-              return true
-            }
-            return component?.ref?.onKeyDown(props) ?? false
-          },
-          onExit: () => {
-            beenden?.()
-            component?.destroy()
-          },
-        }
-      },
+        eintraegeFiltern(personen, query).map((p) => ({ id: p.id, label: p.name })),
+      render: vorschlagslisteRendern,
     },
   })
+}
+
+
+/**
+ * Die Vorschlagsliste unter dem Cursor — geteilt von @Erwähnung (Personen) und
+ * #Wissensverweis (Artikel/Ordner, siehe rich-text-wissensverweis.tsx).
+ */
+export function vorschlagslisteRendern() {
+  let component: ReactRenderer<MentionListeHandle, SuggestionProps<ErwaehnungsEintrag, ErwaehnungsEintrag>> | null = null
+  let beenden: (() => void) | null = null
+
+  return {
+    onStart: (props: SuggestionProps<ErwaehnungsEintrag, ErwaehnungsEintrag>) => {
+      component = new ReactRenderer(MentionListe, { props, editor: props.editor })
+      // Steht der Editor in einem Pop-up (<dialog> mit showModal), liegt alles
+      // außerhalb davon unsichtbar dahinter — auch eine am Seitenende
+      // angehängte Vorschlagsliste. Deshalb direkt in das Pop-up einhängen;
+      // `mount` positioniert ein bereits eingehängtes Element nur noch, und
+      // Floating UI rechnet relativ zum Pop-up (fixed = Bezugspunkt).
+      const dialog = props.editor.view.dom.closest("dialog")
+      if (dialog) dialog.appendChild(component.element)
+      beenden = props.mount(component.element)
+    },
+    onUpdate: (props: SuggestionProps<ErwaehnungsEintrag, ErwaehnungsEintrag>) => {
+      component?.updateProps(props)
+    },
+    onKeyDown: (props: SuggestionKeyDownProps) => {
+      if (props.event.key === "Escape") {
+        beenden?.()
+        return true
+      }
+      return component?.ref?.onKeyDown(props) ?? false
+    },
+    onExit: () => {
+      beenden?.()
+      // Von Hand eingehängt (siehe onStart), also auch von Hand wieder entfernen.
+      component?.element.remove()
+      component?.destroy()
+    },
+  }
 }
 
 type MentionListeHandle = { onKeyDown: (props: SuggestionKeyDownProps) => boolean }
@@ -104,7 +128,7 @@ type MentionListeHandle = { onKeyDown: (props: SuggestionKeyDownProps) => boolea
  * Such-Dropdowns in PersonenAuswahl/InfoEmpfaengerAuswahl, damit sich das
  * Erwähnen vertraut anfühlt statt wie ein Fremdkörper im Editor.
  */
-const MentionListe = forwardRef<MentionListeHandle, SuggestionProps<ErwaehnungsEintrag, ErwaehnungsEintrag>>(
+export const MentionListe = forwardRef<MentionListeHandle, SuggestionProps<ErwaehnungsEintrag, ErwaehnungsEintrag>>(
   function MentionListe({ items, command }, ref) {
     const [ausgewaehltRoh, setAusgewaehltRoh] = useState(0)
     // An die aktuelle Trefferliste geklemmt statt per Effect zurückgesetzt
@@ -158,6 +182,7 @@ const MentionListe = forwardRef<MentionListeHandle, SuggestionProps<ErwaehnungsE
             }
           >
             {eintrag.label}
+            {eintrag.hinweis && <span className="block text-xs text-tertiaer">{eintrag.hinweis}</span>}
           </button>
         ))}
       </div>

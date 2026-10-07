@@ -4,6 +4,7 @@ import { ZurueckButton } from "@/components/zurueck-button"
 import { Hinweis } from "@/components/hinweis"
 import { InfoVorlageDialog } from "@/components/info-vorlage-dialog"
 import { InfoVorlageZeile } from "@/components/info-vorlage-zeile"
+import { wissenVerweiseFuer } from "@/lib/wissen/abfragen"
 import { alleInfoVorlagenFuerVerwaltung } from "@/lib/infos/vorlagen-abfragen"
 import { infoVorlageErstellen, infoVorlageAktualisieren, infoVorlageAktivSetzen, infoVorlageLoeschen } from "@/lib/infos/vorlagen-aktionen"
 
@@ -37,10 +38,10 @@ export default async function InfoVorlagenSeite({
 }: {
   searchParams: Promise<{ fehler?: string }>
 }) {
-  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
+  const kontext = await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
   const { fehler } = await searchParams
 
-  const [vorlagen, personen, gruppen, abteilungen, kategorien] = await Promise.all([
+  const [vorlagen, personen, gruppen, abteilungen, kategorien, wissen] = await Promise.all([
     alleInfoVorlagenFuerVerwaltung(),
     prisma.person.findMany({
       where: { aktiv: true },
@@ -50,6 +51,7 @@ export default async function InfoVorlagenSeite({
     prisma.gruppe.findMany({ where: { aktiv: true }, orderBy: { name: "asc" } }),
     prisma.abteilung.findMany({ where: { aktiv: true }, orderBy: { name: "asc" } }),
     prisma.infoKategorie.findMany({ where: { aktiv: true }, orderBy: { name: "asc" } }),
+    wissenVerweiseFuer(kontext.personId),
   ])
 
   const auswahl = {
@@ -57,6 +59,7 @@ export default async function InfoVorlagenSeite({
     gruppen: gruppen.map((g) => ({ id: g.id, name: g.name })),
     abteilungen: abteilungen.map((a) => ({ id: a.id, name: a.name })),
     kategorien: kategorien.map((k) => ({ id: k.id, name: k.name })),
+    wissen,
   }
 
   return (

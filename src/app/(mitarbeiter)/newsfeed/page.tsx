@@ -7,6 +7,7 @@ import { InfoErstellenDialog } from "@/components/info-erstellen-dialog"
 import { InfoEntwuerfeDialog } from "@/components/info-entwuerfe-dialog"
 import { NewsfeedListe } from "@/components/newsfeed-liste"
 import type { InfoFormularOptionen } from "@/components/info-form-felder"
+import { wissenVerweiseFuer } from "@/lib/wissen/abfragen"
 import { infosFuerPerson, alleInfos, eigeneInfoEntwuerfe, UNTERNEHMENSNAME } from "@/lib/infos/abfragen"
 import { istGeschaeftsfuehrung, darfInfoVorlagenVerwalten } from "@/lib/infos/sichtbarkeit"
 import { infoErstellen, infoAlsEntwurfSpeichern, infoAktualisieren, infoEntwurfLoeschen, infoAnhangLoeschen } from "@/lib/infos/aktionen"
@@ -52,7 +53,7 @@ export default async function NewsfeedSeite({
   const darfVorlagenVerwalten = darfInfoVorlagenVerwalten(kontext)
   const brauchtOptionen = kontext.berechtigungen.some((b) => RELEVANTE_BERECHTIGUNGEN.includes(b))
 
-  const [infos, entwuerfe, darfAlsUnternehmen, personen, gruppen, abteilungen, kategorien, vorlagen] = await Promise.all([
+  const [infos, entwuerfe, darfAlsUnternehmen, personen, gruppen, abteilungen, kategorien, vorlagen, wissen] = await Promise.all([
     kontext.adminModusAktiv ? alleInfos(kontext) : infosFuerPerson(kontext),
     darfErstellen ? eigeneInfoEntwuerfe(kontext.personId) : Promise.resolve([]),
     brauchtOptionen ? istGeschaeftsfuehrung(kontext.personId) : Promise.resolve(false),
@@ -73,6 +74,7 @@ export default async function NewsfeedSeite({
       ? prisma.infoKategorie.findMany({ where: { aktiv: true }, orderBy: { name: "asc" } })
       : Promise.resolve([]),
     darfErstellen ? verwendbareInfoVorlagen(kontext) : Promise.resolve([]),
+    brauchtOptionen ? wissenVerweiseFuer(kontext.personId) : Promise.resolve([]),
   ])
 
   const optionen: InfoFormularOptionen = {
@@ -81,6 +83,7 @@ export default async function NewsfeedSeite({
     abteilungen: abteilungen.map((a) => ({ id: a.id, name: a.name })),
     kategorien: kategorien.map((k) => ({ id: k.id, name: k.name })),
     darfAlsUnternehmen,
+    wissen,
   }
 
   const karten = infos.map((info) => ({

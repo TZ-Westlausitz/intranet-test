@@ -22,9 +22,16 @@ import {
 } from "@/lib/wissen/aktionen"
 
 /** Ein Ordner: Unterordner-Grid (falls vorhanden) + Artikel direkt im Ordner — nur die für die anzeigende Person sichtbaren. */
-export default async function WissensOrdnerSeite({ params }: { params: Promise<{ ordnerId: string }> }) {
+export default async function WissensOrdnerSeite({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ ordnerId: string }>
+  searchParams: Promise<{ artikel?: string }>
+}) {
   const kontext = await berechtigung()
   const { ordnerId } = await params
+  const { artikel: startArtikelId } = await searchParams
   const darfVerwalten = darfWissenVerwalten(kontext)
 
   const [detail, personen, gruppen, abteilungen] = await Promise.all([
@@ -95,6 +102,7 @@ export default async function WissensOrdnerSeite({ params }: { params: Promise<{
           anhangLoeschenAktion={artikelAnhangLoeschen}
           loeschenAktion={artikelLoeschen}
           artikelDetailLadenAktion={artikelDetailLaden}
+          startArtikelId={startArtikelId}
         />
       </div>
 

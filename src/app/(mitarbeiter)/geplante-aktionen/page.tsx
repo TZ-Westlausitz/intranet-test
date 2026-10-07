@@ -6,6 +6,7 @@ import { ZurueckButton } from "@/components/zurueck-button"
 import { GeplanteAktionenMonate, type GeplanteAktionenMonatAnzeige } from "@/components/geplante-aktionen-monate"
 import type { GeplanteAktionenEintrag, GeplanteAktionenTagAnzeige } from "@/components/geplante-aktion-tag"
 import type { InfoFormularOptionen } from "@/components/info-form-felder"
+import { wissenVerweiseFuer } from "@/lib/wissen/abfragen"
 import { infosGeplantFuerZeitraum } from "@/lib/infos/abfragen"
 import { infoAktualisieren, infoAnhangLoeschen, infoLoeschen } from "@/lib/infos/aktionen"
 import { istGeschaeftsfuehrung } from "@/lib/infos/sichtbarkeit"
@@ -57,7 +58,7 @@ export default async function GeplanteAktionenSeite({
   const ersterTag = berlinerZeitpunkt(rasterTagIso(rasterProMonat[0].wochen[0][0].datum))!
   const letzterTag = berlinerZeitpunkt(rasterTagIso(letzteWoche[letzteWoche.length - 1].datum), "23:59:59")!
 
-  const [infos, aufgaben, auftraege, darfAlsUnternehmen, personen, gruppen, abteilungen, kategorien] = await Promise.all([
+  const [infos, aufgaben, auftraege, darfAlsUnternehmen, personen, gruppen, abteilungen, kategorien, wissen] = await Promise.all([
     infosGeplantFuerZeitraum(kontext, ersterTag, letzterTag),
     aufgabenGeplantFuerZeitraum(kontext.personId, ersterTag, letzterTag),
     auftraegeGeplantFuerZeitraum(kontext.personId, ersterTag, letzterTag),
@@ -70,6 +71,7 @@ export default async function GeplanteAktionenSeite({
     prisma.gruppe.findMany({ where: { aktiv: true }, orderBy: { name: "asc" } }),
     prisma.abteilung.findMany({ where: { aktiv: true }, orderBy: { name: "asc" } }),
     prisma.infoKategorie.findMany({ where: { aktiv: true }, orderBy: { name: "asc" } }),
+    wissenVerweiseFuer(kontext.personId),
   ])
 
   const optionen: InfoFormularOptionen = {
@@ -78,6 +80,7 @@ export default async function GeplanteAktionenSeite({
     abteilungen: abteilungen.map((a) => ({ id: a.id, name: a.name })),
     kategorien: kategorien.map((k) => ({ id: k.id, name: k.name })),
     darfAlsUnternehmen,
+    wissen,
   }
 
   // Infos, Aufgaben und Aufträge gemeinsam pro Tag bucketen, dann je Tag

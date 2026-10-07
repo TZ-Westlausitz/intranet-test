@@ -14,6 +14,9 @@ const GUELTIGE_BILD_SRC_MUSTER = [
   /^\/api\/formulare\/vorlagen\/[a-zA-Z0-9]+\/bilder\/[a-zA-Z0-9]+$/,
 ]
 
+/** Zulässige Ziele eines #Wissensverweises: Ordner, Unterordner oder ein Artikel darin (?artikel=…). */
+const WISSEN_PFAD_MUSTER = /^\/wissen\/[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)?(\?artikel=[a-zA-Z0-9_-]+)?$/
+
 /** Lässt auf "td"/"th" nur "vertical-align: top|middle|bottom" als style durch — siehe RichTextTabelle. */
 function zellAusrichtungTransform(tagName: string, attribs: sanitizeHtml.Attributes) {
   const gueltig = typeof attribs.style === "string" && /^vertical-align:\s*(top|middle|bottom);?$/.test(attribs.style.trim())
@@ -48,7 +51,7 @@ export function richTextSanitisieren(html: string): string {
       // Benutzernamen-Zeichensatz passt UND exakt zum sichtbaren href, ein
       // manipuliertes data-mention-id kann also nicht auf eine andere
       // Person zeigen als der Link selbst.
-      a: ["href", "target", "rel", "data-mention-id"],
+      a: ["href", "target", "rel", "data-mention-id", "data-wissen-verweis"],
       // "src" ist grundsätzlich erlaubt, aber nur mit einem gültigen Wert
       // (siehe GUELTIGE_BILD_SRC_MUSTER/transformTags.img unten) — für
       // frisch eingefügte, noch nicht gespeicherte Bilder liefert der
@@ -86,6 +89,12 @@ export function richTextSanitisieren(html: string): string {
         if (typeof mentionId === "string") {
           const gueltig = /^[a-z0-9.@-]+$/.test(mentionId) && rest.href === `/kontakte/${mentionId}`
           if (!gueltig) delete rest["data-mention-id"]
+        }
+        // #Wissensverweis (siehe RichTextWissensverweis): nur mit einem echten
+        // Pfad in den Wissensbereich, sonst ist es ein gewöhnlicher Link.
+        if ("data-wissen-verweis" in rest) {
+          const gueltig = typeof rest.href === "string" && WISSEN_PFAD_MUSTER.test(rest.href)
+          if (!gueltig) delete rest["data-wissen-verweis"]
         }
         return { tagName, attribs: rest }
       },

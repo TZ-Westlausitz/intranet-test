@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react"
 
 import { InfoVorlageDialog, type InfoVorlageAnzeige } from "@/components/info-vorlage-dialog"
 import type { Person } from "@/components/termin-form-felder"
+import type { WissenVerweis } from "@/components/rich-text-wissensverweis"
 import type { infoVorlageAktivSetzen, infoVorlageAktualisieren, infoVorlageLoeschen } from "@/lib/infos/vorlagen-aktionen"
 
 /** Eine Zeile in /newsfeed/vorlagen — Muster FormularZeile, ohne Drei-Punkte-Menü (deutlich weniger Aktionen als bei Formular-Vorlagen). */
@@ -17,7 +18,7 @@ export function InfoVorlageZeile({
 }: {
   vorlage: InfoVorlageAnzeige & { aktiv: boolean }
   benutzerText: string
-  auswahl: { personen: Person[]; gruppen: Person[]; abteilungen: Person[]; kategorien: Person[] }
+  auswahl: { personen: Person[]; gruppen: Person[]; abteilungen: Person[]; kategorien: Person[]; wissen: WissenVerweis[] }
   aktualisierenAktion: typeof infoVorlageAktualisieren
   aktivSetzenAktion: typeof infoVorlageAktivSetzen
   loeschenAktion: typeof infoVorlageLoeschen

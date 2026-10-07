@@ -6,6 +6,7 @@ import { UmfrageFormFelder } from "@/components/umfrage-form-felder"
 import { DatumUhrzeitFeld } from "@/components/datum-uhrzeit-feld"
 import { datumUhrzeitFuerDatumUhrzeitFeld } from "@/lib/datum"
 import type { Person } from "@/components/termin-form-felder"
+import type { WissenVerweis } from "@/components/rich-text-wissensverweis"
 
 export type InfoAnhangAnzeige = { id: string; dateiname: string; groesseBytes: number; mimetyp: string }
 
@@ -91,6 +92,8 @@ export type InfoFormularOptionen = {
   abteilungen: Person[]
   kategorien: Person[]
   darfAlsUnternehmen: boolean
+  /** Auswahl für "#" im Text: Wissensartikel und -ordner. */
+  wissen: WissenVerweis[]
 }
 
 /**
@@ -106,7 +109,7 @@ export type InfoFormularOptionen = {
  */
 export function InfoFormFelder({
   standardwerte,
-  optionen: { personen, gruppen, abteilungen, kategorien, darfAlsUnternehmen },
+  optionen: { personen, gruppen, abteilungen, kategorien, darfAlsUnternehmen, wissen },
   bestehendeAnhaenge = [],
   infoId,
   anhangLoeschenAktion,
@@ -136,7 +139,7 @@ export function InfoFormFelder({
       <div>
         <label className="block text-xs font-medium text-primaer">Inhalt (optional)</label>
         <div className="mt-1">
-          <RichTextEditor name="inhalt" defaultValue={standardwerte.inhalt} bilderErlaubt mentionPersonen={personen} />
+          <RichTextEditor name="inhalt" defaultValue={standardwerte.inhalt} bilderErlaubt mentionPersonen={personen} wissenVerweise={wissen} />
         </div>
       </div>
 

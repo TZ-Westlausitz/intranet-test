@@ -16,6 +16,7 @@ import { Table } from "@tiptap/extension-table"
 import { TableRow } from "@tiptap/extension-table-row"
 import { Bild } from "@/components/rich-text-bild"
 import { Erwaehnung } from "@/components/rich-text-mention"
+import { Wissensverweis, type WissenVerweis } from "@/components/rich-text-wissensverweis"
 import { TableCell, TableHeader, type VertikaleZellAusrichtung } from "@/components/rich-text-tabelle"
 
 /**
@@ -46,6 +47,10 @@ import { TableCell, TableHeader, type VertikaleZellAusrichtung } from "@/compone
  * erwähnbaren Personen kommt als Prop rein (siehe Erwaehnung), kein
  * eigener Query in dieser Komponente.
  *
+ * `wissenVerweise` (Default aus): schaltet "#" frei — Auswahl von
+ * Wissensartikeln/-ordnern, die als Link in den Text kommen (siehe
+ * Wissensverweis). Die Liste kommt wie bei `mentionPersonen` als Prop rein.
+ *
  * `tabelleErlaubt` (Default aus): schaltet einen Knopf frei, der eine
  * zweispaltige Tabelle einfügt ("Zeile in zwei Spalten teilen") — Tiptaps
  * eigene Table-Erweiterung, nur ohne die Zeilen/Spalten-Hinzufügen-UI, weil
@@ -62,6 +67,7 @@ export function RichTextEditor({
   bilderErlaubt = false,
   tabelleErlaubt = false,
   mentionPersonen,
+  wissenVerweise,
   onChange,
 }: {
   name: string
@@ -69,6 +75,7 @@ export function RichTextEditor({
   bilderErlaubt?: boolean
   tabelleErlaubt?: boolean
   mentionPersonen?: { id: string; name: string }[]
+  wissenVerweise?: WissenVerweis[]
   onChange?: (html: string) => void
 }) {
   const [html, setHtml] = useState(defaultValue)
@@ -81,10 +88,13 @@ export function RichTextEditor({
     // eigene zusätzliche Extensions dafür würden sich mit denen
     // überschneiden (Konsolenwarnung "Duplicate extension names").
     extensions: [
-      StarterKit.configure({ link: { openOnClick: false, autolink: true } }),
+      // heading aus: "# " am Zeilenanfang würde sonst eine Überschrift erzeugen, die
+      // der Sanitizer wieder entfernt — und stünde der "#"-Auswahl im Weg.
+      StarterKit.configure({ link: { openOnClick: false, autolink: true }, heading: false }),
       TextAlign.configure({ types: ["paragraph"] }),
       ...(bilderErlaubt ? [Bild] : []),
       ...(mentionPersonen ? [Erwaehnung(mentionPersonen)] : []),
+      ...(wissenVerweise ? [Wissensverweis(wissenVerweise)] : []),
       ...(tabelleErlaubt ? [Table.configure({ resizable: false }), TableRow, TableHeader, TableCell] : []),
     ],
     content: defaultValue,

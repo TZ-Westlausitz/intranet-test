@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 import { BookOpen, Paperclip } from "lucide-react"
 
 import { ArtikelAktionenMenu } from "@/components/artikel-aktionen-menu"
@@ -35,6 +35,7 @@ export function ArtikelListe({
   anhangLoeschenAktion,
   loeschenAktion,
   artikelDetailLadenAktion,
+  startArtikelId,
 }: {
   artikel: ArtikelEintrag[]
   darfVerwalten: boolean
@@ -43,8 +44,16 @@ export function ArtikelListe({
   anhangLoeschenAktion: typeof artikelAnhangLoeschen
   loeschenAktion: typeof artikelLoeschen
   artikelDetailLadenAktion: typeof artikelDetailLaden
+  /** Aus "?artikel=…" (Link aus einer Info, siehe Wissensverweis): dieser Artikel öffnet sich beim Laden der Seite. */
+  startArtikelId?: string
 }) {
   const dialogRef = useRef<ArtikelAnzeigenDialogHandle>(null)
+
+  // Nur einmal beim Laden — danach entscheidet allein der Klick in der Liste.
+  const startArtikelVorhanden = startArtikelId !== undefined && artikel.some((eintrag) => eintrag.id === startArtikelId)
+  useEffect(() => {
+    if (startArtikelId && startArtikelVorhanden) dialogRef.current?.oeffnen(startArtikelId)
+  }, [startArtikelId, startArtikelVorhanden])
 
   if (artikel.length === 0) {
     return <p className="mt-3 text-sm text-sekundaer">Noch keine Artikel.</p>

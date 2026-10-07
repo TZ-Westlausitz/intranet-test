@@ -103,3 +103,50 @@ export async function zuletztBearbeiteteArtikel(kontext: WissenKontext, limit: n
     take: limit,
   })
 }
+
+/**
+ * Auswahlliste für "#" im Info-Editor (siehe Wissensverweis): aktive Ordner und
+ * Unterordner sowie die Artikel, die DIESE Person sehen darf. `id` ist der
+ * Zielpfad — Artikel öffnen sich auf der Ordnerseite als Pop-up (?artikel=…).
+ * Artikel in deaktivierten Ordnern fehlen, genau wie die Ordner selbst.
+ */
+export async function wissenVerweiseFuer(personId: string) {
+  const [ordner, artikel] = await Promise.all([
+    prisma.wissensOrdner.findMany({
+      where: { aktiv: true },
+      include: { unterordner: { where: { aktiv: true }, orderBy: { name: "asc" } } },
+      orderBy: { name: "asc" },
+    }),
+    prisma.wissensArtikel.findMany({
+      where: wissenSichtbarFuer(personId),
+      select: {
+        id: true,
+        titel: true,
+        ordner: { select: { id: true, name: true, aktiv: true } },
+        unterordner: { select: { id: true, name: true, aktiv: true, ordner: { select: { id: true, name: true, aktiv: true } } } },
+      },
+      orderBy: { titel: "asc" },
+    }),
+  ])
+
+  const eintraege: { id: string; name: string; hinweis: string }[] = []
+  for (const o of ordner) {
+    eintraege.push({ id: `/wissen/${o.id}`, name: o.name, hinweis: "Ordner" })
+    for (const u of o.unterordner) {
+      eintraege.push({ id: `/wissen/${o.id}/${u.id}`, name: u.name, hinweis: `Unterordner · ${o.name}` })
+    }
+  }
+  for (const a of artikel) {
+    if (a.ordner?.aktiv) {
+      eintraege.push({ id: `/wissen/${a.ordner.id}?artikel=${a.id}`, name: a.titel, hinweis: `Artikel · ${a.ordner.name}` })
+    } else if (a.unterordner?.aktiv && a.unterordner.ordner.aktiv) {
+      const u = a.unterordner
+      eintraege.push({
+        id: `/wissen/${u.ordner.id}/${u.id}?artikel=${a.id}`,
+        name: a.titel,
+        hinweis: `Artikel · ${u.ordner.name} › ${u.name}`,
+      })
+    }
+  }
+  return eintraege
+}

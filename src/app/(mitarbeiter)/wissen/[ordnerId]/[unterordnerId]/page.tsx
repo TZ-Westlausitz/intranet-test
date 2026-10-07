@@ -20,11 +20,14 @@ import {
 /** Ein Unterordner: nur noch die Artikel-Liste — tiefer geht die Ordnerstruktur nicht (siehe Kommentar am Model WissensUnterordner). */
 export default async function WissensUnterordnerSeite({
   params,
+  searchParams,
 }: {
   params: Promise<{ ordnerId: string; unterordnerId: string }>
+  searchParams: Promise<{ artikel?: string }>
 }) {
   const kontext = await berechtigung()
   const { ordnerId, unterordnerId } = await params
+  const { artikel: startArtikelId } = await searchParams
   const darfVerwalten = darfWissenVerwalten(kontext)
 
   const [detail, personen, gruppen, abteilungen] = await Promise.all([
@@ -76,6 +79,7 @@ export default async function WissensUnterordnerSeite({
           anhangLoeschenAktion={artikelAnhangLoeschen}
           loeschenAktion={artikelLoeschen}
           artikelDetailLadenAktion={artikelDetailLaden}
+          startArtikelId={startArtikelId}
         />
       </div>
 

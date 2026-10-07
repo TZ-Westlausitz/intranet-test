@@ -6,6 +6,7 @@ import { RichTextEditor } from "@/components/rich-text-editor"
 import { InfoEmpfaengerAuswahl } from "@/components/info-empfaenger-auswahl"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import type { Person } from "@/components/termin-form-felder"
+import type { WissenVerweis } from "@/components/rich-text-wissensverweis"
 import { SpeichernKnopf } from "@/components/speichern-knopf"
 
 export type InfoVorlageAnzeige = {
@@ -41,7 +42,7 @@ export function InfoVorlageDialog({
   aktualisierenAktion,
   vorlage,
 }: {
-  auswahl: { personen: Person[]; gruppen: Person[]; abteilungen: Person[]; kategorien: Person[] }
+  auswahl: { personen: Person[]; gruppen: Person[]; abteilungen: Person[]; kategorien: Person[]; wissen: WissenVerweis[] }
   erstellenAktion?: (formData: FormData) => void
   aktualisierenAktion?: (vorlageId: string, formData: FormData) => void
   vorlage?: InfoVorlageAnzeige
@@ -94,7 +95,7 @@ export function InfoVorlageDialog({
             <div>
               <label className="block text-xs font-medium text-primaer">Inhalt (optional)</label>
               <div className="mt-1">
-                <RichTextEditor name="inhalt" defaultValue={vorlage?.inhalt ?? ""} mentionPersonen={auswahl.personen} />
+                <RichTextEditor name="inhalt" defaultValue={vorlage?.inhalt ?? ""} mentionPersonen={auswahl.personen} wissenVerweise={auswahl.wissen} />
               </div>
             </div>
 
