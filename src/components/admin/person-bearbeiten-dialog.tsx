@@ -30,7 +30,7 @@ export type ZugehoerigkeitAnzeige = {
  *
  * Zugehörigkeiten beenden wird erst mit "Speichern" wirksam: "Beenden"
  * markiert sie nur (durchgestrichen, mit "Rückgängig"). Eine neue
- * Zugehörigkeit kommt dazu, wenn Standort UND Abteilung gewählt sind.
+ * Zugehörigkeit kommt dazu, sobald eine Abteilung gewählt ist (Standort optional).
  *
  * "Passwort zurücksetzen" ist bewusst KEIN Teil des Speicherns: Es wirkt
  * sofort und gibt das neue Klartextpasswort einmalig zurück — bei einer
@@ -203,7 +203,10 @@ export function PersonBearbeitenDialog({
                 </ul>
               )}
 
-              <p className="mt-2 text-xs text-sekundaer">Weitere Zugehörigkeit hinzufügen (optional):</p>
+              <p className="mt-2 text-xs text-sekundaer">
+                Zugehörigkeit hinzufügen (optional) — der Standort kann leer bleiben. Für einen Wechsel die alte
+                oben mit „Beenden“ markieren und die neue hier wählen.
+              </p>
               <div className="mt-1 flex flex-wrap items-end gap-2">
                 <select
                   name="standortId"
@@ -211,7 +214,7 @@ export function PersonBearbeitenDialog({
                   aria-label="Standort"
                   className="h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
                 >
-                  <option value="">Standort wählen …</option>
+                  <option value="">Kein Standort</option>
                   {standorte.map((standort) => (
                     <option key={standort.id} value={standort.id}>
                       {standort.name}

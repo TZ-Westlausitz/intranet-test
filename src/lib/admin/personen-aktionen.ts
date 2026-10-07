@@ -167,7 +167,7 @@ export type PersonSpeichernErgebnis = { ok: boolean; fehler?: string }
  * Speichert ALLES, was im Bearbeiten-Pop-Up einer Person steht, in einem
  * Rutsch (Rückmeldung 2026-10-06: ein Speichern-Knopf unten statt einer je
  * Abschnitt): Benutzername, Eintrittsdatum, Gruppen, Berechtigungen, beendete
- * und neue Zugehörigkeiten. Alles läuft in EINER Transaktion — entweder wird
+ * und neue Zugehörigkeiten (Standort optional, Abteilung Pflicht). Alles läuft in EINER Transaktion — entweder wird
  * alles gespeichert oder nichts.
  *
  * Der Benutzername ist der Primärschlüssel (siehe Model Person); die
@@ -200,8 +200,19 @@ export async function personSpeichern(
   const gruppenIds = formData.getAll("gruppen").map(String)
   const berechtigungIds = formData.getAll("berechtigungen").map(String)
   const zuBeenden = formData.getAll("zugehoerigkeitBeenden").map(String)
-  const standortId = String(formData.get("standortId") ?? "")
+  const standortId = String(formData.get("standortId") ?? "") || null
   const abteilungId = String(formData.get("abteilungId") ?? "")
+
+  // Standort ist optional (manche Personen haben keinen festen Standort, siehe
+  // Model Zugehoerigkeit), die Abteilung nicht: ohne sie ließe sich nichts anlegen.
+  if (standortId && !abteilungId) return { ok: false, fehler: "Bitte zum Standort auch eine Abteilung wählen." }
+
+  // Kein upsert: Prisma erlaubt in einem zusammengesetzten Eindeutigkeitsschlüssel
+  // kein null (Standort leer). Eine bereits beendete gleiche Zugehörigkeit wird
+  // wieder geöffnet, sonst entsteht eine neue.
+  const bestehende = abteilungId
+    ? await prisma.zugehoerigkeit.findFirst({ where: { personId, standortId, abteilungId }, select: { id: true } })
+    : null
 
   await prisma.$transaction([
     prisma.person.update({
@@ -234,13 +245,11 @@ export async function personSpeichern(
       where: { id: { in: zuBeenden }, personId },
       data: { bisDatum: new Date() },
     }),
-    ...(standortId && abteilungId
+    ...(abteilungId
       ? [
-          prisma.zugehoerigkeit.upsert({
-            where: { personId_standortId_abteilungId: { personId, standortId, abteilungId } },
-            update: { bisDatum: null },
-            create: { personId, standortId, abteilungId },
-          }),
+          bestehende
+            ? prisma.zugehoerigkeit.update({ where: { id: bestehende.id }, data: { bisDatum: null } })
+            : prisma.zugehoerigkeit.create({ data: { personId, standortId, abteilungId } }),
         ]
       : []),
 
