@@ -7,6 +7,8 @@ import { personKontaktDetail } from "@/lib/kontakte/abfragen"
 import { MONATSNAMEN } from "@/lib/kalender"
 import { profilAktualisieren, profilbildAktualisieren, profilbildLoeschen } from "@/lib/profil/aktionen"
 import { SpeichernKnopf } from "@/components/speichern-knopf"
+import { PasswortAendernKarte } from "@/components/passwort-aendern-karte"
+import { eigenesPasswortAendern } from "@/lib/auth/aktionen"
 
 const FEHLER_TEXTE: Record<string, string> = {
   emailVergeben: "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet.",
@@ -178,6 +180,8 @@ export default async function ProfilSeite({
         </SpeichernKnopf>
         <FormularAenderungenSchutz />
       </form>
+
+      <PasswortAendernKarte aktion={eigenesPasswortAendern} />
 
       <ZurueckButton />
     </main>
