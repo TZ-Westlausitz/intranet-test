@@ -8,7 +8,7 @@ import { ArtikelErstellenDialog } from "@/components/artikel-erstellen-dialog"
 import { ArtikelListe } from "@/components/artikel-liste"
 import type { ArtikelFormularOptionen } from "@/components/artikel-form-felder"
 import { unterordnerDetail } from "@/lib/wissen/abfragen"
-import { darfWissenVerwalten } from "@/lib/wissen/sichtbarkeit"
+import { darfArtikelAnlegen, darfArtikelBearbeiten, darfArtikelLoeschen, } from "@/lib/wissen/sichtbarkeit"
 import {
   artikelErstellen,
   artikelAktualisieren,
@@ -28,7 +28,7 @@ export default async function WissensUnterordnerSeite({
   const kontext = await berechtigung()
   const { ordnerId, unterordnerId } = await params
   const { artikel: startArtikelId } = await searchParams
-  const darfVerwalten = darfWissenVerwalten(kontext)
+  const darfAnlegen = darfArtikelAnlegen(kontext)
 
   const [detail, personen, gruppen, abteilungen] = await Promise.all([
     unterordnerDetail(unterordnerId, kontext),
@@ -59,7 +59,7 @@ export default async function WissensUnterordnerSeite({
       </p>
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ueberschrift">{unterordner.name}</h1>
-        {darfVerwalten && (
+        {darfAnlegen && (
           <ArtikelErstellenDialog
             ordnerId={ordnerId}
             unterordnerId={unterordnerId}
@@ -73,7 +73,8 @@ export default async function WissensUnterordnerSeite({
         <h2 className="text-sm font-semibold text-ueberschrift">Artikel</h2>
         <ArtikelListe
           artikel={artikel}
-          darfVerwalten={darfVerwalten}
+          darfBearbeiten={darfArtikelBearbeiten(kontext)}
+          darfLoeschen={darfArtikelLoeschen(kontext)}
           optionen={optionen}
           aktualisierenAktion={artikelAktualisieren}
           anhangLoeschenAktion={artikelAnhangLoeschen}

@@ -64,7 +64,10 @@ export function WissensOrdnerKachel({
     <div ref={containerRef} className="relative">
       <Link
         href={href}
-        className="group flex flex-col items-center gap-2 rounded-xl p-3 text-center transition hover:bg-flaeche-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen"
+        className={
+          "group flex flex-col items-center gap-2 rounded-xl p-3 text-center transition hover:bg-flaeche-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen" +
+          (aktiv ? "" : " opacity-50")
+        }
       >
         <span className="relative">
           <Image src="/Ordner.png" alt="" width={112} height={112} className="h-28 w-28" aria-hidden="true" />
@@ -75,6 +78,8 @@ export function WissensOrdnerKachel({
           )}
         </span>
         <h3 className="line-clamp-2 text-sm font-semibold text-ueberschrift group-hover:underline">{name}</h3>
+        {/* Deaktivierte Ordner sieht nur, wer sie verwalten darf (siehe ordnerUebersicht). */}
+        {!aktiv && <span className="text-xs text-tertiaer">deaktiviert</span>}
       </Link>
 
       {darfVerwalten && (

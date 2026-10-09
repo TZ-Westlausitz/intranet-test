@@ -7,14 +7,15 @@ import { ArtikelBearbeitenDialog, type ArtikelBearbeitenDialogHandle } from "@/c
 import type { ArtikelAnhangAnzeige, ArtikelStandardwerte, ArtikelFormularOptionen } from "@/components/artikel-form-felder"
 
 /**
- * Drei-Punkte-Menü auf einer Artikel-Zeile — "Bearbeiten"/"Löschen", beide
- * nur bei "Wissensmanager" (siehe darfWissenVerwalten). Muster:
- * InfoAktionenMenu, hier ohne getrennte Bearbeiten-/Löschen-Berechtigung —
- * eine einzige Berechtigung gate beides (siehe Kontext im Plan).
+ * Drei-Punkte-Menü auf einer Artikel-Zeile — "Bearbeiten" und "Löschen"
+ * getrennt freigeschaltet (siehe darfArtikelBearbeiten/darfArtikelLoeschen
+ * in src/lib/wissen/sichtbarkeit.ts). Rendert NICHTS, wenn keines von beiden
+ * erlaubt ist. Muster: InfoAktionenMenu.
  */
 export function ArtikelAktionenMenu({
   artikelId,
-  darfVerwalten,
+  darfBearbeiten,
+  darfLoeschen,
   standardwerte,
   optionen,
   bestehendeAnhaenge,
@@ -23,7 +24,8 @@ export function ArtikelAktionenMenu({
   loeschenAktion,
 }: {
   artikelId: string
-  darfVerwalten: boolean
+  darfBearbeiten: boolean
+  darfLoeschen: boolean
   standardwerte: ArtikelStandardwerte
   optionen: ArtikelFormularOptionen
   bestehendeAnhaenge: ArtikelAnhangAnzeige[]
@@ -48,7 +50,7 @@ export function ArtikelAktionenMenu({
     return () => document.removeEventListener("mousedown", beiKlickAussen)
   }, [offen])
 
-  if (!darfVerwalten) return null
+  if (!darfBearbeiten && !darfLoeschen) return null
 
   return (
     <div ref={containerRef} className="relative shrink-0">
@@ -73,27 +75,31 @@ export function ArtikelAktionenMenu({
           onClick={(ereignis) => ereignis.stopPropagation()}
           className="absolute right-0 z-10 mt-1 w-36 overflow-hidden rounded-lg border border-rand bg-flaeche py-1 shadow-lg"
         >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={(ereignis) => {
-              ereignis.preventDefault()
-              setOffen(false)
-              bearbeitenDialogRef.current?.oeffnen()
-            }}
-            className="block w-full px-4 py-2.5 text-left text-sm text-primaer transition hover:bg-marke-gruen/10"
-          >
-            Bearbeiten
-          </button>
-          <form action={loeschenAktion.bind(null, artikelId)}>
+          {darfBearbeiten && (
             <button
-              type="submit"
+              type="button"
               role="menuitem"
-              className="block w-full px-4 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50"
+              onClick={(ereignis) => {
+                ereignis.preventDefault()
+                setOffen(false)
+                bearbeitenDialogRef.current?.oeffnen()
+              }}
+              className="block w-full px-4 py-2.5 text-left text-sm text-primaer transition hover:bg-marke-gruen/10"
             >
-              Löschen
+              Bearbeiten
             </button>
-          </form>
+          )}
+          {darfLoeschen && (
+            <form action={loeschenAktion.bind(null, artikelId)}>
+              <button
+                type="submit"
+                role="menuitem"
+                className="block w-full px-4 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50"
+              >
+                Löschen
+              </button>
+            </form>
+          )}
         </div>
       )}
 

@@ -9,7 +9,7 @@ import { ArtikelErstellenDialog } from "@/components/artikel-erstellen-dialog"
 import { ArtikelListe } from "@/components/artikel-liste"
 import type { ArtikelFormularOptionen } from "@/components/artikel-form-felder"
 import { ordnerDetail } from "@/lib/wissen/abfragen"
-import { darfWissenVerwalten } from "@/lib/wissen/sichtbarkeit"
+import { darfArtikelAnlegen, darfArtikelBearbeiten, darfArtikelLoeschen, darfWissenVerwalten } from "@/lib/wissen/sichtbarkeit"
 import {
   unterordnerErstellen,
   unterordnerUmbenennen,
@@ -33,9 +33,10 @@ export default async function WissensOrdnerSeite({
   const { ordnerId } = await params
   const { artikel: startArtikelId } = await searchParams
   const darfVerwalten = darfWissenVerwalten(kontext)
+  const darfAnlegen = darfArtikelAnlegen(kontext)
 
   const [detail, personen, gruppen, abteilungen] = await Promise.all([
-    ordnerDetail(ordnerId, kontext),
+    ordnerDetail(ordnerId, kontext, darfVerwalten),
     prisma.person.findMany({
       where: { aktiv: true, benutzername: { not: kontext.personId } },
       orderBy: [{ nachname: "asc" }, { vorname: "asc" }],
@@ -65,14 +66,18 @@ export default async function WissensOrdnerSeite({
     <main className="mx-auto max-w-4xl px-5 py-10">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold text-ueberschrift">{ordner.name}</h1>
-        {darfVerwalten && (
+        {(darfVerwalten || darfAnlegen) && (
           <div className="flex shrink-0 gap-2">
-            <OrdnerErstellenDialog
-              label="+ Unterordner"
-              titel="Neuer Unterordner"
-              erstellenAktion={unterordnerErstellen.bind(null, ordnerId)}
-            />
-            <ArtikelErstellenDialog ordnerId={ordnerId} unterordnerId={null} optionen={optionen} erstellenAktion={artikelErstellen} />
+            {darfVerwalten && (
+              <OrdnerErstellenDialog
+                label="+ Unterordner"
+                titel="Neuer Unterordner"
+                erstellenAktion={unterordnerErstellen.bind(null, ordnerId)}
+              />
+            )}
+            {darfAnlegen && (
+              <ArtikelErstellenDialog ordnerId={ordnerId} unterordnerId={null} optionen={optionen} erstellenAktion={artikelErstellen} />
+            )}
           </div>
         )}
       </div>
@@ -96,7 +101,8 @@ export default async function WissensOrdnerSeite({
         <h2 className="text-sm font-semibold text-ueberschrift">Artikel</h2>
         <ArtikelListe
           artikel={artikel}
-          darfVerwalten={darfVerwalten}
+          darfBearbeiten={darfArtikelBearbeiten(kontext)}
+          darfLoeschen={darfArtikelLoeschen(kontext)}
           optionen={optionen}
           aktualisierenAktion={artikelAktualisieren}
           anhangLoeschenAktion={artikelAnhangLoeschen}

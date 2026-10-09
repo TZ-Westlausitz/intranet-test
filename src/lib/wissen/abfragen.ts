@@ -11,12 +11,13 @@ const EMPFAENGER_INCLUDE = {
   empfaengerAbteilungen: { select: { abteilungId: true } },
 } as const
 
-/** Alle aktiven Ordner fürs Kachel-Grid auf /wissen — Artikel-Anzahl ist die GESAMTZAHL, unabhängig von der Sichtbarkeit für die anzeigende Person (wie im Altsystem-Vorbild). Dieselbe Liste dient auch als Auswahl für die Startseiten-Wissensbereich-Kachel. */
-export async function ordnerUebersicht() {
+/** Alle aktiven Ordner fürs Kachel-Grid auf /wissen — mit `inklusiveInaktive` (nur für Wissensmanager) auch die deaktivierten, damit sie wieder aktivierbar bleiben — Artikel-Anzahl ist die GESAMTZAHL, unabhängig von der Sichtbarkeit für die anzeigende Person (wie im Altsystem-Vorbild). Dieselbe Liste dient auch als Auswahl für die Startseiten-Wissensbereich-Kachel. */
+export async function ordnerUebersicht(inklusiveInaktive = false) {
   return prisma.wissensOrdner.findMany({
-    where: { aktiv: true },
+    where: inklusiveInaktive ? {} : { aktiv: true },
+    // Aktive zuerst, deaktivierte am Ende (nur sichtbar mit inklusiveInaktive)
+    orderBy: [{ aktiv: "desc" }, { name: "asc" }],
     include: { _count: { select: { unterordner: { where: { aktiv: true } }, artikel: true } } },
-    orderBy: { name: "asc" },
   })
 }
 
@@ -39,14 +40,14 @@ export async function ordnerVorschauFuerKachel(ordnerIds: string[], kontext: Wis
   return ordnerIds.map((id) => nachId.get(id)).filter((o): o is NonNullable<typeof o> => o !== undefined)
 }
 
-/** Ein Ordner + seine aktiven Unterordner (mit Artikel-Zähler) + die für diese Person sichtbaren Artikel direkt im Ordner. */
-export async function ordnerDetail(ordnerId: string, kontext: WissenKontext) {
+/** Ein Ordner + seine aktiven Unterordner (mit Artikel-Zähler) + die für diese Person sichtbaren Artikel direkt im Ordner. `inklusiveInaktive` (nur für Wissensmanager) nimmt auch deaktivierte Unterordner mit. */
+export async function ordnerDetail(ordnerId: string, kontext: WissenKontext, inklusiveInaktive = false) {
   const [ordner, unterordner, artikel] = await Promise.all([
     prisma.wissensOrdner.findUnique({ where: { id: ordnerId } }),
     prisma.wissensUnterordner.findMany({
-      where: { ordnerId, aktiv: true },
+      where: inklusiveInaktive ? { ordnerId } : { ordnerId, aktiv: true },
       include: { _count: { select: { artikel: true } } },
-      orderBy: { name: "asc" },
+      orderBy: [{ aktiv: "desc" }, { name: "asc" }],
     }),
     prisma.wissensArtikel.findMany({
       where: { ordnerId, ...wissenSichtbarFuer(kontext.personId) },

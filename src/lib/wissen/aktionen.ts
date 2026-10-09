@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db"
 import { richTextSanitisieren } from "@/lib/rich-text"
 import { wissensAnhaengePruefen, wissensAnhaengeSpeichern, wissensAnhangLoeschenIntern } from "@/lib/wissen/anhaenge"
 import { artikelDetailFuerPerson } from "@/lib/wissen/abfragen"
+import { darfArtikelAnlegen, darfArtikelBearbeiten, darfArtikelLoeschen } from "@/lib/wissen/sichtbarkeit"
 
 function anhaengeAusFormData(formData: FormData): File[] {
   return formData.getAll("anhaenge").filter((wert): wert is File => wert instanceof File)
@@ -66,7 +67,8 @@ function rueckkehrPfadAus(ordnerId: string | null, unterordnerId: string | null)
  * — Regel 5: nie dem Formularwert vertrauen, wo es nicht nötig ist.
  */
 export async function artikelErstellen(ordnerId: string, unterordnerId: string | null, formData: FormData) {
-  const kontext = await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
+  const kontext = await berechtigung()
+  if (!darfArtikelAnlegen(kontext)) throw new NichtBerechtigt("Artikel anlegen: Wissensmanager oder Wissensartikel anlegen nötig")
   const rueckkehrPfad = rueckkehrPfadAus(ordnerId, unterordnerId)
 
   const { titel, inhalt, empfaengerPersonen, empfaengerGruppen, empfaengerAbteilungen, neueAnhaenge } =
@@ -96,7 +98,8 @@ export async function artikelErstellen(ordnerId: string, unterordnerId: string |
 
 /** Bearbeitet einen bestehenden Artikel — dieselben Felder wie beim Anlegen, der Ordner-Bezug bleibt unverändert. */
 export async function artikelAktualisieren(artikelId: string, formData: FormData) {
-  const kontext = await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
+  const kontext = await berechtigung()
+  if (!darfArtikelBearbeiten(kontext)) throw new NichtBerechtigt("Artikel bearbeiten nicht erlaubt")
 
   const artikel = await prisma.wissensArtikel.findUnique({
     where: { id: artikelId },
@@ -138,7 +141,8 @@ export async function artikelAktualisieren(artikelId: string, formData: FormData
  * Artikels überraschend wäre — nur revalidatePath, die Seite bleibt stehen.
  */
 export async function artikelLoeschen(artikelId: string) {
-  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
+  const kontext = await berechtigung()
+  if (!darfArtikelLoeschen(kontext)) throw new NichtBerechtigt("Artikel löschen nicht erlaubt")
 
   const artikel = await prisma.wissensArtikel.findUnique({
     where: { id: artikelId },
@@ -154,7 +158,8 @@ export async function artikelLoeschen(artikelId: string) {
 
 /** Entfernt einen einzelnen Anhang — Anhänge lassen sich nur nachträglich löschen, nicht ergänzen (Muster: Info). */
 export async function artikelAnhangLoeschen(anhangId: string) {
-  await berechtigung({ benoetigteBerechtigung: "Wissensmanager" })
+  const kontext = await berechtigung()
+  if (!darfArtikelBearbeiten(kontext)) throw new NichtBerechtigt("Artikel bearbeiten nicht erlaubt")
 
   const anhang = await prisma.wissensAnhang.findUnique({
     where: { id: anhangId },

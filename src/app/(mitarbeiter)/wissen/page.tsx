@@ -6,7 +6,7 @@ import { WissensOrdnerGrid } from "@/components/wissens-ordner-grid"
 import { ArtikelListe } from "@/components/artikel-liste"
 import type { ArtikelFormularOptionen } from "@/components/artikel-form-felder"
 import { ordnerUebersicht, zuletztBearbeiteteArtikel } from "@/lib/wissen/abfragen"
-import { darfWissenVerwalten } from "@/lib/wissen/sichtbarkeit"
+import { darfArtikelBearbeiten, darfArtikelLoeschen, darfWissenVerwalten } from "@/lib/wissen/sichtbarkeit"
 import {
   ordnerErstellen,
   ordnerUmbenennen,
@@ -33,7 +33,7 @@ export default async function WissenSeite() {
   const darfVerwalten = darfWissenVerwalten(kontext)
 
   const [ordnerRoh, zuletztBearbeitet, personen, gruppen, abteilungen] = await Promise.all([
-    ordnerUebersicht(),
+    ordnerUebersicht(darfVerwalten),
     zuletztBearbeiteteArtikel(kontext, ZULETZT_BEARBEITET_ANZAHL),
     prisma.person.findMany({
       where: { aktiv: true, benutzername: { not: kontext.personId } },
@@ -84,7 +84,8 @@ export default async function WissenSeite() {
         <h2 className="text-sm font-semibold text-ueberschrift">Zuletzt bearbeitet</h2>
         <ArtikelListe
           artikel={zuletztBearbeitet}
-          darfVerwalten={darfVerwalten}
+          darfBearbeiten={darfArtikelBearbeiten(kontext)}
+          darfLoeschen={darfArtikelLoeschen(kontext)}
           optionen={optionen}
           aktualisierenAktion={artikelAktualisieren}
           anhangLoeschenAktion={artikelAnhangLoeschen}

@@ -22,14 +22,14 @@ type ArtikelEintrag = {
 
 /**
  * Artikel-Liste mit Klick-öffnet-Pop-up — wiederverwendet auf der Ordner-
- * und Unterordner-Detailseite (mit "⋮"-Menü bei Wissensmanager) sowie für
- * "Zuletzt bearbeitet" auf /wissen (`darfVerwalten=false` von dort,
- * ArtikelAktionenMenu blendet sich dann selbst aus). Muster: NewsfeedListe
+ * und Unterordner-Detailseite (mit "⋮"-Menü, je nach Berechtigung) sowie für
+ * "Zuletzt bearbeitet" auf /wissen (das ⋮-Menü blendet sich ohne Berechtigung selbst aus). Muster: NewsfeedListe
  * — ein gemeinsamer Dialog-Ref über alle Zeilen hinweg.
  */
 export function ArtikelListe({
   artikel,
-  darfVerwalten,
+  darfBearbeiten,
+  darfLoeschen,
   optionen,
   aktualisierenAktion,
   anhangLoeschenAktion,
@@ -38,7 +38,8 @@ export function ArtikelListe({
   startArtikelId,
 }: {
   artikel: ArtikelEintrag[]
-  darfVerwalten: boolean
+  darfBearbeiten: boolean
+  darfLoeschen: boolean
   optionen: ArtikelFormularOptionen
   aktualisierenAktion: typeof artikelAktualisieren
   anhangLoeschenAktion: typeof artikelAnhangLoeschen
@@ -80,7 +81,8 @@ export function ArtikelListe({
             <span className="shrink-0 text-xs text-tertiaer">{formatiereDatumAusDate(eintrag.aktualisiertAm)}</span>
             <ArtikelAktionenMenu
               artikelId={eintrag.id}
-              darfVerwalten={darfVerwalten}
+              darfBearbeiten={darfBearbeiten}
+              darfLoeschen={darfLoeschen}
               standardwerte={artikelZuStandardwerte(eintrag)}
               optionen={optionen}
               bestehendeAnhaenge={eintrag.anhaenge}
