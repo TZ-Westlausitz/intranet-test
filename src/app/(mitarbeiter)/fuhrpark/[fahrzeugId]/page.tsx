@@ -27,6 +27,7 @@ import { TerminvorschlagKarte } from "@/components/fuhrpark/terminvorschlag-kart
 import { ZurueckButton } from "@/components/zurueck-button"
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 import { SpeichernKnopf } from "@/components/speichern-knopf"
+import { DatumFeld } from "@/components/datum-feld"
 
 const FEHLER_TEXTE: Record<string, string> = {
   pflichtfeld: "Kennzeichen und Fahrzeugname sind Pflichtfelder.",
@@ -367,7 +368,7 @@ export default async function FahrzeugProfilSeite({
               </div>
               <label className="flex flex-col gap-1 text-sm font-medium text-primaer">
                 Festgestellt am
-                <input type="date" name="festgestelltAm" defaultValue={datumIsoAusDate(heute)} className="h-10 rounded-lg border border-flaeche-300 bg-flaeche px-3 text-sm" />
+                <DatumFeld name="festgestelltAm" defaultValue={datumIsoAusDate(heute)} ariaLabel="Festgestellt am" />
               </label>
               <SpeichernKnopf type="submit" className="h-10 w-fit rounded-lg bg-marke-gruen px-4 text-sm font-semibold text-neutral-900 transition hover:bg-marke-gruen-dunkel">
                 Schaden speichern

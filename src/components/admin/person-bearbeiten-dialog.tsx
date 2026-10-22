@@ -6,6 +6,7 @@ import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-sch
 import { SpeichernKnopf } from "@/components/speichern-knopf"
 import { zeigeToast } from "@/components/toast-anzeige"
 import type { PersonSpeichernErgebnis } from "@/lib/admin/personen-aktionen"
+import { DatumFeld } from "@/components/datum-feld"
 
 type Option = { id: string; name: string }
 
@@ -163,12 +164,12 @@ export function PersonBearbeitenDialog({
               <label htmlFor={`eintritt-${personId}`} className="text-xs font-semibold text-primaer">
                 Eintrittsdatum
               </label>
-              <input
+              <DatumFeld
                 id={`eintritt-${personId}`}
                 name="eintrittAm"
-                type="date"
                 defaultValue={eintrittAm}
-                className="mt-2 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm"
+                ariaLabel="Eintrittsdatum"
+                className="mt-2"
               />
             </section>
 

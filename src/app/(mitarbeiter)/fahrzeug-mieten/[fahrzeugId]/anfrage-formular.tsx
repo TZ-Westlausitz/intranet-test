@@ -6,6 +6,7 @@ import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-sch
 
 import { Hinweis } from "@/components/hinweis"
 import { heutigesDatumIso } from "@/lib/datum"
+import { DatumFeld } from "@/components/datum-feld"
 
 /**
  * Formular für die Fahrzeug-Anfrage — Client-Komponente, weil die
@@ -81,26 +82,26 @@ export function AnfrageFormular({
       <div className="flex gap-3">
         <label className="flex flex-1 flex-col gap-1">
           <span className="text-sm font-medium">Von</span>
-          <input
-            type="date"
+          <DatumFeld
             name="geplantVon"
             required
-            value={geplantVon}
-            onChange={(e) => geplantVonAendern(e.target.value)}
-            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+            wert={geplantVon}
+            onAenderung={geplantVonAendern}
+            ariaLabel="Von"
+            groesse="gross"
           />
         </label>
 
         <label className="flex flex-1 flex-col gap-1">
           <span className="text-sm font-medium">Bis</span>
-          <input
-            type="date"
+          <DatumFeld
             name="geplantBis"
             required
             min={geplantVon}
-            value={geplantBis}
-            onChange={(e) => setGeplantBis(e.target.value)}
-            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+            wert={geplantBis}
+            onAenderung={setGeplantBis}
+            ariaLabel="Bis"
+            groesse="gross"
           />
         </label>
       </div>

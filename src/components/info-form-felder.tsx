@@ -263,7 +263,7 @@ export function InfoFormFelder({
         <div>
           <label className="block text-xs font-medium text-primaer">Geplant für (optional)</label>
           <div className="mt-1">
-            <DatumUhrzeitFeld name="geplantAm" defaultValue={standardwerte.geplantAm ?? undefined} />
+            <DatumUhrzeitFeld name="geplantAm" defaultValue={standardwerte.geplantAm ?? undefined} groesse="klein" />
           </div>
           <p className="mt-1.5 text-xs text-sekundaer">Leer lassen, um sofort zu veröffentlichen.</p>
         </div>

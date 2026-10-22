@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react"
 
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
+import { DatumFeld } from "@/components/datum-feld"
 
 type Option = { id: string; name: string; kuerzel: string | null }
 
@@ -163,12 +164,7 @@ export function PersonErstellenFormular({
           <label htmlFor="pe-eintritt" className="block text-xs font-medium text-primaer">
             Eintrittsdatum <span className="font-normal text-tertiaer">(optional)</span>
           </label>
-          <input
-            id="pe-eintritt"
-            name="eintrittAm"
-            type="date"
-            className="mt-1 h-9 w-full rounded-lg border border-flaeche-300 px-2 text-sm sm:w-48"
-          />
+          <DatumFeld id="pe-eintritt" name="eintrittAm" ariaLabel="Eintrittsdatum" className="mt-1 sm:w-48" />
         </div>
 
         <div className="flex items-center justify-between gap-3">

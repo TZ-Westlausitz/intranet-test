@@ -3,6 +3,7 @@ import { Paperclip } from "lucide-react"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { AUFGABE_PRIORITAETEN } from "@/lib/aufgaben-optionen"
 import { datumIsoAusDate } from "@/lib/datum"
+import { DatumFeld } from "@/components/datum-feld"
 
 export type AufgabeAnhangAnzeige = { id: string; dateiname: string; groesseBytes: number; mimetyp: string }
 
@@ -112,12 +113,7 @@ export function AufgabeFormFelder({
           <div className="flex flex-wrap items-end gap-3">
             <div>
               <label className="block text-xs font-medium text-primaer">Fällig am</label>
-              <input
-                name="faelligAm"
-                type="date"
-                defaultValue={standardwerte.faelligAm}
-                className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
-              />
+              <DatumFeld name="faelligAm" defaultValue={standardwerte.faelligAm} ariaLabel="Fällig am" className="mt-1" />
             </div>
 
             <fieldset>
@@ -151,12 +147,7 @@ export function AufgabeFormFelder({
           {standardwerte.geplantAmBearbeitbar && (
             <div>
               <label className="block text-xs font-medium text-primaer">Geplant für (optional)</label>
-              <input
-                name="geplantAm"
-                type="date"
-                defaultValue={standardwerte.geplantAm}
-                className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
-              />
+              <DatumFeld name="geplantAm" defaultValue={standardwerte.geplantAm} ariaLabel="Geplant für" className="mt-1" />
               <p className="mt-1.5 text-xs text-sekundaer">Taucht erst ab diesem Datum in der To-Do-Liste auf.</p>
             </div>
           )}

@@ -1,5 +1,6 @@
 import { PersonenAuswahl } from "@/components/personen-auswahl"
 import { datumIsoAusDate } from "@/lib/datum"
+import { DatumFeld } from "@/components/datum-feld"
 
 type Optionen = {
   orte: { id: string; name: string }[]
@@ -121,15 +122,14 @@ export function FahrzeugFormularFelder({
         <div className="grid gap-4 sm:grid-cols-3">
           <label className={LABEL}>
             TÜV fällig am
-            <input type="date" name="huFaelligAm" defaultValue={standard?.huFaelligAm ? datumIsoAusDate(standard.huFaelligAm) : ""} className={FELD} />
+            <DatumFeld name="huFaelligAm" defaultValue={standard?.huFaelligAm ? datumIsoAusDate(standard.huFaelligAm) : ""} ariaLabel="TÜV fällig am" />
           </label>
           <label className={LABEL}>
             Service fällig am
-            <input
-              type="date"
+            <DatumFeld
               name="serviceFaelligAm"
               defaultValue={standard?.serviceFaelligAm ? datumIsoAusDate(standard.serviceFaelligAm) : ""}
-              className={FELD}
+              ariaLabel="Service fällig am"
             />
           </label>
           <label className={LABEL}>

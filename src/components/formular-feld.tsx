@@ -1,9 +1,8 @@
 "use client"
 
-import { useEffect, useRef } from "react"
-
 import { FormularElementTyp } from "@/generated/prisma/enums"
 import { heutigesDatumIso } from "@/lib/datum"
+import { DatumFeld } from "@/components/datum-feld"
 
 export type FormularFeldElement = {
   id: string
@@ -34,21 +33,14 @@ const EINGABE_KLASSE = "h-9 w-full rounded-lg border border-flaeche-300 px-2 tex
 
 /**
  * Datumsfeld, mit Heute vorbelegt (Rückmeldung 2026-09-09: manche Browser
- * zeigen im Datepicker optisch schon das heutige Datum, ohne es wirklich
+ * zeigten im Datepicker optisch schon das heutige Datum, ohne es wirklich
  * als Wert zu committen — beim Absenden griff dann trotzdem die
- * Pflichtfeld-Prüfung). Die Vorbelegung passiert erst NACH dem Mounten via
- * Ref statt über `defaultValue` direkt, damit Server- und Client-Rendering
- * (unterschiedliche Zeitzonen möglich) exakt gleich aussehen — sonst
- * Hydration-Mismatch. Kein Effekt auf CHECKBOX/Trigger-Logik: rein lokal.
+ * Pflichtfeld-Prüfung). Das DatumFeld trägt den Wert immer wirklich im
+ * Formular; `heutigesDatumIso()` rechnet fest in Berliner Zeit, Server und
+ * Browser kommen also zum selben Tag (kein Hydration-Unterschied).
  */
 function FormularDatumFeld({ id, name, required }: { id: string; name: string; required: boolean }) {
-  const ref = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (ref.current && !ref.current.value) ref.current.value = heutigesDatumIso()
-  }, [])
-
-  return <input ref={ref} id={id} name={name} type="date" required={required} className={EINGABE_KLASSE} />
+  return <DatumFeld id={id} name={name} required={required} defaultValue={heutigesDatumIso()} ariaLabel="Datum" />
 }
 
 /**

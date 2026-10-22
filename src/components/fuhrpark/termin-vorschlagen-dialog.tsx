@@ -3,6 +3,7 @@
 import { useRef } from "react"
 
 import { heutigesDatumIso } from "@/lib/datum"
+import { DatumFeld } from "@/components/datum-feld"
 
 const HEUTE_ISO = heutigesDatumIso
 
@@ -45,7 +46,7 @@ export function TerminVorschlagenDialog({ aktion }: { aktion: (formData: FormDat
             </label>
             <label className="flex flex-col gap-1 text-sm font-medium text-primaer">
               Datum
-              <input type="date" name="datum" required defaultValue={HEUTE_ISO()} className="h-10 rounded-lg border border-flaeche-300 bg-flaeche px-3 text-sm" />
+              <DatumFeld name="datum" required defaultValue={HEUTE_ISO()} ariaLabel="Datum" />
             </label>
             <div className="flex justify-end gap-2">
               <button

@@ -1,11 +1,12 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useState } from "react"
 
 import { FormularAenderungenSchutz } from "@/components/formular-aenderungen-schutz"
 
 import { Hinweis } from "@/components/hinweis"
 import { heutigesDatumIso } from "@/lib/datum"
+import { DatumFeld } from "@/components/datum-feld"
 
 /**
  * Client-Komponente nur für die Interaktivität der beiden Datumsfelder
@@ -25,14 +26,12 @@ export function AusleiheAnlegenFormular({
   entleiherOptionen: { benutzername: string; vorname: string; nachname: string }[]
   fehler?: string
 }) {
-  const bisRef = useRef<HTMLInputElement>(null)
   const [minBis, setMinBis] = useState(() => heutigesDatumIso())
+  const [bis, setBis] = useState(() => heutigesDatumIso())
 
-  function vonAendern(ereignis: React.ChangeEvent<HTMLInputElement>) {
-    const neuesVon = ereignis.target.value
-    if (bisRef.current && bisRef.current.value < neuesVon) {
-      bisRef.current.value = neuesVon
-    }
+  function vonAendern(neuesVon: string) {
+    if (!neuesVon) return
+    if (bis < neuesVon) setBis(neuesVon)
     setMinBis(neuesVon)
   }
 
@@ -62,26 +61,26 @@ export function AusleiheAnlegenFormular({
       <div className="flex gap-3">
         <label className="flex flex-1 flex-col gap-1">
           <span className="text-sm font-medium">Von</span>
-          <input
-            type="date"
+          <DatumFeld
             name="geplantVon"
             required
             defaultValue={heutigesDatumIso()}
-            onChange={vonAendern}
-            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+            onAenderung={vonAendern}
+            ariaLabel="Von"
+            groesse="gross"
           />
         </label>
 
         <label className="flex flex-1 flex-col gap-1">
           <span className="text-sm font-medium">Bis</span>
-          <input
-            type="date"
+          <DatumFeld
             name="geplantBis"
             required
             min={minBis}
-            defaultValue={heutigesDatumIso()}
-            ref={bisRef}
-            className="rounded-lg border border-flaeche-300 px-3 py-2.5 text-base focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen"
+            wert={bis}
+            onAenderung={setBis}
+            ariaLabel="Bis"
+            groesse="gross"
           />
         </label>
       </div>

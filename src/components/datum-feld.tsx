@@ -3,6 +3,10 @@
 import { useEffect, useId, useRef, useState } from "react"
 import { CalendarDays } from "lucide-react"
 
+import { KalenderAuswahl } from "@/components/kalender-auswahl"
+import { heutigesDatumIso } from "@/lib/datum"
+import { useIstTouch } from "@/lib/use-ist-touch"
+
 type Teile = { tag: string; monat: string; jahr: string }
 
 const LEER: Teile = { tag: "", monat: "", jahr: "" }
@@ -51,8 +55,15 @@ function anzeigeAusIso(iso: string): string {
  * `<input name>` trägt "2026-10-17" (oder leer, solange unvollständig/
  * ungültig) — die Server Actions bleiben unverändert. Mit `wert` +
  * `onAenderung` ist es kontrolliert (der Aufrufer darf den Wert setzen,
- * z. B. ein Enddatum nachziehen), sonst reicht `defaultValue`. Das kleine
- * Kalender-Symbol öffnet bei Bedarf trotzdem die Datumsauswahl des Geräts.
+ * z. B. ein Enddatum nachziehen), sonst reicht `defaultValue`.
+ *
+ * Auswahl per Kalender (Rückmeldung 2026-10-22): Das Kalender-Symbol öffnet am
+ * Computer unseren eigenen Kalender im App-Design (KalenderAuswahl, in einem
+ * Pop-over über allem, auch über Pop-up-Fenstern). Auf Handy und Tablet
+ * (`pointer: coarse`) steht stattdessen das Datumsfeld des Geräts da — mit dem
+ * Datumsrad bzw. Kalender, den das Betriebssystem mitbringt. Beide Varianten
+ * liegen im Dokument und teilen sich denselben Zustand; welche zu sehen ist,
+ * entscheidet nur CSS (kein Flackern beim Laden).
  */
 export function DatumFeld({
   name,
@@ -61,10 +72,14 @@ export function DatumFeld({
   onAenderung,
   required = false,
   min,
+  max,
+  id: idProp,
+  groesse = "klein",
   ariaLabel,
   className = "",
 }: {
-  name: string
+  /** Name des Formularfelds (trägt "2026-10-17"); ohne Namen bleibt das Feld ohne eigenes Formularfeld, z. B. als Teil von DatumUhrzeitFeld. */
+  name?: string
   /** Kontrollierter Wert als ISO ("2026-10-17" oder ""). */
   wert?: string
   defaultValue?: string
@@ -73,6 +88,12 @@ export function DatumFeld({
   required?: boolean
   /** Frühestes erlaubtes Datum als ISO. */
   min?: string
+  /** Spätestes erlaubtes Datum als ISO. */
+  max?: string
+  /** Für `<label htmlFor>`: Ziel ist das Tag-Feld (am Handy das Gerätefeld). */
+  id?: string
+  /** "gross": höhere Felder mit größerer Schrift (Formulare, die am Handy am Fahrzeug ausgefüllt werden). */
+  groesse?: "klein" | "gross"
   ariaLabel?: string
   className?: string
 }) {
@@ -80,8 +101,13 @@ export function DatumFeld({
   const tagRef = useRef<HTMLInputElement>(null)
   const monatRef = useRef<HTMLInputElement>(null)
   const jahrRef = useRef<HTMLInputElement>(null)
-  const kalenderRef = useRef<HTMLInputElement>(null)
+  const nativRef = useRef<HTMLInputElement>(null)
   const versteckRef = useRef<HTMLInputElement>(null)
+  const feldRef = useRef<HTMLDivElement>(null)
+  const popoverRef = useRef<HTMLDivElement>(null)
+  const kalenderKnopfRef = useRef<HTMLButtonElement>(null)
+  const istTouch = useIstTouch()
+  const [kalenderOffen, setKalenderOffen] = useState(false)
 
   const [teile, setTeile] = useState<Teile>(() => teileAusIso(wert ?? defaultValue))
   const [angefasst, setAngefasst] = useState(false)
@@ -110,14 +136,19 @@ export function DatumFeld({
         : "Dieses Datum gibt es nicht."
   } else if (iso && min && iso < min) {
     fehler = `Das Datum darf nicht vor dem ${anzeigeAusIso(min)} liegen.`
+  } else if (iso && max && iso > max) {
+    fehler = `Das Datum darf nicht nach dem ${anzeigeAusIso(max)} liegen.`
   } else if (ganzLeer && required) {
     fehler = "Bitte ein Datum eingeben."
   }
 
-  // Browser-Meldung am Tag-Feld: sperrt das Absenden, solange das Datum nicht passt.
+  // Browser-Meldung: sperrt das Absenden, solange das Datum nicht passt. Nur das
+  // SICHTBARE Eingabefeld bekommt sie — ein verstecktes Feld mit Fehler würde
+  // das Absenden sonst stumm blockieren (der Browser kann es nicht anzeigen).
   useEffect(() => {
-    tagRef.current?.setCustomValidity(fehler)
-  }, [fehler])
+    tagRef.current?.setCustomValidity(istTouch ? "" : fehler)
+    nativRef.current?.setCustomValidity(istTouch ? fehler : "")
+  }, [fehler, istTouch])
 
   // Formular zurückgesetzt (z. B. nach dem Speichern): zurück auf den Ausgangswert.
   useEffect(() => {
@@ -208,31 +239,94 @@ export function DatumFeld({
     jahrRef.current?.focus()
   }
 
-  function kalenderOeffnen() {
-    const feld = kalenderRef.current
-    if (!feld) return
-    try {
-      feld.showPicker()
-    } catch {
-      feld.focus()
-      feld.click()
-    }
+  // --- Kalender-Pop-over (nur Computer) -------------------------------------
+
+  /** Setzt das Pop-over unter (oder, wenn dort kein Platz ist, über) das Feld. */
+  function positionieren() {
+    const feld = feldRef.current
+    const pop = popoverRef.current
+    if (!feld || !pop) return
+    const rand = 8
+    const rect = feld.getBoundingClientRect()
+    const hoehe = pop.offsetHeight
+    const breite = pop.offsetWidth
+    let oben = rect.bottom + 6
+    if (oben + hoehe > window.innerHeight - rand && rect.top - 6 - hoehe >= rand) oben = rect.top - 6 - hoehe
+    const links = Math.min(Math.max(rand, rect.left), window.innerWidth - breite - rand)
+    pop.style.top = `${Math.max(rand, oben)}px`
+    pop.style.left = `${links}px`
   }
+
+  function kalenderSchliessen(fokusZurueck: boolean) {
+    setKalenderOffen(false)
+    if (fokusZurueck) kalenderKnopfRef.current?.focus()
+  }
+
+  // Pop-over zeigen/verstecken (Top Layer: liegt auch über modalen Fenstern) und
+  // dabei Klick außerhalb, Scrollen und Größenänderung überwachen.
+  useEffect(() => {
+    const pop = popoverRef.current
+    if (!pop) return
+    if (!kalenderOffen) {
+      if (pop.matches(":popover-open")) pop.hidePopover()
+      return
+    }
+    pop.showPopover()
+    positionieren()
+    const frame = window.requestAnimationFrame(positionieren)
+
+    function beiKlickAussen(ereignis: PointerEvent) {
+      const ziel = ereignis.target as Node
+      if (pop?.contains(ziel) || kalenderKnopfRef.current?.contains(ziel)) return
+      setKalenderOffen(false)
+    }
+    // Escape schließt NUR den Kalender (nicht das umgebende Fenster) — auf
+    // Dokumentebene, damit es auch greift, wenn der Fokus gerade nirgends im
+    // Kalender steht (z. B. nach dem Wechsel zur Monatsauswahl).
+    function beiTaste(ereignis: KeyboardEvent) {
+      if (ereignis.key !== "Escape") return
+      ereignis.preventDefault()
+      ereignis.stopPropagation()
+      kalenderSchliessen(true)
+    }
+    document.addEventListener("keydown", beiTaste, true)
+    document.addEventListener("pointerdown", beiKlickAussen, true)
+    window.addEventListener("resize", positionieren)
+    window.addEventListener("scroll", positionieren, true)
+    return () => {
+      window.cancelAnimationFrame(frame)
+      document.removeEventListener("keydown", beiTaste, true)
+      document.removeEventListener("pointerdown", beiKlickAussen, true)
+      window.removeEventListener("resize", positionieren)
+      window.removeEventListener("scroll", positionieren, true)
+    }
+  }, [kalenderOffen])
 
   // Fehler zeigen, sobald das Jahr komplett ist (dann ist die Eingabe fertig) oder das Feld verlassen wurde.
   const zeigeFehler = fehler !== "" && (angefasst || teile.jahr.length === 4)
+  const gross = groesse === "gross"
   const teilKlasse =
-    "bg-transparent text-center text-sm text-primaer outline-none placeholder:text-tertiaer"
+    "bg-transparent text-center text-primaer outline-none placeholder:text-tertiaer " + (gross ? "text-base" : "text-sm")
+  const rahmen = zeigeFehler ? "border-red-500" : "border-flaeche-300"
+  // Handy/Tablet: das Gerätefeld bekommt dieselbe Optik und Höhe wie die Nachbarfelder.
+  const nativKlasse =
+    "hidden w-full rounded-lg border bg-flaeche text-primaer focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen pointer-coarse:block " +
+    (gross ? "h-11 px-3 text-base " : "h-9 px-2 text-sm ") +
+    rahmen
 
   return (
     <div className={className}>
       <div
+        ref={feldRef}
         className={
-          "relative flex h-9 items-center gap-0.5 rounded-lg border bg-flaeche px-2 focus-within:border-marke-gruen " +
-          (zeigeFehler ? "border-red-500" : "border-flaeche-300")
+          "relative items-center gap-0.5 rounded-lg border bg-flaeche focus-within:border-marke-gruen flex pointer-coarse:hidden " +
+          (gross ? "h-11 px-3 " : "h-9 px-2 ") +
+          rahmen
         }
         onBlur={(ereignis) => {
-          // Nur wenn der Fokus das GANZE Feld verlässt (nicht beim Wechsel zwischen den Teilen).
+          // Nur wenn der Fokus das GANZE Feld verlässt (nicht beim Wechsel zwischen den Teilen
+          // oder in den geöffneten Kalender hinein).
+          if (kalenderOffen) return
           if (!ereignis.currentTarget.contains(ereignis.relatedTarget as Node | null)) {
             setAngefasst(true)
             // "05.10.26" → Jahr 2026 ergänzen.
@@ -242,20 +336,21 @@ export function DatumFeld({
       >
         <input
           ref={tagRef}
+          id={istTouch ? undefined : idProp}
           type="text"
           inputMode="numeric"
           autoComplete="off"
           placeholder="TT"
           aria-label={`${ariaLabel ?? "Datum"}: Tag`}
           aria-invalid={zeigeFehler}
+          aria-required={required}
           aria-describedby={zeigeFehler ? `${id}-fehler` : undefined}
-          required={required}
           value={teile.tag}
           onChange={(e) => eingabe("tag", e.target.value)}
           onKeyDown={(e) => taste(e, "tag")}
           onPaste={einfuegen}
           onFocus={(e) => e.currentTarget.select()}
-          className={teilKlasse + " w-6"}
+          className={teilKlasse + (gross ? " w-7" : " w-6")}
         />
         <span aria-hidden className="text-tertiaer">
           .
@@ -272,7 +367,7 @@ export function DatumFeld({
           onKeyDown={(e) => taste(e, "monat")}
           onPaste={einfuegen}
           onFocus={(e) => e.currentTarget.select()}
-          className={teilKlasse + " w-6"}
+          className={teilKlasse + (gross ? " w-7" : " w-6")}
         />
         <span aria-hidden className="text-tertiaer">
           .
@@ -289,31 +384,73 @@ export function DatumFeld({
           onKeyDown={(e) => taste(e, "jahr")}
           onPaste={einfuegen}
           onFocus={(e) => e.currentTarget.select()}
-          className={teilKlasse + " w-10"}
+          className={teilKlasse + (gross ? " w-12" : " w-10")}
         />
 
         <button
+          ref={kalenderKnopfRef}
           type="button"
-          onClick={kalenderOeffnen}
+          onClick={() => (kalenderOffen ? kalenderSchliessen(false) : setKalenderOffen(true))}
           aria-label={`${ariaLabel ?? "Datum"}: Kalender öffnen`}
-          className="ml-1.5 rounded p-0.5 text-tertiaer transition hover:text-primaer"
+          aria-haspopup="dialog"
+          aria-expanded={kalenderOffen}
+          className={
+            "ml-1.5 rounded p-0.5 transition hover:text-primaer focus-visible:outline focus-visible:outline-2 focus-visible:outline-marke-gruen " +
+            (kalenderOffen ? "text-marke-gruen-dunkel" : "text-tertiaer")
+          }
         >
           <CalendarDays className="h-4 w-4" aria-hidden />
         </button>
-        {/* Nur für die Kalenderauswahl des Geräts; trägt nichts zum Formular bei. */}
-        <input
-          ref={kalenderRef}
-          type="date"
-          tabIndex={-1}
-          aria-hidden
-          min={min}
-          value={iso ?? ""}
-          onChange={(e) => e.target.value && melden(teileAusIso(e.target.value))}
-          className="pointer-events-none absolute h-0 w-0 opacity-0"
-        />
+
+        {/* Der Kalender selbst: im Top Layer (liegt über Pop-up-Fenstern, wird nicht von
+            scrollenden Containern abgeschnitten), per Hand geöffnet/geschlossen. */}
+        <div
+          ref={popoverRef}
+          popover="manual"
+          className="fixed inset-auto m-0 overflow-visible border-0 bg-transparent p-0"
+        >
+          {kalenderOffen && (
+            <KalenderAuswahl
+              wert={iso ?? ""}
+              heute={heutigesDatumIso()}
+              min={min}
+              max={max}
+              onWahl={(gewaehlt) => {
+                melden(teileAusIso(gewaehlt))
+                setAngefasst(true)
+                kalenderSchliessen(true)
+              }}
+              onLoeschen={
+                required
+                  ? undefined
+                  : () => {
+                      melden(LEER)
+                      kalenderSchliessen(true)
+                    }
+              }
+              onSchliessen={() => kalenderSchliessen(true)}
+            />
+          )}
+        </div>
       </div>
 
-      <input ref={versteckRef} type="hidden" name={name} value={iso ?? ""} />
+      {/* Handy/Tablet: Datumsauswahl des Geräts (Rad bzw. Kalender des Betriebssystems). */}
+      <input
+        ref={nativRef}
+        id={istTouch ? idProp : undefined}
+        type="date"
+        min={min}
+        max={max}
+        aria-label={ariaLabel ?? "Datum"}
+        aria-invalid={zeigeFehler}
+        aria-describedby={zeigeFehler ? `${id}-fehler` : undefined}
+        value={iso ?? ""}
+        onChange={(e) => melden(e.target.value ? teileAusIso(e.target.value) : LEER)}
+        onBlur={() => setAngefasst(true)}
+        className={nativKlasse}
+      />
+
+      <input ref={versteckRef} type="hidden" name={name} value={iso ?? ""} disabled={!name} />
 
       {zeigeFehler && (
         <p id={`${id}-fehler`} role="alert" className="mt-1 text-xs text-red-600">

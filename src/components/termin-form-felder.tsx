@@ -7,6 +7,7 @@ import { TERMIN_FARBEN, TERMIN_ERINNERUNGEN } from "@/lib/termin-optionen"
 import { PersonenAuswahl } from "@/components/personen-auswahl"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { wiederholenOptionen } from "@/lib/termine/wiederholung"
+import { DatumFeld } from "@/components/datum-feld"
 
 export type Person = { id: string; name: string }
 
@@ -175,7 +176,6 @@ export function TerminFormFelder({
 }) {
   const id = useId()
   const bisRef = useRef<HTMLInputElement>(null)
-  const bisDatumRef = useRef<HTMLInputElement>(null)
   const [ganztaegig, setGanztaegig] = useState(standardwerte.ganztaegig)
   const [wiederholen, setWiederholen] = useState("nein")
   const [wiederholenUnbefristet, setWiederholenUnbefristet] = useState(false)
@@ -184,6 +184,8 @@ export function TerminFormFelder({
   // Serie läuft serverseitig immer über das tatsächlich übermittelte
   // Startdatum, unabhängig davon, ob dieser Wert hier ganz aktuell ist.
   const [aktuellesDatum, setAktuellesDatum] = useState(standardwerte.datum || standardwerte.vonDatum)
+  // "Bis" beim ganztägigen Zeitraum ist kontrolliert, damit es dem "Von"-Datum folgen kann (siehe beiVonDatumAendern).
+  const [bisDatum, setBisDatum] = useState(standardwerte.bisDatum || standardwerte.datum)
 
   // Endzeit folgt der Startzeit (+30 Min.), bleibt danach aber ein
   // normales Feld — wer eine andere Dauer braucht, überschreibt es
@@ -213,11 +215,9 @@ export function TerminFormFelder({
   // Enddatum mehr auswählen lässt — der Sprung oben fängt nur den
   // Moment der Datumsänderung selbst ab, nicht eine spätere manuelle
   // Eingabe im "Bis"-Feld.
-  function beiVonDatumAendern(ereignis: React.ChangeEvent<HTMLInputElement>) {
-    const neuesVon = ereignis.target.value
-    if (bisDatumRef.current && bisDatumRef.current.value < neuesVon) {
-      bisDatumRef.current.value = neuesVon
-    }
+  function beiVonDatumAendern(neuesVon: string) {
+    if (!neuesVon) return
+    if (bisDatum < neuesVon) setBisDatum(neuesVon)
     setAktuellesDatum(neuesVon)
   }
 
@@ -239,40 +239,38 @@ export function TerminFormFelder({
 
       {/* `key` auf beiden Zweigen erzwingt beim Umschalten von Ganztägig
           einen echten Neuaufbau dieser Felder statt eines von React
-          gepatchten Wiederverwendens derselben DOM-Knoten — sonst behält
+          gepatchten Wiederverwendens derselben DOM-Knoten — sonst behielte
           z. B. das "Bis"-Feld beim Wechsel von Uhrzeit- auf Datumsfeld
-          (type="time" → type="date" auf demselben Input-Element) seinen
-          leeren Anzeigezustand, obwohl der defaultValue korrekt gesetzt
-          wurde (ein Browser-Eigenheit bei Typwechsel auf demselben Knoten). */}
+          seinen Anzeigezustand, obwohl der Wert korrekt gesetzt wurde. */}
       {ganztaegig ? (
         <div key="ganztaegig" className="flex flex-wrap gap-3">
           <div>
             <label htmlFor={`${id}-vonDatum`} className="block text-xs font-medium text-primaer">
               Von
             </label>
-            <input
+            <DatumFeld
               id={`${id}-vonDatum`}
               name="vonDatum"
-              type="date"
               required
               defaultValue={standardwerte.vonDatum || standardwerte.datum}
-              onChange={beiVonDatumAendern}
-              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+              onAenderung={beiVonDatumAendern}
+              ariaLabel="Von"
+              className="mt-1"
             />
           </div>
           <div>
             <label htmlFor={`${id}-bisDatum`} className="block text-xs font-medium text-primaer">
               Bis
             </label>
-            <input
+            <DatumFeld
               id={`${id}-bisDatum`}
               name="bisDatum"
-              type="date"
               required
               min={aktuellesDatum}
-              defaultValue={standardwerte.bisDatum || standardwerte.datum}
-              ref={bisDatumRef}
-              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+              wert={bisDatum}
+              onAenderung={setBisDatum}
+              ariaLabel="Bis"
+              className="mt-1"
             />
           </div>
         </div>
@@ -282,14 +280,14 @@ export function TerminFormFelder({
             <label htmlFor={`${id}-datum`} className="block text-xs font-medium text-primaer">
               Datum
             </label>
-            <input
+            <DatumFeld
               id={`${id}-datum`}
               name="datum"
-              type="date"
               required
               defaultValue={standardwerte.datum}
-              onChange={(ereignis) => setAktuellesDatum(ereignis.target.value)}
-              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+              onAenderung={setAktuellesDatum}
+              ariaLabel="Datum"
+              className="mt-1"
             />
           </div>
           <div>
@@ -401,13 +399,13 @@ export function TerminFormFelder({
                   <label htmlFor={`${id}-wiederholenBis`} className="block text-xs font-medium text-primaer">
                     Bis wann
                   </label>
-                  <input
+                  <DatumFeld
                     id={`${id}-wiederholenBis`}
                     name="wiederholenBis"
-                    type="date"
                     required={!wiederholenUnbefristet}
                     defaultValue={standardwerte.datum}
-                    className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+                    ariaLabel="Bis wann"
+                    className="mt-1"
                   />
                 </div>
               )}

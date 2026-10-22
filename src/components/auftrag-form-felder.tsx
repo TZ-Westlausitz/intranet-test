@@ -11,6 +11,7 @@ import type { Person } from "@/components/termin-form-felder"
 import { AUFGABE_PRIORITAETEN, AUFGABE_PRIORITAET_KLASSEN, AUFGABE_PRIORITAET_NAMEN } from "@/lib/aufgaben-optionen"
 import { formatiereDatum } from "@/lib/datum"
 import type { AuftragStandardwerte } from "@/lib/auftraege/standardwerte"
+import { DatumFeld } from "@/components/datum-feld"
 
 /**
  * Titel, Zuweisen, Beschreibung, Checkliste, Fällig/Priorität/Geplant und
@@ -123,13 +124,13 @@ export function AuftragFormFelder({
           <label htmlFor={`${idPrefix}faelligAm`} className="block text-xs font-medium text-primaer">
             Fällig am
           </label>
-          <input
+          <DatumFeld
             id={`${idPrefix}faelligAm`}
             name="faelligAm"
-            type="date"
             defaultValue={standardwerte.faelligAm ?? ""}
-            onChange={(ereignis) => setFaelligAm(ereignis.target.value)}
-            className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+            onAenderung={setFaelligAm}
+            ariaLabel="Fällig am"
+            className="mt-1"
           />
         </div>
 
@@ -165,13 +166,13 @@ export function AuftragFormFelder({
               </label>
               <InfoHinweis text="Die zugewiesene Person sieht die Aufgabe erst ab diesem Datum." />
             </div>
-            <input
+            <DatumFeld
               id={`${idPrefix}geplantAm`}
               name="geplantAm"
-              type="date"
               defaultValue={standardwerte.geplantAm ?? ""}
-              onChange={(ereignis) => setGeplantAm(ereignis.target.value)}
-              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+              onAenderung={setGeplantAm}
+              ariaLabel="Geplant für"
+              className="mt-1"
             />
           </div>
         )}
