@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises"
 import path from "node:path"
 
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFPage } from "pdf-lib"
+import sharp from "sharp"
 
 import { richTextZuText } from "@/lib/rich-text"
 import { formatiereDatumAusDate, zeitAusDate } from "@/lib/datum"
@@ -57,7 +58,64 @@ type AntwortFuerPdf = {
   wertJa: boolean | null
 }
 
-type AnhangFuerPdf = { elementId: string | null; dateiname: string }
+/** `mimetyp` + `bytes` nur für Datei-Antworten, die in die PDF eingefügt werden sollen (siehe anhaengeVorbereiten). */
+type AnhangFuerPdf = { elementId: string | null; dateiname: string; mimetyp?: string; bytes?: Uint8Array }
+
+/** Längste Bildkante im PDF in Pixel — Handyfotos haben 4000+ Pixel, das würde die PDF um Megabytes aufblähen, ohne dass man es auf A4 sieht. */
+const BILD_MAX_KANTE = 1800
+
+type AnlageVorbereitet = {
+  label: string
+  dateiname: string
+} & (
+  | { art: "bild"; jpeg: Uint8Array; breite: number; hoehe: number }
+  | { art: "pdf"; dokument: PDFDocument; seitenAnzahl: number }
+  | { art: "nichtEingebettet"; grund: string }
+)
+
+/**
+ * Bereitet die Datei-Antworten für die PDF auf: Fotos werden mit sharp
+ * eingelesen, nach der Kamera-Drehung (EXIF) ausgerichtet, verkleinert und
+ * als JPEG neu geschrieben — dabei fallen automatisch alle Metadaten weg,
+ * auch die GPS-Position (REGEL 10: keine Ortungsdaten; die Originaldatei
+ * bleibt unverändert als eigener Anhang erhalten). PDFs werden seitenweise
+ * übernommen. Was sich nicht einbetten lässt (beschädigt, verschlüsselt, HEIC
+ * ohne Decoder, anderer Typ), bricht die Einreichung NICHT ab, sondern
+ * erscheint in der Anlagen-Übersicht mit dem Hinweis, dass die Datei einzeln
+ * abrufbar bleibt.
+ */
+async function anhaengeVorbereiten(elemente: ElementFuerPdf[], anhaenge: AnhangFuerPdf[]): Promise<AnlageVorbereitet[]> {
+  const nachElement = new Map(anhaenge.filter((a) => a.elementId).map((a) => [a.elementId as string, a]))
+  const ergebnis: AnlageVorbereitet[] = []
+
+  for (const element of elemente) {
+    if (element.typ !== "DATEI") continue
+    const anhang = nachElement.get(element.id)
+    if (!anhang?.bytes) continue
+    const kopf = { label: element.label ?? "Anhang", dateiname: anhang.dateiname }
+    const mimetyp = anhang.mimetyp ?? ""
+
+    try {
+      if (mimetyp === "application/pdf") {
+        const dokument = await PDFDocument.load(anhang.bytes, { ignoreEncryption: true })
+        ergebnis.push({ ...kopf, art: "pdf", dokument, seitenAnzahl: dokument.getPageCount() })
+      } else if (mimetyp.startsWith("image/")) {
+        const { data, info } = await sharp(Buffer.from(anhang.bytes), { failOn: "none" })
+          .rotate()
+          .resize({ width: BILD_MAX_KANTE, height: BILD_MAX_KANTE, fit: "inside", withoutEnlargement: true })
+          .flatten({ background: "#ffffff" })
+          .jpeg({ quality: 82 })
+          .toBuffer({ resolveWithObject: true })
+        ergebnis.push({ ...kopf, art: "bild", jpeg: new Uint8Array(data), breite: info.width, hoehe: info.height })
+      } else {
+        ergebnis.push({ ...kopf, art: "nichtEingebettet", grund: "Dateityp nicht darstellbar" })
+      }
+    } catch {
+      ergebnis.push({ ...kopf, art: "nichtEingebettet", grund: "Datei konnte nicht eingebettet werden" })
+    }
+  }
+  return ergebnis
+}
 
 const TRENNZEICHEN_DASH: Record<string, number[] | undefined> = {
   DURCHGEZOGEN: undefined,
@@ -117,6 +175,7 @@ function antwortAlsText(element: ElementFuerPdf, antwort: AntwortFuerPdf | undef
 /** Kopfzeile (Logo) + Fußzeile (Titel mittig, Seitenzahl nur bei mehreren Seiten) auf JEDE Seite — erst am Ende, wenn die Seitenzahl feststeht. */
 function kopfUndFusszeileZeichnen(
   seiten: PDFPage[],
+  gesamtSeiten: PDFPage[],
   logo: PDFImage,
   schrift: PDFFont,
   titel: string,
@@ -125,7 +184,9 @@ function kopfUndFusszeileZeichnen(
   const fusszeileGroesse = 8
   const titelSicher = fuerPdfKodierbar(titel, schrift)
 
-  seiten.forEach((seite, index) => {
+  seiten.forEach((seite) => {
+    // Nummer im GANZEN Dokument — übernommene PDF-Seiten (Anhänge) zählen mit, bekommen aber selbst keine Zeile.
+    const nummer = gesamtSeiten.indexOf(seite) + 1
     seite.drawImage(logo, {
       x: SEITE_BREITE - RAND - logoBreite,
       y: SEITE_HOEHE - RAND - LOGO_HOEHE,
@@ -142,8 +203,8 @@ function kopfUndFusszeileZeichnen(
       color: rgb(0.55, 0.55, 0.55),
     })
 
-    if (seiten.length > 1) {
-      const seitenzahlText = `Seite ${index + 1} von ${seiten.length}`
+    if (gesamtSeiten.length > 1) {
+      const seitenzahlText = `Seite ${nummer} von ${gesamtSeiten.length}`
       const seitenzahlBreite = schrift.widthOfTextAtSize(seitenzahlText, fusszeileGroesse)
       seite.drawText(seitenzahlText, {
         x: SEITE_BREITE - RAND - seitenzahlBreite,
@@ -207,6 +268,8 @@ export async function formularPdfErzeugen(daten: {
   textZeichnen(`Eingereicht von ${daten.eingereichtVon} am ${eingereichtAmText}`, 10, false, rgb(0.4, 0.4, 0.4))
   neueZeile(14)
 
+  const anlagen = await anhaengeVorbereiten(daten.elemente, daten.anhaenge)
+
   const antwortenNachElement = new Map(daten.antworten.map((a) => [a.elementId, a]))
   const anhaengeNachElement = new Map(daten.anhaenge.filter((a) => a.elementId).map((a) => [a.elementId as string, a]))
 
@@ -236,7 +299,62 @@ export async function formularPdfErzeugen(daten: {
     neueZeile(6)
   }
 
-  kopfUndFusszeileZeichnen(seiten, logo, schrift, titel)
+  // --- Anlagen: Übersicht mit Seitenzahlen, danach die Anhänge selbst ----------
+  if (anlagen.length > 0) {
+    // Die Übersicht bleibt auf EINER Seite zusammen, damit feststeht, wo die
+    // Anlagen beginnen (Seitenzahl der Übersicht = letzte eigene Seite davor).
+    const benoetigt = 28 + anlagen.length * (11 + 6 + 4) + 12
+    if (y - benoetigt < FUSSZEILE_HOEHE) {
+      seite = pdf.addPage([SEITE_BREITE, SEITE_HOEHE])
+      seiten.push(seite)
+      y = SEITE_HOEHE - KOPFZEILE_HOEHE
+    }
+    neueZeile(8)
+    textZeichnen("Anlagen", 13, true)
+
+    let naechsteSeite = pdf.getPageCount() + 1
+    for (const [index, anlage] of anlagen.entries()) {
+      const anzahl = anlage.art === "pdf" ? anlage.seitenAnzahl : anlage.art === "bild" ? 1 : 0
+      const ort =
+        anzahl === 0
+          ? `nicht eingebettet (${anlage.art === "nichtEingebettet" ? anlage.grund : ""}) — Datei einzeln abrufbar`
+          : anzahl === 1
+            ? `Seite ${naechsteSeite}`
+            : `Seiten ${naechsteSeite}–${naechsteSeite + anzahl - 1}`
+      naechsteSeite += anzahl
+      textZeichnen(`${index + 1}. ${anlage.label}: ${anlage.dateiname} — ${ort}`, 10, false)
+    }
+
+    for (const anlage of anlagen) {
+      if (anlage.art === "bild") {
+        const bildSeite = pdf.addPage([SEITE_BREITE, SEITE_HOEHE])
+        seiten.push(bildSeite)
+        let bildY = SEITE_HOEHE - KOPFZEILE_HOEHE
+        const ueberschrift = fuerPdfKodierbar(`${anlage.label} — ${anlage.dateiname}`, schriftFett)
+        for (const zeile of zeilenUmbrechen(ueberschrift, schriftFett, 11, inhaltsBreite)) {
+          bildSeite.drawText(zeile, { x: RAND, y: bildY, size: 11, font: schriftFett, color: rgb(0.1, 0.1, 0.1) })
+          bildY -= 17
+        }
+        const verfuegbareHoehe = bildY - FUSSZEILE_HOEHE - 8
+        // Einpassen (nicht größer als 2x der Pixelzahl, sonst wirken kleine Bilder unscharf).
+        const faktor = Math.min(inhaltsBreite / anlage.breite, verfuegbareHoehe / anlage.hoehe, 2)
+        const bildBreite = anlage.breite * faktor
+        const bildHoehe = anlage.hoehe * faktor
+        const bild = await pdf.embedJpg(anlage.jpeg)
+        bildSeite.drawImage(bild, {
+          x: RAND + (inhaltsBreite - bildBreite) / 2,
+          y: bildY - bildHoehe,
+          width: bildBreite,
+          height: bildHoehe,
+        })
+      } else if (anlage.art === "pdf") {
+        const kopien = await pdf.copyPages(anlage.dokument, anlage.dokument.getPageIndices())
+        for (const kopie of kopien) pdf.addPage(kopie)
+      }
+    }
+  }
+
+  kopfUndFusszeileZeichnen(seiten, pdf.getPages(), logo, schrift, titel)
 
   return pdf.save()
 }

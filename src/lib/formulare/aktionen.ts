@@ -626,14 +626,23 @@ export async function formularEinreichen(vorlageId: string, formData: FormData) 
   }
 
   if (vorlage.pdfExport) {
-    const anhaenge = await prisma.formularEinreichungAnhang.findMany({ where: { einreichungId: einreichung.id } })
+    // Die Datei-Antworten kommen mit ihren Bytes in die PDF (Fotos/PDFs werden dort
+    // angehängt, siehe formularPdfErzeugen) — `dateiAntworten` hat sie bereits im Speicher.
+    const anhaenge = await Promise.all(
+      dateiAntworten.map(async ({ elementId, datei }) => ({
+        elementId,
+        dateiname: datei.name,
+        mimetyp: datei.type,
+        bytes: new Uint8Array(await datei.arrayBuffer()),
+      })),
+    )
     const pdfBytes = await formularPdfErzeugen({
       titel: vorlage.titel,
       eingereichtVon: kontext.name,
       eingereichtAm: einreichung.eingereichtAm,
       elemente: vorlage.elemente.map((e) => ({ id: e.id, typ: e.typ, label: e.label, inhalt: e.inhalt })),
       antworten: antwortenDaten,
-      anhaenge: anhaenge.map((a) => ({ elementId: a.elementId, dateiname: a.dateiname })),
+      anhaenge,
     })
     const pfad = `formulare/${einreichung.id}/ausgefuellt.pdf`
     await dateiAblegen(pfad, pdfBytes)
