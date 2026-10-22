@@ -6,6 +6,7 @@ import { CalendarDays } from "lucide-react"
 import { KalenderAuswahl } from "@/components/kalender-auswahl"
 import { heutigesDatumIso } from "@/lib/datum"
 import { useIstTouch } from "@/lib/use-ist-touch"
+import { usePopoverAnker } from "@/lib/use-popover-anker"
 
 type Teile = { tag: string; monat: string; jahr: string }
 
@@ -103,11 +104,14 @@ export function DatumFeld({
   const jahrRef = useRef<HTMLInputElement>(null)
   const nativRef = useRef<HTMLInputElement>(null)
   const versteckRef = useRef<HTMLInputElement>(null)
-  const feldRef = useRef<HTMLDivElement>(null)
-  const popoverRef = useRef<HTMLDivElement>(null)
-  const kalenderKnopfRef = useRef<HTMLButtonElement>(null)
   const istTouch = useIstTouch()
   const [kalenderOffen, setKalenderOffen] = useState(false)
+  const {
+    feldRef,
+    popoverRef,
+    knopfRef: kalenderKnopfRef,
+    schliessen: kalenderSchliessen,
+  } = usePopoverAnker(kalenderOffen, setKalenderOffen)
 
   const [teile, setTeile] = useState<Teile>(() => teileAusIso(wert ?? defaultValue))
   const [angefasst, setAngefasst] = useState(false)
@@ -238,69 +242,6 @@ export function DatumFeld({
     melden({ tag: tag.padStart(2, "0"), monat: monat.padStart(2, "0"), jahr })
     jahrRef.current?.focus()
   }
-
-  // --- Kalender-Pop-over (nur Computer) -------------------------------------
-
-  /** Setzt das Pop-over unter (oder, wenn dort kein Platz ist, über) das Feld. */
-  function positionieren() {
-    const feld = feldRef.current
-    const pop = popoverRef.current
-    if (!feld || !pop) return
-    const rand = 8
-    const rect = feld.getBoundingClientRect()
-    const hoehe = pop.offsetHeight
-    const breite = pop.offsetWidth
-    let oben = rect.bottom + 6
-    if (oben + hoehe > window.innerHeight - rand && rect.top - 6 - hoehe >= rand) oben = rect.top - 6 - hoehe
-    const links = Math.min(Math.max(rand, rect.left), window.innerWidth - breite - rand)
-    pop.style.top = `${Math.max(rand, oben)}px`
-    pop.style.left = `${links}px`
-  }
-
-  function kalenderSchliessen(fokusZurueck: boolean) {
-    setKalenderOffen(false)
-    if (fokusZurueck) kalenderKnopfRef.current?.focus()
-  }
-
-  // Pop-over zeigen/verstecken (Top Layer: liegt auch über modalen Fenstern) und
-  // dabei Klick außerhalb, Scrollen und Größenänderung überwachen.
-  useEffect(() => {
-    const pop = popoverRef.current
-    if (!pop) return
-    if (!kalenderOffen) {
-      if (pop.matches(":popover-open")) pop.hidePopover()
-      return
-    }
-    pop.showPopover()
-    positionieren()
-    const frame = window.requestAnimationFrame(positionieren)
-
-    function beiKlickAussen(ereignis: PointerEvent) {
-      const ziel = ereignis.target as Node
-      if (pop?.contains(ziel) || kalenderKnopfRef.current?.contains(ziel)) return
-      setKalenderOffen(false)
-    }
-    // Escape schließt NUR den Kalender (nicht das umgebende Fenster) — auf
-    // Dokumentebene, damit es auch greift, wenn der Fokus gerade nirgends im
-    // Kalender steht (z. B. nach dem Wechsel zur Monatsauswahl).
-    function beiTaste(ereignis: KeyboardEvent) {
-      if (ereignis.key !== "Escape") return
-      ereignis.preventDefault()
-      ereignis.stopPropagation()
-      kalenderSchliessen(true)
-    }
-    document.addEventListener("keydown", beiTaste, true)
-    document.addEventListener("pointerdown", beiKlickAussen, true)
-    window.addEventListener("resize", positionieren)
-    window.addEventListener("scroll", positionieren, true)
-    return () => {
-      window.cancelAnimationFrame(frame)
-      document.removeEventListener("keydown", beiTaste, true)
-      document.removeEventListener("pointerdown", beiKlickAussen, true)
-      window.removeEventListener("resize", positionieren)
-      window.removeEventListener("scroll", positionieren, true)
-    }
-  }, [kalenderOffen])
 
   // Fehler zeigen, sobald das Jahr komplett ist (dann ist die Eingabe fertig) oder das Feld verlassen wurde.
   const zeigeFehler = fehler !== "" && (angefasst || teile.jahr.length === 4)

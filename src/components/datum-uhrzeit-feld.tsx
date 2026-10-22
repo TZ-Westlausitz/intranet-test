@@ -3,6 +3,7 @@
 import { useState } from "react"
 
 import { DatumFeld } from "@/components/datum-feld"
+import { UhrzeitFeld } from "@/components/uhrzeit-feld"
 import { heutigesDatumIso, teileInBerlinerZeit } from "@/lib/datum"
 
 /**
@@ -40,7 +41,6 @@ export function DatumUhrzeitFeld({
   }
 
   const gross = groesse === "gross"
-
   return (
     <div className="flex flex-wrap items-start gap-2">
       <DatumFeld
@@ -51,23 +51,20 @@ export function DatumUhrzeitFeld({
         groesse={groesse}
         className="min-w-0 flex-1 basis-44"
       />
-      <input
-        type="time"
-        aria-label="Uhrzeit"
-        value={zeit}
+      <UhrzeitFeld
+        wert={zeit}
+        onAenderung={setZeit}
         required={required || datum !== ""}
-        onChange={(ereignis) => setZeit(ereignis.target.value)}
-        className={
-          "shrink-0 rounded-lg border border-flaeche-300 bg-flaeche text-primaer focus:border-marke-gruen focus:outline focus:outline-2 focus:outline-marke-gruen " +
-          (gross ? "h-11 w-32 px-3 text-base" : "h-9 w-28 px-2 text-sm pointer-coarse:h-11")
-        }
+        ariaLabel="Uhrzeit"
+        groesse={groesse}
+        className="w-32 shrink-0"
       />
       <button
         type="button"
         onClick={jetztEinsetzen}
         className={
           "shrink-0 rounded-lg border border-flaeche-300 px-3 text-sm font-medium text-primaer transition hover:border-marke-gruen hover:text-marke-gruen-dunkel " +
-          (gross ? "h-11" : "h-9 pointer-coarse:h-11")
+          (gross ? "h-11" : "h-9")
         }
       >
         Jetzt

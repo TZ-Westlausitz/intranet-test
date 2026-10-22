@@ -8,6 +8,7 @@ import { PersonenAuswahl } from "@/components/personen-auswahl"
 import { RichTextEditor } from "@/components/rich-text-editor"
 import { wiederholenOptionen } from "@/lib/termine/wiederholung"
 import { DatumFeld } from "@/components/datum-feld"
+import { UhrzeitFeld } from "@/components/uhrzeit-feld"
 
 export type Person = { id: string; name: string }
 
@@ -175,7 +176,6 @@ export function TerminFormFelder({
   wiederholenAnzeigen?: boolean
 }) {
   const id = useId()
-  const bisRef = useRef<HTMLInputElement>(null)
   const [ganztaegig, setGanztaegig] = useState(standardwerte.ganztaegig)
   const [wiederholen, setWiederholen] = useState("nein")
   const [wiederholenUnbefristet, setWiederholenUnbefristet] = useState(false)
@@ -186,22 +186,24 @@ export function TerminFormFelder({
   const [aktuellesDatum, setAktuellesDatum] = useState(standardwerte.datum || standardwerte.vonDatum)
   // "Bis" beim ganztägigen Zeitraum ist kontrolliert, damit es dem "Von"-Datum folgen kann (siehe beiVonDatumAendern).
   const [bisDatum, setBisDatum] = useState(standardwerte.bisDatum || standardwerte.datum)
+  // Endzeit ist kontrolliert, damit sie der Startzeit folgen kann (siehe beiVonAendern).
+  const [bisZeit, setBisZeit] = useState(standardwerte.bis)
 
   // Endzeit folgt der Startzeit (+30 Min.), bleibt danach aber ein
   // normales Feld — wer eine andere Dauer braucht, überschreibt es
   // einfach wieder. Verhindert nebenbei, dass die Endzeit nach einer
   // händischen Änderung der Startzeit vor dieser (bzw. in der
   // Vergangenheit) stehen bleibt.
-  function beiVonAendern(ereignis: React.ChangeEvent<HTMLInputElement>) {
-    const [stundenText, minutenText] = ereignis.target.value.split(":")
+  function beiVonAendern(neueZeit: string) {
+    const [stundenText, minutenText] = neueZeit.split(":")
     const stunden = Number(stundenText)
     const minuten = Number(minutenText)
-    if (Number.isNaN(stunden) || Number.isNaN(minuten) || !bisRef.current) return
+    if (!neueZeit || Number.isNaN(stunden) || Number.isNaN(minuten)) return
 
     const gesamtMinuten = (stunden * 60 + minuten + 30) % (24 * 60)
     const neueStunden = Math.floor(gesamtMinuten / 60)
     const neueMinuten = gesamtMinuten % 60
-    bisRef.current.value = `${String(neueStunden).padStart(2, "0")}:${String(neueMinuten).padStart(2, "0")}`
+    setBisZeit(`${String(neueStunden).padStart(2, "0")}:${String(neueMinuten).padStart(2, "0")}`)
   }
 
   // "Bis" springt beim Ganztägig-Zeitraum NUR dann auf das neue
@@ -294,28 +296,28 @@ export function TerminFormFelder({
             <label htmlFor={`${id}-von`} className="block text-xs font-medium text-primaer">
               Von
             </label>
-            <input
+            <UhrzeitFeld
               id={`${id}-von`}
               name="von"
-              type="time"
               required
               defaultValue={standardwerte.von}
-              onChange={beiVonAendern}
-              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+              onAenderung={beiVonAendern}
+              ariaLabel="Von"
+              className="mt-1"
             />
           </div>
           <div>
             <label htmlFor={`${id}-bis`} className="block text-xs font-medium text-primaer">
               Bis
             </label>
-            <input
+            <UhrzeitFeld
               id={`${id}-bis`}
               name="bis"
-              type="time"
               required
-              defaultValue={standardwerte.bis}
-              ref={bisRef}
-              className="mt-1 h-9 rounded-lg border border-flaeche-300 px-2 text-sm"
+              wert={bisZeit}
+              onAenderung={setBisZeit}
+              ariaLabel="Bis"
+              className="mt-1"
             />
           </div>
         </div>
