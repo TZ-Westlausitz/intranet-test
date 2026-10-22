@@ -330,6 +330,10 @@ export function FormularBaukasten({
     const dialog = dialogRef?.current
     if (!dialog) return
     function beiAbbrechen(ereignis: Event) {
+      // Nur das "cancel" des Pop-ups selbst (Escape). Das Abbrechen einer
+      // Dateiauswahl (z. B. "Bild einfügen") löst ebenfalls "cancel" aus, das
+      // bis hierher aufsteigt — das ist kein Schließen des Formulars.
+      if (ereignis.target !== dialog) return
       if (!hatAenderungen) return
       ereignis.preventDefault()
       setEntwurfNachfrageOffen(true)

@@ -115,6 +115,10 @@ export function FormularAenderungenSchutz() {
     // Bestätigung gezeigt).
     const dialog = form.closest("dialog")
     function beiAbbrechenTaste(ereignis: Event) {
+      // Nur das "cancel" des Pop-ups selbst (Escape): Das Abbrechen einer
+      // Dateiauswahl in diesem Formular löst auch "cancel" aus, das hierher
+      // aufsteigt, und darf das Formular nicht schließen wollen.
+      if (ereignis.target !== dialog) return
       if (!istSchmutzig()) return
       ereignis.preventDefault()
       naechsteAktionRef.current = () => {

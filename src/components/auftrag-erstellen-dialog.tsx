@@ -129,6 +129,9 @@ export function AuftragErstellenDialog({
       <dialog
         ref={dialogRef}
         onCancel={(ereignis) => {
+          // Nur Escape auf dem Pop-up selbst — das Abbrechen einer Dateiauswahl
+          // (Anhänge, Bild einfügen) steigt ebenfalls als "cancel" auf.
+          if (ereignis.target !== ereignis.currentTarget) return
           if (istLeer()) return
           ereignis.preventDefault()
           setEntwurfNachfrageOffen(true)
